@@ -1,0 +1,67 @@
+# additional QtCreator files #
+# ############################
+*.pro.*
+*.qmlproject.*
+*.cbp
+
+# PCLint installation depending files
+# ###################################
+lint/lint_cmac.h
+lint/lint_cppmac.h
+lint/gcc-include-path.lnt
+lint/size-options.lnt
+lint/qt-include-path.lnt
+
+# Compiled source, better to ignore directly #
+# ############################################
+*.dll
+*.exe
+*.[oa]
+*.so
+*.so.*
+# expect some 3rd party libraries
+!3rdparty/canlib32/canlib32.dll
+
+# backup, output and temporary files #
+# ####################################
+*~
+*.bak
+*.autosave
+*.orig
+tmp/
+generators/output/
+
+# Packages #
+# ##########
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.tgz
+*.tar.gz
+*.zip
+# expect the tar- and zip- packages in 3rdparty
+!3rdparty/packages/*.tar
+!3rdparty/packages/*.tar.gz
+!3rdparty/packages/*.tgz
+!3rdparty/packages/*.zip
+
+# Logs and databases #
+# ####################
+*.log
+*.rep
+*.sql
+*.sqlite
+
+# OS generates files #
+# ####################
+.DS_Store
+.DS_Store?
+._*
+.Trashes
+ehthumbs.db
+Thumbs.db
+

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" 
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" >
+<article lang="de">
+	<title>SQLReporter</title>
+	<articleinfo>
+		<author>
+			<firstname>Steffen</firstname>
+			<surname>Köhler</surname>
+			<affiliation>
+				<address><email>s.koehler@goepel.com</email></address>
+			</affiliation>
+		</author>
+
+		<copyright>
+			<year>2010</year>
+			<holder>Göpel electronic GmbH</holder>
+		</copyright>
+	</articleinfo>
+
+	<section>
+		<title>Einleitung</title>
+      <para>Der SQL-Reporter ist ein extrem einfaches Werkzeug um
+      anhand zweier Beschreibungs-Dateien eine Ausgabedatei zu erzeugen.
+      Eine Datei enthält alle Angaben um Werte aus einer Datenbank zu
+      extrahieren und die andere ist ein Ausgabe-Template mit dem die
+      selektierten Daten ausgegeben werden.</para>
+      <para>Dabei sind mehrere Kombinationen möglich, so können die
+      selben Daten in unterschiedliche Formate überführt werden.</para>
+	</section>
+	<section>
+		<title>Beschreibungsdateien</title>
+		<para>Die Beschreibungs-Dateien haben einen einfachen
+		Aufbau. Sie bestehen aus Sektionen, die
+		einen Namen besitzen, über den sie angesprochen
+		werden können. Dieser Name wird mit
+		einem doppelten Doppelpunkt am Beginn einer Zeile eingeleitet.</para>
+		<para>Alle weiteren Texte bis zum Start der nächsten
+		Sektion gehören zu dieser Sektion und
+		werden verarbeitet. Bei der Verarbeitung
+		werden enthaltene Platzhalter durch ihren Wert
+		ersetzt. Danach erfolgt entweder eine Abfrage
+		in die Datenbank oder eine Ausgabe in den
+		Ausgabestrom in Abhängigkeit vom Typ der Datei.</para>
+		<para>Der wichtigste Platzhalter ist die Ersetzung mit
+		einem vorhandenen Wert. Dieser Wert
+		kann aus der Datenbank kommen oder wurde vom
+		Nutzer eingegeben. Das Format entspricht
+		dem Variablenformat in vielen anderen ähnlichen Skripten.</para>
+		<itemizedlist numeration="">
+			<listitem>
+				<para>${Name} wird durch den aktuellen Wert ersetzt.</para>
+			</listitem>
+			<listitem>
+				<para>${?Name[,Bezeichnung]} wird ersetzt durch den Wert,
+					den der Nutzer eingegeben hat. Beim ersten Auftreten wird
+					der Wert erfragt, dabei wird die Bezeichnung verwendet.
+				</para>
+			</listitem>
+			<listitem>
+            <para>${__DATE} fügt das aktuelle Datum ein</para>
+			</listitem>
+			<listitem>
+				<para>#{Templatename} fügt das Ausgabetemplate an dieser Stelle
+					ein. Darf nur in Ausgabetemplates verwendet werden.</para>
+			</listitem>
+         <listitem>
+            <para>${__LINECNT} fügt den Zähler für die aktuelle Ergebnis
+            menge hinzu, dieser startet für jede SQL-Abfrage wieder
+            bei Null.</para>
+         </listitem>
+			<listitem>
+            <para>${__UNIQUEID} fügt eine eindeutige Id für den
+            gesamten Prozess hinzu. Dieser Zähler startet mit Null und
+            wird bei jeder Ergebniszeile erhöht.</para>
+         </listitem>
+		</itemizedlist>
+
+		<para>Die Ersetzungen können formatiert werden. Dazu existieren
+			Modifizierer, die mir einem Komma an den Namen angefügt werden.
+			<itemizedlist numeration="">
+				<listitem>
+					<para>${Name,HEX} Ausgabe einer Zahl als Hexadezimal-Zahl ausgibt.
+					</para>
+				</listitem>
+                <listitem>
+                    <para>
+                        ${Name,BOOL} Ausgabe von "false" bei 0 oder "true" sonst,
+                        abhängig vom Wert der mit Name verbunden ist.
+                    </para>
+                </listitem>
+			</itemizedlist>
+		</para>
+
+		<para>Die Zeilen der Templates werden mit einem abschließenden
+			Zeilenumbruch ausgegeben. Soll dies verhindert werden, muss die Zeile
+			mit einem Backslash abgeschlossen werden.
+		</para>
+	</section>
+	<section>
+		<title>Abarbeitungsschema</title>
+		<para>Die Abarbeitung erfolgt für alle Sektionen gleich und wird durch
+			die Verarbeitung der Template-Datei gestartet:
+			<orderedlist>
+				<listitem>
+					<para>Existiert ein Eintrag in der SQL-Datei, wird diese Abfrage
+						ausgeführt.</para>
+				</listitem>
+				<listitem>
+					<para>Für jeden Datensatz der Abfrage wird das Template
+						ausgegeben, die aktuellen Werte der beteiligten Spalten
+						werden in die gleichnamigen internen Variablen geschrieben.</para>
+				</listitem>
+				<listitem>
+					<para>Wurde kein Datensatz gefunden wird versucht das Template
+						mit dem Suffix <emphasis role="bold">_EMPTY</emphasis> auszuführen.
+					</para>
+				</listitem>
+				<listitem>
+					<para>Existiert kein Eintrag in der SQL-Datei wird das Template
+						einfach einmal ausgegeben.</para> 
+				</listitem>
+			</orderedlist>
+		</para>
+		<para>Während der Ausgabe werden die Templates beginnend mit der Sektion <emphasis
+				role="bold">MAIN</emphasis> abgearbeitet. Während der Abarbeitung
+			können alle bisher ermittelten Variablen verwendet werden. Es sind
+			alle bisher ermittelten Werte aus der Datenbank verfügbar. Um
+			Überschneidungen zu vermeiden, können bei der <emphasis
+				role="bold">select</emphasis>-Anweisung
+			mittels <emphasis role="bold">as</emphasis> neue Namen vergeben werden.
+		</para>
+	</section>
+
+	<section>
+		<title>Beispiel</title>
+		<para>
+			Das folgende Beispiel erzeugt eine sortierte Liste aller Prozessoren.
+			<programlisting>::MAIN
+Liste der Prozessoren vom ${DATE}
+---------------------------------------------
+#{PROCESSOR}\
+---------------------------------------------
+
+::PROCESSOR
+${?dot,Aufzählungszeichen} ${chipname}</programlisting>
+
+			Das zugehörige SQL-Template hat folgendes Aussehen.
+			<programlisting>::PROCESSOR
+select * from vt_chip order by chipname</programlisting>
+		</para>
+		<para>
+			Bei der Ausführung wird das MAIN-Template abgearbeitet. Zu diesem
+			existiert keine SQL-Anweisung, deshalb wird es einfach ausgegeben. Dabei
+			wird die Ausführung des PROCESSOR-Templates angestoßen. Dafür gibt es
+			ein SQL-Template. Diese Abfrage erzeugt eine Liste aller Chips sortiert
+			nach ihrem Name. Durch den Stern in der Abfrage, sind später alle
+			Spaltennamen der Tabelle vt_chip als Variablen verfügbar.
+		</para>
+		<para>
+			Für jedes gefundene Tupel wird das Template PROCESSOR abgearbeitet. Beim
+			ersten Mal wird der Wert für das Aufzählungszeichen vom Nutzer erfragt.
+			Dieses wird dann immer verwendet.
+		</para>
+	</section>
+</article>
