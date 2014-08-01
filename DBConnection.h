@@ -9,6 +9,9 @@
 #include <QtCore/QXmlStreamWriter>
 #include "QTreeReporter.h"
 
+//! This class holds the information for a database connection and has some methods to
+//! connect the database, react at errors and show the structure of the database in a
+//! QTreeReporter.
 class DbConnection : public QObject
 {
 
