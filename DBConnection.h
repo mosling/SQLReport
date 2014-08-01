@@ -9,12 +9,14 @@
 #include <QtCore/QXmlStreamWriter>
 #include "QTreeReporter.h"
 
-class DBConnection
+class DbConnection : public QObject
 {
 
+	Q_OBJECT
+
 public:
-	DBConnection();
-	~DBConnection();
+	explicit DbConnection(QObject *parentObj = nullptr);
+	virtual ~DbConnection();
 
 	void showDbError() const;
 	QString getConnectionName() const;
@@ -25,6 +27,9 @@ public:
 
 	void readXmlNode(const QDomNode &aNode);
 	void writeXmlNode(QXmlStreamWriter &aStream);
+
+	QString getName() const { return name; }
+	void setName(const QString &value);
 
 	QString getDbType() const;
 	void setDbType(const QString &value);
@@ -45,6 +50,7 @@ public:
 	void setPort(const quint32 &value);
 
 private:
+	QString name;
 	QString dbType;
 	QString dbName;
 	QString host;

@@ -19,8 +19,10 @@ EditWidget::~EditWidget()
     delete ui;
 }
 
-void EditWidget::newFile(QString aFileName)
+bool EditWidget::newFile(QString aFileName)
 {
+	bool bRet = true;
+
 	if (aFileName != currentFileName)
 	{
 		QFile file(aFileName);
@@ -30,13 +32,16 @@ void EditWidget::newFile(QString aFileName)
 		}
 		else
 		{
-			QMessageBox::information(this, "Fileinfo",
-									 QString("File '%1' not found.").arg(aFileName),QMessageBox::Ok);
+			QMessageBox::information(this, tr("Fileinfo"),
+									 tr("File '%1' not found.").arg(aFileName),QMessageBox::Ok);
+			bRet = false;
 		}
 
 		currentFileName = aFileName;
 		ui->leFileName->setText(currentFileName);
 	}
+
+	return bRet;
 }
 
 //! Aufruf der Speicherfunkion, falls das Fenster sichtbar ist.
@@ -64,6 +69,20 @@ bool EditWidget::on_btnSave_clicked()
 
 	ui->teEditor->document()->setModified(false);
 	return true;
+}
+
+void EditWidget::on_pushButtonFind_clicked()
+{
+	static QString lastFind = "";
+
+	QString f = ui->lineEditFind->text();
+	if (f != lastFind)
+	{
+		ui->teEditor->moveCursor(QTextCursor::Start);
+		lastFind = f;
+	}
+
+	ui->teEditor->find(f);
 }
 
 //! Wenn die Speichern-Nachfrage abgebrochen wurde, dann wird das

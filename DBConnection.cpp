@@ -1,12 +1,15 @@
 #include "DBConnection.h"
 
+#include <QDebug>
 #include <QMessageBox>
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlField>
 #include <QtSql/QSqlIndex>
 #include <QDebug>
 
-DBConnection::DBConnection() :
+DbConnection::DbConnection(QObject *parentObj) :
+	QObject(parentObj),
+	name(""),
 	dbType(""),
 	dbName(""),
 	host(""),
@@ -16,101 +19,109 @@ DBConnection::DBConnection() :
 {
 }
 
-DBConnection::~DBConnection()
+DbConnection::~DbConnection()
 {
 
 }
 
-void DBConnection::readXmlNode(const QDomNode &aNode)
+void DbConnection::readXmlNode(const QDomNode &aNode)
 {
 	QDomNode cn = aNode.firstChild();
 	while (!cn.isNull())
 	{
 		QString ce = cn.toElement().tagName();
+		qDebug() << "adding element " << ce;
 		QString te = cn.firstChild().toText().data();
 		ce = ce.toUpper();
-		if (ce == "NAME") { dbName = te; }
-		if (ce == "HOST") { host = te; }
-		if (ce == "USER") { username = te; }
-		if (ce == "PASS") { password = te; }
-		if (ce == "TYPE") { dbType = te; }
-		if (ce == "PORT") { port = te.toInt(); }
+		if (ce == "NAME")   { name = te; }
+		if (ce == "DBNAME") { dbName = te; }
+		if (ce == "HOST")   { host = te; }
+		if (ce == "USER")   { username = te; }
+		if (ce == "PASS")   { password = te; }
+		if (ce == "TYPE")   { dbType = te; }
+		if (ce == "PORT")   { port = te.toInt(); }
 		cn = cn.nextSibling();
 	}
 }
 
-void DBConnection::writeXmlNode(QXmlStreamWriter &aStream)
+void DbConnection::writeXmlNode(QXmlStreamWriter &aStream)
 {
 	aStream.writeStartElement("Database");
+	aStream.writeTextElement("name", name);
 	aStream.writeTextElement("type", dbType);
 	aStream.writeTextElement("host", host);
 	aStream.writeTextElement("port", QString("%1").arg(port));
-	aStream.writeTextElement("name", dbName);
+	aStream.writeTextElement("dbname", dbName);
 	aStream.writeTextElement("user", username);
 	aStream.writeTextElement("pass", password);
 	aStream.writeEndElement();
 }
 
-QString DBConnection::getDbType() const
+void DbConnection::setName(const QString &value)
+{
+	name = value;
+}
+
+QString DbConnection::getDbType() const
 {
 	return dbType;
 }
 
-void DBConnection::setDbType(const QString &value)
+void DbConnection::setDbType(const QString &value)
 {
 	dbType = value;
 }
-QString DBConnection::getDbName() const
+QString DbConnection::getDbName() const
 {
 	return dbName;
 }
 
-void DBConnection::setDbName(const QString &value)
+void DbConnection::setDbName(const QString &value)
 {
 	dbName = value;
 }
 
-QString DBConnection::getHost() const
+QString DbConnection::getHost() const
 {
 	return host;
 }
 
-void DBConnection::setHost(const QString &value)
+void DbConnection::setHost(const QString &value)
 {
 	host = value;
 }
 
-QString DBConnection::getUsername() const
+QString DbConnection::getUsername() const
 {
 	return username;
 }
 
-void DBConnection::setUsername(const QString &value)
+void DbConnection::setUsername(const QString &value)
 {
 	username = value;
 }
 
-QString DBConnection::getPassword() const
+QString DbConnection::getPassword() const
 {
 	return password;
 }
 
-void DBConnection::setPassword(const QString &value)
+void DbConnection::setPassword(const QString &value)
 {
 	password = value;
 }
 
-quint32 DBConnection::getPort() const
+quint32 DbConnection::getPort() const
 {
 	return port;
 }
 
-void DBConnection::setPort(const quint32 &value)
+void DbConnection::setPort(const quint32 &value)
 {
 	port = value;
 }
 
-void DBConnection::showDbError() const
+void DbConnection::showDbError() const
 {
 	QSqlDatabase db = QSqlDatabase::database();
 
@@ -121,7 +132,7 @@ void DBConnection::showDbError() const
 	}
 }
 
-QString DBConnection::getConnectionName() const
+QString DbConnection::getConnectionName() const
 {
 	QString vDbName = dbName;
 	if (vDbName.endsWith(".mdb") || vDbName.endsWith(".accdb"))
@@ -132,7 +143,7 @@ QString DBConnection::getConnectionName() const
 	return vDbName;
 }
 
-bool DBConnection::connectDatabase()
+bool DbConnection::connectDatabase()
 {
 	QSqlDatabase db = QSqlDatabase::database();
 
@@ -163,7 +174,7 @@ bool DBConnection::connectDatabase()
 	return ok;
 }
 
-void DBConnection::closeDatabase() const
+void DbConnection::closeDatabase() const
 {
 	qDebug() << "close database";
 	QSqlDatabase db = QSqlDatabase::database();
@@ -173,7 +184,7 @@ void DBConnection::closeDatabase() const
 	}
 }
 
-void DBConnection::showTableList(QSql::TableType aType, QString aHead, QTreeReporter *tr) const
+void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeReporter *tr) const
 {
 	tr->reportMsg(aHead);
 	tr->incReportLevel();
@@ -222,7 +233,7 @@ void DBConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
 	tr->decReportLevel();
 }
 
-void DBConnection::showDatabaseTables(QTreeReporter *tr) const
+void DbConnection::showDatabaseTables(QTreeReporter *tr) const
 {
 	QSqlDatabase db = QSqlDatabase::database();
 	bool b;

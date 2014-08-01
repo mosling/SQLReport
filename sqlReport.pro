@@ -11,6 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = sqlReport
 TEMPLATE = app
 
+include (../../moonwave.pri)
+
 SOURCES += main.cpp \
     SqlReportHighlighter.cpp \
     SqlReport.cpp \
@@ -19,7 +21,9 @@ SOURCES += main.cpp \
     QueryExecutor.cpp \
     QTreeReporter.cpp \
     editwidget.cpp \
-    DBConnection.cpp
+    DbConnectionSet.cpp \
+    DbConnection.cpp \
+    DbConnectionForm.cpp
 
 HEADERS  += \
     SqlReportHighlighter.h \
@@ -29,8 +33,11 @@ HEADERS  += \
     QueryExecutor.h \
     QTreeReporter.h \
     EditWidget.h \
-    DBConnection.h
+    DbConnectionSet.h \
+    DbConnection.h \
+    DbConnectionForm.h
 
 FORMS    += \
     SqlReport.ui \
-    editwidget.ui
+    editwidget.ui \
+    DbConnectionForm.ui

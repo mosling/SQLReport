@@ -3,12 +3,14 @@
 
 #include <QObject>
 #include <QStringList>
-#include <QMap>
+#include <QList>
 #include <QtXML/QDomDocument>
+#include <QAbstractListModel>
 
+#include "DbConnectionSet.h"
 #include "QuerySetEntry.h"
 
-class QuerySet : public QObject
+class QuerySet : public QAbstractListModel
 {
 	Q_OBJECT
 
@@ -16,20 +18,26 @@ public:
 	explicit QuerySet(QObject *parentObj = NULL);
 	~QuerySet();
 
-    bool readXml(QString aFilename);
-	void writeXml(QString aFileName) const;
+	bool readXml(QString aFilename, DbConnectionSet &dbSet);
+	void writeXml(QString aFileName, DbConnectionSet &dbSet) const;
 	void getNames(QStringList &aList) const;
 	bool contains(const QString &aName) const;
 	QuerySetEntry *getByName(QString aName) const;
+	void append(QuerySetEntry *aEntry);
 	void remove(QuerySetEntry *entry);
-	void insert(QString aName, QuerySetEntry *aEntry);
 	QString getQuerySetFileName() const { return querySetFileName; }
+	QString getLastError() const { return lastErrMessage; }
 
+	qint32 rowCount(const QModelIndex &parent = QModelIndex()) const;
+	QVariant data(const QModelIndex &index, int role) const;
+	QVariant headerData(int section, Qt::Orientation orientation,
+						int role = Qt::DisplayRole) const;
 private:
 	void clear();
 
-	QMap<QString, QuerySetEntry* > mQueries;
+	QList<QuerySetEntry* > mQueries;
     QString querySetFileName;
+	QString lastErrMessage;
 };
 
 #endif // QUERYSET_H

@@ -14,17 +14,11 @@ public:
 
 	QuerySetEntry& operator=(const QuerySetEntry& rhs);
 
-	//! Database interface
-	const DBConnection &getDatabase() const { return database; }
-	void setDbName(const QString &s) { database.setDbName(s); }
-	void setDbType(const QString &s) { database.setDbType(s); }
-	void setDbHost(const QString &s) { database.setHost(s); }
-	void setDbPort(const quint32 p) { database.setPort(p); }
-	void setDbUsername(const QString &s) { database.setUsername(s); }
-	void setDbPassword(const QString &s) { database.setPassword(s); }
-	bool connectDatabase() { return database.connectDatabase(); }
-	void loadDatabase(const QDomNode &node) { database.readXmlNode(node); }
-	void saveDatabase(QXmlStreamWriter &w) { database.writeXmlNode(w); }
+	QString getName() const { return name; }
+	void setName(const QString &value);
+
+	QString getDbName() const { return dbname; }
+	void setDbName(const QString &value);
 
 	QString getDescr() const;
 	void setDescr(const QString &value);
@@ -63,7 +57,8 @@ public:
 	void setLocale(const QString &value);
 
 private:
-	DBConnection database;
+	QString name;
+	QString dbname;
 	QString descr;
 	QString inputDefines;
 	QString sqlFile;

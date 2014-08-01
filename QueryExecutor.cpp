@@ -1,23 +1,28 @@
 #include "QueryExecutor.h"
 #include <QInputDialog>
 #include <QUrl>
+#include <QHashIterator>
 
 QueryExecutor::QueryExecutor(QObject *parentObj)
-: QObject(parentObj),
-  mTreeNodeChanged(false),
-  mQSE(nullptr),
-  mMsgWin(nullptr),
-  mInputs(),
-  mReplacements(),
-  mLastReplacements(),
-  mQueries(),
-  mTemplates(),
-  sqlFileName(""),
-  templFileName(""),
-  mExpressionMap(),
-  fileOut(),
-  streamOut(),
-  uniqueId(0)
+	: QObject(parentObj),
+	  mTreeNodeChanged(false),
+	  mQSE(nullptr),
+	  mMsgWin(nullptr),
+	  mErrorWin(nullptr),
+	  mInputs(),
+	  mReplacements(),
+	  mLastReplacements(),
+	  mQueries(),
+	  mTemplates(),
+	  sqlFileName(""),
+	  templFileName(""),
+	  mExpressionMap(),
+	  fileOut(),
+	  streamOut(),
+	  uniqueId(0),
+	  firstQueryResult(false),
+	  lastErrorFilename(""),
+	  debugOutput(false)
 {
 	mExpressionMap["GT"]	= 1;
 	mExpressionMap["GE"]	= 2;
@@ -35,11 +40,27 @@ QueryExecutor::~QueryExecutor()
 		mExpressionMap.clear();
 		mQSE = nullptr;
 		mMsgWin = nullptr;
+		mErrorWin = nullptr;
 	}
 	catch (...)
 	{
 		// catch all exception
 	}
+}
+
+void QueryExecutor::setMsgWindow(QTextEdit *te)
+{
+	mMsgWin = te;
+}
+
+void QueryExecutor::setErrorWindow(QTextEdit *te)
+{
+	mErrorWin = te;
+}
+
+void QueryExecutor::setDebugFlag(bool flag)
+{
+	debugOutput = flag;
 }
 
 void QueryExecutor::clearStructures()
@@ -51,11 +72,37 @@ void QueryExecutor::clearStructures()
 	mTemplates.clear();
 }
 
-void QueryExecutor::showMsg(QString vErrStr)
+//! show message string
+void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 {
-	if (NULL != mMsgWin)
+	if (LogLevel::DBG != ll || debugOutput )
 	{
-		mMsgWin->append(vErrStr);
+		if (nullptr != mErrorWin && LogLevel::MSG != ll)
+		{
+			if (lastErrorFilename != templFileName)
+			{
+				mErrorWin->append(templFileName);
+				lastErrorFilename = templFileName;
+			}
+
+			QString logStr("");
+			switch (ll)
+			{
+			case LogLevel::DBG:  logStr = "DEBUG"; break;
+			case LogLevel::ERR:  logStr = "ERROR"; break;
+			case LogLevel::WARN: logStr = "WARN "; break;
+			case LogLevel::MSG:  logStr = "INFO "; break;
+			default: break;
+			}
+
+			mErrorWin->append(QString("%1: %2")
+							  .arg(logStr)
+							  .arg(vMsgStr));
+		}
+		else if (nullptr != mMsgWin)
+		{
+			mMsgWin->append(vMsgStr);
+		}
 	}
 }
 
@@ -83,8 +130,8 @@ void QueryExecutor::createOutputFileName(const QString &basePath)
 		QString sf = outInfo.suffix();
 		
 		QDateTime mNow = QDateTime::currentDateTime();
-        mOutFileName = p + "/" + mNow.toString("yyyy-MM-dd")
-            +"-"+bn+"-"+mNow.toString("hhmm")+"."+sf;
+		mOutFileName = p + "/" + mNow.toString("yyyy-MM-dd")
+					   +"-"+bn+"-"+mNow.toString("hhmm")+"."+sf;
 	}
 
 	showMsg(tr("OUTPUT FILE NAME '%1'").arg(mOutFileName));
@@ -138,6 +185,79 @@ QStringList QueryExecutor::splitString(const QString &str, int width, const QStr
 	return l;
 }
 
+//! Convert a number given as string into a 32Bit unsigned integer. The
+//! representation follows the c++ convention with some addtitional enhancements:
+//! * number can be grouped by underlines
+//! * interprets 0b as binary number (0 and 1 allowed only)
+//! * prefix $ and suffix h or H identify a hexadecimal number
+quint32 QueryExecutor::convertToNumber(QString aNumStr, bool &aOk) const
+{
+	int vRes = 0x0;
+	int vBase = 10;  // Basis der Zahl 2, 10 oder 16
+	aOk = true;
+
+	aNumStr.replace("_","");
+	aNumStr = aNumStr.trimmed();
+
+	if (aNumStr.startsWith("0x") || aNumStr.startsWith("0X") )
+	{
+		aNumStr.remove(0,2);
+		vBase = 16;
+	}
+	else if (aNumStr.startsWith("$"))
+	{
+		aNumStr.remove(0,1);
+		vBase = 16;
+	}
+	else if (aNumStr.endsWith("H") || aNumStr.endsWith("h") )
+	{
+		aNumStr.truncate(aNumStr.length()-1);
+		vBase = 16;
+	}
+	else if (aNumStr.startsWith("0b") || aNumStr.startsWith("0B") )
+	{
+		aNumStr.remove(0,2);
+		vBase = 2;
+	}
+
+	if (16 == vBase)
+	{
+		vRes = static_cast<quint32>(aNumStr.toUInt(&aOk, 16));
+	}
+	else if (2 == vBase)
+	{
+		QRegExp binValue("[01]+");
+
+		if (binValue.exactMatch(aNumStr))
+		{
+			int l = aNumStr.length() - 1;
+			for (int i = l; l >= 0; --i)
+			{
+				vRes <<= 1;
+				if ('1' == aNumStr[i])
+				{
+					vRes |= 0x1;
+				}
+			}
+		}
+		else
+		{
+			aOk = false;
+		}
+	}
+	else
+	{
+		vRes = static_cast<quint32>(aNumStr.toUInt(&aOk, 10));
+	}
+
+	if (!aOk)
+	{
+		vRes = 0;
+	}
+
+	return vRes;
+}
+
 //! Hier werden die folgenden Aktionen gemacht:
 //! - Eingabedateien lesen und in die internen Strukturen kopieren
 //! - Öffnen des Ausgabestroms
@@ -151,6 +271,7 @@ bool QueryExecutor::executeInputFiles()
 	QFile fileSql(sqlFileName);
 	if (!fileSql.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
+		showMsg(tr("can't open sql file '%1'").arg(templFileName), LogLevel::ERR);
 		return false;
 	}
 
@@ -163,9 +284,13 @@ bool QueryExecutor::executeInputFiles()
 		lineNr++;
 		if (line.length() != 0 && !line.startsWith("//"))  // ignore empty lines and comments
 		{
-			if (line.startsWith("::")) 
+			if (line.startsWith("::"))
 			{
-				if (!name.isEmpty()) mQueries[name] = sqlLine;
+				if (!name.isEmpty())
+				{
+					showMsg(QString("Adding SQL Query '%1'").arg(name), LogLevel::DBG);
+					mQueries[name] = sqlLine;
+				}
 				sqlLine = "";
 				name = line.mid(2);
 			}
@@ -173,24 +298,28 @@ bool QueryExecutor::executeInputFiles()
 			{
 				if ( "" == name)
 				{
-					showMsg(QString("ERROR: no name for SQL at line %2")
-						.arg(lineNr));
+					showMsg(QString("no name for SQL at line %2")
+							.arg(lineNr), LogLevel::ERR);
 				}
 				else
 				{
 					sqlLine += " " + line;  // add a space to prevent concatening input words
 				}
 			}
-		}	
+		}
 	}
-	if (!name.isEmpty()) mQueries[name] = sqlLine;
-
+	if (!name.isEmpty())
+	{
+		showMsg(QString("Adding SQL Query '%1'").arg(name), LogLevel::DBG);
+		mQueries[name] = sqlLine;
+	}
 
 	// open and read the template file
 	QStringList *tempList = NULL;
 	QFile fileTemplate(templFileName);
 	if (!fileTemplate.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
+		showMsg(tr("can't open template file '%1'").arg(templFileName), LogLevel::ERR);
 		return false;
 	}
 	
@@ -202,11 +331,11 @@ bool QueryExecutor::executeInputFiles()
 		line = streamInTemplate.readLine();
 		if (line.length() != 0)  // ignore empty lines first
 		{
-			if (line.startsWith("::")) 
+			if (line.startsWith("::"))
 			{
-				if (name != "")
+				if (!name.isEmpty())
 				{
-					showMsg(QString("Adding Template '%1'").arg(name));
+					showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
 					mTemplates[name] = tempList;
 				}
 				name = line.mid(2);
@@ -230,7 +359,11 @@ bool QueryExecutor::executeInputFiles()
 		}
 	}
 	// letzten Eintrag machen
-	mTemplates[name] = tempList;
+	if (!name.isEmpty())
+	{
+		showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
+		mTemplates[name] = tempList;
+	}
 
 	// open the output file, create missing path
 	fileOut.setFileName(mQSE->getLastOutputFile());
@@ -244,7 +377,7 @@ bool QueryExecutor::executeInputFiles()
 
 	if (!fileOut.open(mQSE->getAppendOutput() ? QIODevice::Append : QIODevice::WriteOnly))
 	{
-		showMsg(tr("Can't open file '%1'").arg(mQSE->getLastOutputFile()));
+		showMsg(tr("Can't open file '%1'").arg(mQSE->getLastOutputFile()), LogLevel::ERR);
 		return false;
 	}
 
@@ -276,7 +409,7 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 			showMsg(tr("%1 INPUT PARAM '%2' with value '%3'")
 					.arg(overwrite ? "OVERWRITE" : "ADD")
 					.arg(param)
-					.arg(value));
+					.arg(value), LogLevel::DBG);
 		}
 	}
 }
@@ -318,7 +451,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 				// ask the user for the value
 				bool ok;
 				QString text = QInputDialog::getText(NULL, tmpName, tmpDescr,
-					QLineEdit::Normal, "", &ok);
+													 QLineEdit::Normal, "", &ok);
 				result += text;
 				mInputs[tmpName] = text;
 			}
@@ -419,6 +552,22 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 						if (i < (ls-1)) result += "\n";
 					}
 				}
+				else if ("CUMULATE" == vCmd)
+				{
+					bool bOk = false;
+					quint32 number = vStr.toUInt(&bOk);
+					if (bOk)
+					{
+						quint32 c = number;
+
+						if (mCumulationMap.contains(tmpName))
+						{
+							c += mCumulationMap[tmpName];
+						}
+						mCumulationMap[tmpName] = c;
+						result += QString("%1").arg(c);
+					}
+				}
 				else if (mExpressionMap.contains(vCmd))
 				{
 					// einen einfachen Vergleich gefunden, der zu einer Ausgabe
@@ -462,6 +611,13 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 				result += mReplacements[tmpName];
 			}
 		}
+		else if (tmpName == "__LSEP")
+		{
+			if (!firstQueryResult)
+			{
+				result += tmpList.size() > 1 ? tmpList.at(1) : ",";
+			}
+		}
 		else if (tmpName == "__DATE")
 		{
 			QString tmpDateFormat("d MMMM yyyy");
@@ -475,14 +631,21 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 		{
 			result += QString("%1").arg(uniqueId);
 		}
-		else if (tmpName == "__LINECNT")
+		else if (tmpName.startsWith("__LINECNT"))
 		{
-			result += QString("%1").arg(aLineCnt);
+			quint32 tmpNumber = aLineCnt;
+			if (tmpList.size() > 1)
+			{
+				bool bOk;
+				quint32 addNum = convertToNumber(tmpList.at(1), bOk);
+				if (bOk) tmpNumber += addNum;
+			}
+			result += QString("%1").arg(tmpNumber,0,tmpName=="__LINECNTH" ? 16 : 10);
 		}
 		else if (tmpName == "__TAB")
 		{
 			int tab = 0;
-			bool bOk; 
+			bool bOk;
 			if (tmpList.size() > 1)
 			{
 				tab = tmpList.at(1).toInt(&bOk);
@@ -494,10 +657,21 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 				}
 			}
 		}
+		else if (tmpName == "__CLEAR")
+		{
+			if (tmpList.size() > 1)
+			{
+				mCumulationMap.remove(tmpList.at(1));
+			}
+		}
+		else if (tmpName == "__LF")
+		{
+			// do nothing use the line feed from the line :-)
+		}
 		else
 		{
 			result += "?? unknown variable name: '" + tmpName + "' ??";
-			showMsg(QString("unknown variable name '%1'").arg(tmpName));
+			showMsg(QString("unknown variable name '%1'").arg(tmpName), LogLevel::ERR);
 		}
 	}
 	
@@ -515,10 +689,13 @@ QString QueryExecutor::getDate(const QString &aFormat) const
 	return res;
 }
 
+//! This method expands all lines of the given template list.
+//! \return true if the calling method has to add a linefeed
 bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt)
 {
 	QRegExp rx("\\#\\{([^\\}]*)\\}"); // all expressions like #{...}
 	QString tmpName, result;
+	bool vRes = false;
 	int vLineNum=0, pos=0, lpos=0;
 	QString vStr("");
 
@@ -526,6 +703,7 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 	mTreeNodeChanged = false;
 	for (int i = 0; i < vLineNum; ++i)
 	{
+		bool lastLine = ((i+1) == vLineNum);
 		vStr = aTemplLines->at(i);
 		lpos = 0;
 		while ((pos = rx.indexIn(vStr, lpos)) != -1)
@@ -538,31 +716,66 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 			outputTemplate(tmpName);
 		}
 
-      QString tmpStr = vStr.mid(lpos);
-      result = replaceLine(tmpStr, aLineCnt);
-		if (!result.endsWith("\\")) 
+		QString tmpStr = vStr.mid(lpos);
+		result = replaceLine(tmpStr, aLineCnt);
+		if (result.endsWith("\\"))
 		{
-			streamOut << result << "\n";
-		}
-		else
-		{
+			// remove the last backslash sign
 			result = result.mid(0,result.length()-1);
 			streamOut << result;
 		}
+		else
+		{
+			// we need to add a linefeed, but not for the last
+			// line, that is added in outputTemplate
+			if (!lastLine)
+			{
+				streamOut << result << "\n";
+			}
+			else
+			{
+				streamOut << result;
+				vRes = true;
+			}
+		}
 	}
 
-	return true;
+	return vRes;
 }
 
-//! Diese Funktion erzeugt die Ausgabe für ein Template,
-//! die Funktion ruft sich selbst auf, wenn Subtemplates
-//! benötigt werden.
+//! This is the heart of the executor. This method controls the SQL
+//! query execution, the output generating and is called recursiv
+//! to execute inner templates.
+//! All SQL results stored as QString in the hash mReplacements. Same
+//! column names hides the outer names and will be restored when leaving the
+//! method.
 bool QueryExecutor::outputTemplate(QString aTemplate)
 {
 	QSqlQuery query;
 	const QStringList *templLines;
+	QString listSeperator("");
 	int lineCnt = 0;
 	bool bRet = true;
+	bool lastReplaceLinefeed = false;
+	QHash<QString, QString> overwrittenReplacements;
+
+	// first check the calling template string for more informations
+	if (aTemplate.contains("list"))
+	{
+		QStringList ll = aTemplate.split(' ');
+		aTemplate = ll.at(0);
+
+		if (ll.size() > 2)
+		{
+			ll.removeFirst(); // the template name
+			ll.removeFirst(); // the list modifier
+			listSeperator = ll.join(' ');
+		}
+		else
+		{
+			listSeperator = ",";
+		}
+	}
 
 	// exists a template with this name
 	if (mTemplates.contains(aTemplate))
@@ -572,13 +785,19 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 		// exists a query with the template name ?
 		// or up to the time we can handle saved result set we can reuse a
 		// SQL query by writing his name and add a different output template
-		// using a dot
-		QString queryTemplate = aTemplate;
+		// using a dot (::ARTICLE.NAMES)
 
+		QString queryTemplate = aTemplate;
 		if (aTemplate.contains('.'))
 		{
 			queryTemplate = aTemplate.split('.').at(0);
+			if (aTemplate.endsWith("_EMPTY"))
+			{
+				queryTemplate += "_EMPTY";
+			}
 		}
+
+		showMsg(tr("output template %1 using query %2").arg(aTemplate).arg(queryTemplate), LogLevel::DBG);
 
 		if (mQueries.contains(queryTemplate))
 		{
@@ -591,15 +810,31 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 				int numCols = rec.count();
 				bool empty = true;
 
-				showMsg("SQL-Query: "+sqlQuery);
-				for (int i=0; i<numCols; ++i)
+				if (debugOutput)
 				{
-					showMsg(QString("column %1 name '%2'").arg(i).arg(rec.fieldName(i)) );
+					showMsg("SQL-Query: "+sqlQuery, LogLevel::DBG);
+					for (int i=0; i<numCols; ++i)
+					{
+						showMsg(QString("column %1 name '%2'").arg(i).arg(rec.fieldName(i)), LogLevel::DBG );
+					}
+					showMsg(tr("Size of result is %1").arg(query.size()), LogLevel::DBG );
 				}
 
+				firstQueryResult = true;
 				while (query.next())
 				{
 					QCoreApplication::processEvents();
+					// add a optional list seperator
+					if (!firstQueryResult && !listSeperator.isEmpty())
+					{
+						streamOut << listSeperator;
+					}
+					// add the deferred linefeed from the last replaceTemplate call
+					if (lastReplaceLinefeed)
+					{
+						streamOut << "\n";
+					}
+
 					//get the sql values
 					for (int i=0; i<numCols; ++i)
 					{
@@ -611,65 +846,101 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 							tmpStr.replace("<", "&lt;");
 							tmpStr.replace(">","&gt;");
 						}
-						mReplacements[rec.fieldName(i)] = tmpStr;
-						showMsg(tr("column %1 is /%2/").arg(i).arg(tmpStr));
+						QString tmpFieldName = rec.fieldName(i);
+
+						if (mReplacements.contains(tmpFieldName))
+						{
+							overwrittenReplacements[tmpFieldName] = mReplacements[tmpFieldName];
+						}
+						mReplacements[tmpFieldName] = tmpStr;
+						showMsg(tr("column %1 is /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
 					}
 					if (!empty)
 					{
-						replaceTemplate(templLines, lineCnt);
+						lastReplaceLinefeed = replaceTemplate(templLines, lineCnt);
 						uniqueId++;
 						lineCnt++;
-						showMsg(QString("%1 %2").arg(aTemplate).arg(uniqueId));
+						showMsg(QString("%1 %2").arg(aTemplate).arg(uniqueId), LogLevel::DBG);
 					}
+					firstQueryResult = false;
 				}
 
 				if (empty)
 				{
 					outputTemplate(aTemplate+"_EMPTY");
 				}
+				else
+				{
+					// add the deferred linefeed from the last replaceTemplate call
+					if (lastReplaceLinefeed)
+					{
+						streamOut << "\n";
+					}
+				}
 			}
 			else
 			{
 				QString errText = query.lastError().text();
 				streamOut << "## error executing " << sqlQuery << " ## " << errText << "##";
-				showMsg(sqlQuery);
-				showMsg(errText);
+				showMsg(tr("executing SQL '%1' (%2)").arg(sqlQuery).arg(errText), LogLevel::ERR);
 			}
 		}
 		else
 		{
-			// a standalone template without new data
-			replaceTemplate(templLines, lineCnt);
+			// a standalone template without new data, at this position we
+			// can ignore the return value, because a not data driven template
+			// can't create a list.
+			(void) replaceTemplate(templLines, lineCnt);
 		}
+	}
+	else
+	{
+		if (!aTemplate.endsWith("_EMPTY"))
+		{
+			showMsg(tr("template %1 isn't defined").arg(aTemplate), LogLevel::ERR);
+		}
+	}
+
+	//! last action is to restore the overwritten replacements
+	QHashIterator<QString,QString> it(overwrittenReplacements);
+	while (it.hasNext())
+	{
+		it.next();
+		mReplacements[it.key()] = it.value();
 	}
 
 	return bRet;
 }
 
+
 bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
-								 QTextEdit *aMsgWin,
+								 DbConnection *dbc,
 								 const QString &basePath,
 								 const QString &inputDefines)
 {
-	bool b;
-
+	bool b = true;
 	mQSE = aQSE;
-	mMsgWin = aMsgWin;
-	
+
 	clearStructures();								// Bereinigen der internen Strukturen
 	setInputValues(inputDefines);                   // create mInput Einträge
 	createOutputFileName(basePath);                 // erzeuge mOutFileName
 	createInputFileNames(basePath);					// ergänzen der Input-Dateien um den Pfad
-	b = mQSE->connectDatabase();                    // Verbindung zur Datenbank herstellen
+	if (nullptr != dbc)
+	{
+		b = dbc->connectDatabase();                 // Verbindung zur Datenbank herstellen
+	}
 	b = b && executeInputFiles();                   // Einlesen der
 	b = b && outputTemplate("MAIN");				// Abarbeitung mit MAIN starten
 	streamOut.flush();								// Ausgabe-Datei schreiben
 	fileOut.close();								// Ausgabe-Datei schließen
 
 	showMsg(QString("%1 result line processed.").arg(uniqueId));
-	mMsgWin = NULL;
+
 	// Verbindung in jedem Fall wieder schließen
-	mQSE->getDatabase().closeDatabase();				// Beenden der Datenbank-Verbindung.
+	if (nullptr != dbc)
+	{
+		dbc->closeDatabase();				        // Beenden der Datenbank-Verbindung.
+	}
 
 	return b;
 }

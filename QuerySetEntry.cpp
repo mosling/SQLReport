@@ -1,7 +1,8 @@
 #include "QuerySetEntry.h"
 
 QuerySetEntry::QuerySetEntry() :
-	database(),
+	name(""),
+	dbname(""),
 	descr(""),
 	inputDefines(""),
 	sqlFile(""),
@@ -26,7 +27,8 @@ QuerySetEntry &QuerySetEntry::operator=(const QuerySetEntry &rhs)
 {
 	if (this != &rhs)
 	{
-		database      = rhs.database;
+		name          = rhs.name;
+		dbname        = rhs.dbname;
 		descr         = rhs.descr;
 		inputDefines  = rhs.inputDefines;
 		sqlFile       = rhs.sqlFile;
@@ -41,6 +43,16 @@ QuerySetEntry &QuerySetEntry::operator=(const QuerySetEntry &rhs)
 		appendOutput  = rhs.appendOutput;
 	}
 	return *this;
+}
+
+void QuerySetEntry::setName(const QString &value)
+{
+	name = value;
+}
+
+void QuerySetEntry::setDbName(const QString &value)
+{
+	dbname = value;
 }
 
 QString QuerySetEntry::getDescr() const

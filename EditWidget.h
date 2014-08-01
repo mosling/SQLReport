@@ -19,7 +19,7 @@ public:
 	explicit EditWidget(QWidget *parentObj = 0);
     ~EditWidget();
 
-	void newFile(QString aFileName);
+	bool newFile(QString aFileName);
 	void saveFile();
 	void reject() override;
 
@@ -28,6 +28,7 @@ protected:
 
 private slots:
 	bool on_btnSave_clicked();
+	void on_pushButtonFind_clicked();
 
 private:
 	bool maybeSave();

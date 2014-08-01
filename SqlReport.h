@@ -5,6 +5,7 @@
 #include "QueryExecutor.h"
 #include "ui_sqlReport.h"
 #include "QuerySet.h"
+#include "DbConnectionSet.h"
 
 #include <QStandardItemModel>
 
@@ -29,26 +30,28 @@ private slots:
 	void on_but_outTemplate_clicked();
 	void on_but_output_clicked();
 	void on_but_database_clicked();
+	void on_but_AddDatabase_clicked();
+	void on_but_DeleteDatabase_clicked();
 	void on_But_OK_clicked();
 	void on_btnEditSql_clicked();
 	void on_btnEditTemplate_clicked();
 	void on_btnShowOutput_clicked();
 	void on_btnShowTables_clicked();
+	void on_btnClear_clicked();
 	void on_pushButtonExit_clicked();
 
 private:
 	bool validQuerySet();
 	QString getAbsoluteFileName(QString fname) const;
 	QString selectFile(QString desc, QString def,
-		QString pattern, bool modify);
+	QString pattern, bool modify);
 	void readQuerySet(QString &qsName);
 
 	Ui_SqlReportClass ui;
 	QuerySet mQuerySet;
+	DbConnectionSet databaseSet;
 	QuerySetEntry *activeQuerySetEntry;
-
 	QStandardItemModel treeModel;
-	bool constructorRunning;
 	EditWidget sqlEditor;
 	EditWidget templateEditor;
 	EditWidget outputEditor;

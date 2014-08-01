@@ -1,11 +1,11 @@
 #include "SqlReport.h"
 #include "editwidget.h"
 #include "QTreeReporter.h"
+#include "DbConnectionForm.h"
 
 #include <QRegExp>
 #include <QtSql/QSqlRecord>
 #include <QFileInfo>
-#include <QProgressBar>
 #include <QInputDialog>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -14,36 +14,26 @@
 SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	: QMainWindow(parentObj, flags),
 	  mQuerySet(this),
+	  databaseSet(this),
 	  activeQuerySetEntry(nullptr),
 	  treeModel(),
-	  constructorRunning(false),
 	  sqlEditor(this),
 	  templateEditor(this),
 	  outputEditor(this)
 {
 	ui.setupUi(this);
 
-	ui.progressBar->hide();
 	ui.tvTable->setModel(&treeModel);
 	ui.tvTable->header()->hide();
 
-	// Combobox füllen
-	ui.cbDbType->addItem("QODBC");
-	ui.cbDbType->addItem("QPSQL");
-	ui.cbDbType->addItem("QMYSQL");
-	ui.cbDbType->addItem("QSQLITE");
+	ui.comboBoxDatabase->setModel(&databaseSet);
+	ui.cbQuerySet->setModel(&mQuerySet);
 
 	QSettings rc;
-	this->restoreState(rc.value("properties").toByteArray());
+	this->restoreState(rc.value("windowState").toByteArray());
+	this->restoreGeometry(rc.value("geometry").toByteArray());
 	// Größe und Position des Hauptfensters anpassen
-	int winx=rc.value("window_xpos","-1").toInt();
-	int winy=rc.value("window_ypos","-1").toInt();
-	int winw=rc.value("window_width","-1").toInt();
-	int winh=rc.value("window_height","-1").toInt();
-	if (winx!=-1 && winy!=-1 && winw!=-1 && winh!=-1)
-	{
-		this->frameGeometry().setRect(winx,winy,winw,winh);
-	}
+
 	QString qsn = rc.value("queryset_name","scripts/queryset.xml").toString();
 	ui.lineEditLocal->setText(rc.value("local_inputs","").toString());
 
@@ -58,11 +48,8 @@ SqlReport::~SqlReport()
 
 	rc.setValue("queryset_name",mQuerySet.getQuerySetFileName());
 	rc.setValue("local_inputs",ui.lineEditLocal->text());
-	rc.setValue("properties", QVariant(this->saveState()));
-	rc.setValue("window_xpos",QVariant(this->x()));
-	rc.setValue("window_ypos",QVariant(this->y()));
-	rc.setValue("window_width",QVariant(this->frameGeometry().width()));
-	rc.setValue("window_height",QVariant(this->frameGeometry().height()));
+	rc.setValue("geometry", this->saveGeometry());
+	rc.setValue("windowState", QVariant(this->saveState()));
 
 	activeQuerySetEntry = nullptr;
 	}
@@ -86,13 +73,19 @@ void SqlReport::on_But_OK_clicked()
 	// do the action
 	updateQuerySet();
 	ui.teReport->clear();
+	ui.textEditError->clear();
 	ui.teReport->append(tr("using base path   : %1").arg(queryPath));
-	ui.progressBar->show();
+
+	vpExecutor.setMsgWindow(ui.teReport);
+	vpExecutor.setErrorWindow(ui.textEditError);
+	vpExecutor.setDebugFlag(ui.checkBoxDebug->isChecked());
 
 	if (activeQuerySetEntry->getBatchrun())
 	{
-		vpExecutor.createOutput(activeQuerySetEntry, ui.teReport,
-								queryPath, baseInput );
+		vpExecutor.createOutput(activeQuerySetEntry,
+								databaseSet.getByName(activeQuerySetEntry->getDbName()),
+								queryPath,
+								baseInput );
 
 		// Batch command, uses the created file to execute each line independently
 
@@ -129,12 +122,15 @@ void SqlReport::on_But_OK_clicked()
 					}
 					if (mQuerySet.contains(queryName))
 					{
-						vpExecutor.createOutput(mQuerySet.getByName(queryName),
-												ui.teReport, queryPath, queryInput);
+						QuerySetEntry *tmpQuery = mQuerySet.getByName(queryName);
+						vpExecutor.createOutput(tmpQuery,
+												databaseSet.getByName(tmpQuery->getDbName()),
+												queryPath,
+												queryInput);
 					}
 					else
 					{
-						ui.teReport->append(tr("unknown QuerySet '%1'").arg(queryName));
+						ui.textEditError->append(tr("ReportErr: unknown QuerySet '%1'").arg(queryName));
 					}
 				}
 			}
@@ -144,11 +140,11 @@ void SqlReport::on_But_OK_clicked()
 	}
 	else
 	{
-		vpExecutor.createOutput(activeQuerySetEntry, ui.teReport,
-								queryPath, baseInput );
+		vpExecutor.createOutput(activeQuerySetEntry,
+								databaseSet.getByName(activeQuerySetEntry->getDbName()),
+								queryPath,
+								baseInput );
 	}
-
-	ui.progressBar->hide();
 }
 
 //! Im QuerySet werden nur die Dateinamen gespeichert. Um wirklich
@@ -187,22 +183,68 @@ QString SqlReport::selectFile(QString desc, QString def, QString pattern, bool m
 	if (modify)
 	{
 		QFileInfo fi (str);
-		str = fi.fileName();
+		QString qsPath = QFileInfo(mQuerySet.getQuerySetFileName()).absolutePath();
+
+		if (fi.absoluteFilePath().startsWith(qsPath))
+		{
+			str = fi.absoluteFilePath().remove(0, qsPath.size() + 1);
+		}
+		else
+		{
+			str = fi.absoluteFilePath();
+		}
 	}
 
 	return str;
 }
 
+//! Here we enter die Database connection dialog. If we have no existing database
+//! we start with the 'new connection' connection.
 void SqlReport::on_but_database_clicked()
+{
+
+	if (validQuerySet())
+	{
+		DbConnection *currentDbConnection = databaseSet.getByName(activeQuerySetEntry->getDbName());
+
+		if (nullptr == currentDbConnection)
+		{
+			QString nc("new connection");
+			currentDbConnection = databaseSet.getByName(nc);
+			if (nullptr == currentDbConnection)
+			{
+				currentDbConnection = new DbConnection(&databaseSet);
+				currentDbConnection->setName(nc);
+				databaseSet.append(currentDbConnection);
+			}
+		}
+
+		DbConnectionForm dbForm(currentDbConnection, this);
+		dbForm.exec();
+	}
+}
+
+//! Add a new database connection to the system. This is named 'new connection'
+void SqlReport::on_but_AddDatabase_clicked()
+{
+	DbConnection *currentDbConnection = new DbConnection(&databaseSet);
+	currentDbConnection->setName("new connection");
+	databaseSet.append(currentDbConnection);
+
+	DbConnectionForm dbForm(currentDbConnection, this);
+	dbForm.exec();
+}
+
+//! Delete the selected database connection from the list
+//! of available connections. There is no check if other
+//! queries use this connection. The object itself is deleted
+//! by the databaseSet object, that has created the connection object.
+void SqlReport::on_but_DeleteDatabase_clicked()
 {
 	if (validQuerySet())
 	{
-		QString database = selectFile("Bitte Datenbank auswählen",
-									  activeQuerySetEntry->getDatabase().getDbName(),
-									  "Alle Dateien(*.*)", false);
-
-		ui.database->setText(database);
-		activeQuerySetEntry->setDbName(database);
+		DbConnection *currentDbConnection = databaseSet.getByName(activeQuerySetEntry->getDbName());
+		databaseSet.remove(currentDbConnection);
 	}
 }
 
@@ -210,9 +252,9 @@ void SqlReport::on_but_output_clicked()
 {
 	if (validQuerySet())
 	{
-		QString output = selectFile("Bitte Zieldatei auswählen",
+		QString output = selectFile("Please select Target file",
 									activeQuerySetEntry->getOutputFile(),
-									"Alle Dateien(*.*)", false);
+									"All Files(*.*)", false);
 		ui.output->setText(output);
 		activeQuerySetEntry->setOutputFile(output);
 	}
@@ -222,9 +264,9 @@ void SqlReport::on_but_outTemplate_clicked()
 {
 	if (validQuerySet())
 	{
-		QString outTemplate = selectFile("Bitte Template auswählen",
+		QString outTemplate = selectFile("Please select Template file",
 										 activeQuerySetEntry->getTemplateFile(),
-										 "Templates (*.template);;Alle Dateien(*.*)", true);
+										 "Templates (*.template);;All Files(*.*)", true);
 		ui.outTemplate->setText(outTemplate);
 		activeQuerySetEntry->setTemplateFile(outTemplate);
 	}
@@ -234,9 +276,10 @@ void SqlReport::on_but_outSql_clicked()
 {
 	if (validQuerySet())
 	{
-		QString outSql = selectFile("Bitte SQL-Datei auswählen",
+		QString outSql = selectFile("Please select SQL file",
 									activeQuerySetEntry->getSqlFile(),
-									"SQL-Dateien (*.sql);;Alle Dateien(*.*)", true);
+									"SQL-Files (*.sql);;Alle Dateien(*.*)", true);
+
 		ui.outSql->setText(outSql);
 		activeQuerySetEntry->setSqlFile(outSql);
 	}
@@ -246,12 +289,14 @@ void SqlReport::on_but_querySet_clicked()
 {
 	QString qsName = selectFile(tr("Please seletc QuerySet file"),
 								mQuerySet.getQuerySetFileName(),
-								tr("XML-Dateien (*.xml);;Alle Dateien(*.*)"), false);
+								tr("XML-Files (*.xml);;All Files(*.*)"), false);
 	
-	mQuerySet.writeXml("");
+	mQuerySet.writeXml("", databaseSet);
 	readQuerySet(qsName);
 }
 
+//! Einlesen einer QueryDatei, dabei werden die Datenbankverbindungen
+//! gefüllt und die einzelnen Abfragen erstellt.
 void SqlReport::readQuerySet(QString &qsName)
 {
 	if (qsName.isEmpty()) qsName = "queryset.xml";
@@ -259,27 +304,23 @@ void SqlReport::readQuerySet(QString &qsName)
 
 	if (!qsFile.exists())
 	{
-		qDebug() << "query file doesn't exists -> write existing data";
-		mQuerySet.writeXml(qsName);
+		ui.teReport->append("query file doesn't exists -> write existing data");
+		mQuerySet.writeXml(qsName, databaseSet);
 	}
 
-	ui.lblQuerySetName->setText(QString("%1 (%2)").arg(qsName).arg(QFileInfo(qsName).absolutePath()));
-
-	if (mQuerySet.readXml(qsName))
+	if (mQuerySet.readXml(qsName, databaseSet))
 	{
-		qDebug() << "XML read";
-		ui.cbQuerySet->clear();
-		qDebug() << "combobox cleared";
-		QStringList vL;
+		QString p = QFileInfo(qsName).absolutePath();
+		if (qsName.startsWith(p)) ui.lblQuerySetName->setText(QString("%1").arg(qsName));
+		else                      ui.lblQuerySetName->setText(QString("%1 (%2)").arg(qsName).arg(p));
 
-		mQuerySet.getNames(vL);
-		constructorRunning = true;
-		ui.cbQuerySet->insertItems(0, vL);
-		qDebug() << "combobox items inserted";
-		constructorRunning = false;
-		qDebug() << "set active query" << ui.cbQuerySet->itemText(0);
-		setActiveQuerySetEntry(ui.cbQuerySet->itemText(0));
-		qDebug() << "active query set";
+		// we start with empty activeQuerySet
+		activeQuerySetEntry = nullptr;
+		ui.cbQuerySet->setCurrentIndex(0);
+	}
+	else
+	{
+		ui.textEditError->append(mQuerySet.getLastError());
 	}
 }
 
@@ -290,10 +331,7 @@ void SqlReport::on_but_AddQuerySet_clicked()
 	QString newEntryName = QInputDialog::getText(this, "", "new entry name",
 										 QLineEdit::Normal, "", &ok);
 
-	QStringList vL;
-	mQuerySet.getNames(vL);
-
-	if (!vL.contains(newEntryName))
+	if (!mQuerySet.contains(newEntryName))
 	{
 		if (activeQuerySetEntry != nullptr)
 		{
@@ -302,9 +340,11 @@ void SqlReport::on_but_AddQuerySet_clicked()
 
 		QuerySetEntry *tmpQSE = new QuerySetEntry();
 		*tmpQSE = *activeQuerySetEntry;
-		mQuerySet.insert(newEntryName, tmpQSE);
-		activeQuerySetEntry = mQuerySet.getByName(newEntryName);
-		ui.cbQuerySet->insertItem(0, newEntryName);
+		tmpQSE->setName(newEntryName);
+
+		mQuerySet.append(tmpQSE);
+		// minimal one existing entry (index 0)
+		ui.cbQuerySet->setCurrentIndex(mQuerySet.rowCount() - 1);
 	}
 	else
 	{
@@ -326,16 +366,21 @@ void SqlReport::on_but_DeleteQuerySet_clicked()
 
 	if (ret == QMessageBox::Yes)
 	{
-		mQuerySet.remove(activeQuerySetEntry);
-		ui.cbQuerySet->removeItem(ui.cbQuerySet->currentIndex());
-		ui.cbQuerySet->setCurrentIndex(0);
-		setActiveQuerySetEntry(ui.cbQuerySet->itemText(0));
+		QuerySetEntry *tmpQSE = activeQuerySetEntry;
+		mQuerySet.remove(tmpQSE);
+
+		if (tmpQSE == activeQuerySetEntry)
+		{
+			// no new value set by the model, the old QuerySetEntry was
+			// deleted, set the active set to null.
+			activeQuerySetEntry = nullptr;
+		}
 	}
 }
 
 void SqlReport::on_cbQuerySet_currentIndexChanged(int aIndex)
 {
-	if ( !constructorRunning) updateQuerySet();
+	updateQuerySet();
 	setActiveQuerySetEntry(ui.cbQuerySet->itemText(aIndex));
 }
 
@@ -371,26 +416,30 @@ void SqlReport::on_btnEditTemplate_clicked()
 	}
 }
 
+//! If the file not exist, there is no need to show the empty file.
 void SqlReport::on_btnShowOutput_clicked()
 {
 	if (!activeQuerySetEntry->getLastOutputFile().isEmpty())
 	{
-		outputEditor.newFile(activeQuerySetEntry->getLastOutputFile());
-		outputEditor.show();
+		if (outputEditor.newFile(activeQuerySetEntry->getLastOutputFile()))
+		{
+			outputEditor.show();
+		}
 	}
 	else
 	{
-		//! Sonst versuchen wir einen Dateinamen zu erzeugen, wenn
-		//! dieser keine dynamsichen Teile enthält.
+		//! We try to create a filename if the pattern doesn't contains dynamic parts
 		if (!activeQuerySetEntry->getOutputFile().contains('$'))
 		{
-			outputEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getOutputFile()));
-			outputEditor.show();
+			if (outputEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getOutputFile())))
+			{
+				outputEditor.show();
+			}
 		}
 		else
 		{
-			QMessageBox::information(this, tr("Keine Datei"),
-									 tr("Bitte zuerst eine Ausgabe erzeugen (Start)"));
+			QMessageBox::information(this, tr("No file found!"),
+									 tr("Please create output first (Start)\nOr uncheck batch to see the result."));
 		}
 	}
 }
@@ -398,22 +447,35 @@ void SqlReport::on_btnShowOutput_clicked()
 void SqlReport::on_btnShowTables_clicked()
 {
 	updateQuerySet();
-	if (activeQuerySetEntry->connectDatabase())
+
+	DbConnection *currentDbConnection = databaseSet.getByName(activeQuerySetEntry->getDbName());
+
+	if (nullptr != currentDbConnection)
 	{
+		currentDbConnection->connectDatabase();
 		QTreeReporter treeReporter;
 
 		treeReporter.setReportRoot(treeModel.invisibleRootItem());
-		activeQuerySetEntry->getDatabase().showDatabaseTables(&treeReporter);
+		currentDbConnection->showDatabaseTables(&treeReporter);
 
-		activeQuerySetEntry->getDatabase().closeDatabase();
+		currentDbConnection->closeDatabase();
+
 		if (ui.dockWidget->isHidden()) ui.dockWidget->show();
 	}
 }
 
+void SqlReport::on_btnClear_clicked()
+{
+	ui.teReport->clear();
+	ui.textEditError->clear();
+}
+
+//! After pressing the exit button the we write the existing
+//! query file.
 void SqlReport::on_pushButtonExit_clicked()
 {
 	updateQuerySet();
-	mQuerySet.writeXml("");
+	mQuerySet.writeXml("", databaseSet);
 
 	sqlEditor.close();
 	templateEditor.close();
@@ -427,12 +489,7 @@ void SqlReport::updateQuerySet()
 {
 	if ( nullptr != activeQuerySetEntry)
 	{
-		activeQuerySetEntry->setDbName(ui.database->text());
-		activeQuerySetEntry->setDbType(ui.cbDbType->currentText());
-		activeQuerySetEntry->setDbPort(ui.leDbPort->text().toInt());
-		activeQuerySetEntry->setDbUsername(ui.leDbUser->text());
-		activeQuerySetEntry->setDbPassword(ui.leDbPasswd->text());
-		activeQuerySetEntry->setDbHost(ui.leDbHost->text());
+		activeQuerySetEntry->setDbName(ui.comboBoxDatabase->currentText());
 		activeQuerySetEntry->setDescr(ui.leDescr->text());
 		activeQuerySetEntry->setInputDefines(ui.lineEditInput->text());
 		activeQuerySetEntry->setSqlFile(ui.outSql->text());
@@ -457,31 +514,22 @@ bool SqlReport::validQuerySet()
 		QMessageBox::information(this, "No active query set entry",
 								 "Please select a query set or create a new.");
 	}
+	else
+	{
+		updateQuerySet();
+	}
 
 	return result;
 }
 
 //! Diese Methode setzt die Werte aus dem aktiven QuerySet in der Oberfläche.
-//! Wird keine solcher Indes gefunden, werden alle Felder gelöscht.
+//! Wird keine solcher Index gefunden, werden alle Felder gelöscht.
 void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 {
 	activeQuerySetEntry = mQuerySet.getByName(aIdxName);
 	if (activeQuerySetEntry != nullptr)
 	{
-		ui.database->setText(activeQuerySetEntry->getDatabase().getDbName());
-		int mc = ui.cbDbType->count();
-		for (int i=0; i < mc; ++i)
-		{
-			if (ui.cbDbType->itemText(i) == activeQuerySetEntry->getDatabase().getDbType())
-			{
-				ui.cbDbType->setCurrentIndex(i);
-				i = mc;
-			}
-		}
-		ui.leDbPort->setText(QString("%1").arg(activeQuerySetEntry->getDatabase().getPort()));
-		ui.leDbUser->setText(activeQuerySetEntry->getDatabase().getUsername());
-		ui.leDbPasswd->setText(activeQuerySetEntry->getDatabase().getPassword());
-		ui.leDbHost->setText(activeQuerySetEntry->getDatabase().getHost());
+		ui.comboBoxDatabase->setCurrentText(activeQuerySetEntry->getDbName());
 		ui.leDescr->setText(activeQuerySetEntry->getDescr());
 		ui.lineEditInput->setText(activeQuerySetEntry->getInputDefines());
 		ui.outSql->setText(activeQuerySetEntry->getSqlFile());
@@ -496,11 +544,7 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 	}
 	else
 	{
-		ui.database->setText("");
-		ui.leDbPort->setText("");
-		ui.leDbUser->setText("");
-		ui.leDbPasswd->setText("");
-		ui.leDbHost->setText("");
+		ui.comboBoxDatabase->setCurrentIndex(0);
 		ui.lineEditInput->setText("");
 		ui.leDescr->setText("");
 		ui.outSql->setText("");
@@ -514,4 +558,3 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 		ui.cbOutputXml->setCheckState(Qt::Unchecked);
 	}
 }
-
