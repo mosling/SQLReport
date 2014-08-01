@@ -39,3 +39,6 @@ FORMS    += \
     SqlReport.ui \
     editwidget.ui \
     DbConnectionForm.ui
+
+OTHER_FILES += \
+    README.md
