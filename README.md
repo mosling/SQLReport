@@ -10,4 +10,5 @@ You can include this repository as git submodule using the command
 
 <code>git submodule add git://github.com/mosling/SQLreport.git &lt;path&gt;</code>
 
+The documentation can be found under https://github.com/mosling/SQLReport/wiki
 
