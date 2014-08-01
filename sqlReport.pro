@@ -11,8 +11,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = sqlReport
 TEMPLATE = app
 
-include (../../moonwave.pri)
-
 SOURCES += main.cpp \
     SqlReportHighlighter.cpp \
     SqlReport.cpp \
