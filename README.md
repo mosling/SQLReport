@@ -8,6 +8,6 @@ You found this at www.qt-project.org.
 
 You can include this repository as git submodule using the command
 
-<code>git submodule add git://github.com/mosling/SQLreport.git &lt;path&rt;</code>
+<code>git submodule add git://github.com/mosling/SQLreport.git &lt;path&gt;</code>
 
 
