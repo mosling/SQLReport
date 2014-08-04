@@ -513,7 +513,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 					// hexadecimal output
 					bool bOk = false;
 					int i = vStr.toInt(&bOk);
-					result += QString("0x%1").arg(i,0,16);
+					result += QString("%1").arg(i,0,16);
 				}
 				else if ("BOOL" == vCmd)
 				{
