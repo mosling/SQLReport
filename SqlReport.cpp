@@ -44,14 +44,14 @@ SqlReport::~SqlReport()
 {
 	try
 	{
-	QSettings rc;
+		QSettings rc;
 
-	rc.setValue("queryset_name",mQuerySet.getQuerySetFileName());
-	rc.setValue("local_inputs",ui.lineEditLocal->text());
-	rc.setValue("geometry", this->saveGeometry());
-	rc.setValue("windowState", QVariant(this->saveState()));
+		rc.setValue("queryset_name",mQuerySet.getQuerySetFileName());
+		rc.setValue("local_inputs",ui.lineEditLocal->text());
+		rc.setValue("geometry", this->saveGeometry());
+		rc.setValue("windowState", QVariant(this->saveState()));
 
-	activeQuerySetEntry = nullptr;
+		activeQuerySetEntry = nullptr;
 	}
 	catch (...) {}
 }
@@ -287,11 +287,20 @@ void SqlReport::on_but_outSql_clicked()
 
 void SqlReport::on_but_querySet_clicked()
 {
-	QString qsName = selectFile(tr("Please seletc QuerySet file"),
-								mQuerySet.getQuerySetFileName(),
-								tr("XML-Files (*.xml);;All Files(*.*)"), false);
+	QString qsName = QFileDialog::getSaveFileName(this,
+												  tr("Please seletc QuerySet file"),
+												  mQuerySet.getQuerySetFileName(),
+												  tr("XML-Files (*.xml);;All Files(*.*)") );
 	
 	mQuerySet.writeXml("", databaseSet);
+	mQuerySet.clear();
+	databaseSet.clear();
+
+	if (!QFile::exists(qsName))
+	{
+		mQuerySet.writeXml(qsName, databaseSet);
+	}
+
 	readQuerySet(qsName);
 }
 
@@ -311,12 +320,25 @@ void SqlReport::readQuerySet(QString &qsName)
 	if (mQuerySet.readXml(qsName, databaseSet))
 	{
 		QString p = QFileInfo(qsName).absolutePath();
-		if (qsName.startsWith(p)) ui.lblQuerySetName->setText(QString("%1").arg(qsName));
-		else                      ui.lblQuerySetName->setText(QString("%1 (%2)").arg(qsName).arg(p));
+		if (qsName.startsWith(p))
+		{
+			ui.lblQuerySetName->setText(QString("%1").arg(qsName));
+		}
+		else
+		{
+			ui.lblQuerySetName->setText(QString("%1 (%2)").arg(qsName).arg(p));
+		}
 
-		// we start with empty activeQuerySet
-		activeQuerySetEntry = nullptr;
-		ui.cbQuerySet->setCurrentIndex(0);
+		if (mQuerySet.rowCount() > 0)
+		{
+			ui.cbQuerySet->setCurrentIndex(0);
+			setActiveQuerySetEntry(ui.cbQuerySet->itemText(0));
+		}
+		else
+		{
+			// we start with empty activeQuerySet
+			activeQuerySetEntry = nullptr;
+		}
 	}
 	else
 	{
@@ -329,17 +351,18 @@ void SqlReport::on_but_AddQuerySet_clicked()
 	bool ok;
 
 	QString newEntryName = QInputDialog::getText(this, "", "new entry name",
-										 QLineEdit::Normal, "", &ok);
+												 QLineEdit::Normal, "", &ok);
 
 	if (!mQuerySet.contains(newEntryName))
 	{
+		QuerySetEntry *tmpQSE = new QuerySetEntry();
+
 		if (activeQuerySetEntry != nullptr)
 		{
 			updateQuerySet();
+			*tmpQSE = *activeQuerySetEntry;
 		}
 
-		QuerySetEntry *tmpQSE = new QuerySetEntry();
-		*tmpQSE = *activeQuerySetEntry;
 		tmpQSE->setName(newEntryName);
 
 		mQuerySet.append(tmpQSE);
@@ -386,60 +409,69 @@ void SqlReport::on_cbQuerySet_currentIndexChanged(int aIndex)
 
 void SqlReport::on_btnEditSql_clicked()
 {
-	activeQuerySetEntry->setSqlFile(ui.outSql->text());
+	if (validQuerySet())
+	{
+		activeQuerySetEntry->setSqlFile(ui.outSql->text());
 
-	if (!activeQuerySetEntry->getSqlFile().isEmpty())
-	{
-		sqlEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getSqlFile()));
-		sqlEditor.show();
-	}
-	else
-	{
-		QMessageBox::information(this, tr("Keine Datei"),
-								 tr("Bitte erst eine Datei auswählen oder eingeben") );
+		if (!activeQuerySetEntry->getSqlFile().isEmpty())
+		{
+			sqlEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getSqlFile()));
+			sqlEditor.show();
+		}
+		else
+		{
+			QMessageBox::information(this, tr("Keine Datei"),
+									 tr("Bitte erst eine Datei auswählen oder eingeben") );
+		}
 	}
 }
 
 void SqlReport::on_btnEditTemplate_clicked()
 {
-	activeQuerySetEntry->setTemplateFile(ui.outTemplate->text());
+	if (validQuerySet())
+	{
+		activeQuerySetEntry->setTemplateFile(ui.outTemplate->text());
 
-	if (!activeQuerySetEntry->getTemplateFile().isEmpty())
-	{
-		templateEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getTemplateFile()));
-		templateEditor.show();
-	}
-	else
-	{
-		QMessageBox::information(this, tr("Keine Datei"),
-								 tr("Bitte erst eine Datei auswählen oder eingeben"));
+		if (!activeQuerySetEntry->getTemplateFile().isEmpty())
+		{
+			templateEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getTemplateFile()));
+			templateEditor.show();
+		}
+		else
+		{
+			QMessageBox::information(this, tr("Keine Datei"),
+									 tr("Bitte erst eine Datei auswählen oder eingeben"));
+		}
 	}
 }
 
 //! If the file not exist, there is no need to show the empty file.
 void SqlReport::on_btnShowOutput_clicked()
 {
-	if (!activeQuerySetEntry->getLastOutputFile().isEmpty())
+	if (validQuerySet())
 	{
-		if (outputEditor.newFile(activeQuerySetEntry->getLastOutputFile()))
+		if (!activeQuerySetEntry->getLastOutputFile().isEmpty())
 		{
-			outputEditor.show();
-		}
-	}
-	else
-	{
-		//! We try to create a filename if the pattern doesn't contains dynamic parts
-		if (!activeQuerySetEntry->getOutputFile().contains('$'))
-		{
-			if (outputEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getOutputFile())))
+			if (outputEditor.newFile(activeQuerySetEntry->getLastOutputFile()))
 			{
 				outputEditor.show();
 			}
 		}
 		else
 		{
-			QMessageBox::information(this, tr("No file found!"),
-									 tr("Please create output first (Start)\nOr uncheck batch to see the result."));
+			//! We try to create a filename if the pattern doesn't contains dynamic parts
+			if (!activeQuerySetEntry->getOutputFile().contains('$'))
+			{
+				if (outputEditor.newFile(getAbsoluteFileName(activeQuerySetEntry->getOutputFile())))
+				{
+					outputEditor.show();
+				}
+			}
+			else
+			{
+				QMessageBox::information(this, tr("No file found!"),
+										 tr("Please create output first (Start)\nOr uncheck batch to see the result."));
+			}
 		}
 	}
 }
@@ -448,7 +480,7 @@ void SqlReport::on_btnShowTables_clicked()
 {
 	updateQuerySet();
 
-	DbConnection *currentDbConnection = databaseSet.getByName(activeQuerySetEntry->getDbName());
+	DbConnection *currentDbConnection = databaseSet.getByName(ui.comboBoxDatabase->currentText());
 
 	if (nullptr != currentDbConnection)
 	{

@@ -9,11 +9,12 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  mQSE(nullptr),
 	  mMsgWin(nullptr),
 	  mErrorWin(nullptr),
-	  mInputs(),
-	  mReplacements(),
-	  mLastReplacements(),
-	  mQueries(),
-	  mTemplates(),
+	  mInputs(QHash <QString, QString>()),
+	  mReplacements(QHash <QString, QString>()),
+	  mLastReplacements(QHash <QString, QString>()),
+	  mCumulationMap(QMap <QString, quint32>()),
+	  mQueries(QMap <QString, QString>()),
+	  mTemplates(QMap<QString,QStringList*>()),
 	  sqlFileName(""),
 	  templFileName(""),
 	  mExpressionMap(),
@@ -111,31 +112,33 @@ void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 //! Der erzeugte Name wird in lastOutputFile gespeichert.
 void QueryExecutor::createOutputFileName(const QString &basePath)
 {
-	QString mOutFileName = mQSE->getOutputFile();
-
-	mOutFileName = replaceLine(mOutFileName, 0);
-
-	if (!(mOutFileName.startsWith("/") || mOutFileName.at(1)==':') )
+	if (nullptr != mQSE)
 	{
-		// find a relative path, prepend with basePath
-		mOutFileName = basePath + "/" + mOutFileName;
+		QString mOutFileName = mQSE->getOutputFile();
+		mOutFileName = replaceLine(mOutFileName, 0);
+
+		if (!(mOutFileName.startsWith("/") || mOutFileName.at(1)==':') )
+		{
+			// find a relative path, prepend with basePath
+			mOutFileName = basePath + "/" + mOutFileName;
+		}
+
+		if (mQSE->getWithTimestamp())
+		{
+			QFileInfo outInfo(mOutFileName);
+
+			QString bn = outInfo.baseName();
+			QString p  = outInfo.dir().absolutePath();
+			QString sf = outInfo.suffix();
+
+			QDateTime mNow = QDateTime::currentDateTime();
+			mOutFileName = p + "/" + mNow.toString("yyyy-MM-dd")
+						   +"-"+bn+"-"+mNow.toString("hhmm")+"."+sf;
+		}
+
+		showMsg(tr("OUTPUT FILE NAME '%1'").arg(mOutFileName));
+		mQSE->setLastOutputFile(mOutFileName);
 	}
-
-	if (mQSE->getWithTimestamp())
-	{
-		QFileInfo outInfo(mOutFileName);
-
-		QString bn = outInfo.baseName();
-		QString p  = outInfo.dir().absolutePath();
-		QString sf = outInfo.suffix();
-		
-		QDateTime mNow = QDateTime::currentDateTime();
-		mOutFileName = p + "/" + mNow.toString("yyyy-MM-dd")
-					   +"-"+bn+"-"+mNow.toString("hhmm")+"."+sf;
-	}
-
-	showMsg(tr("OUTPUT FILE NAME '%1'").arg(mOutFileName));
-	mQSE->setLastOutputFile(mOutFileName);
 }
 
 //! Das QuerySet kann ausgewählt werden und alle Dateien 
@@ -143,8 +146,16 @@ void QueryExecutor::createOutputFileName(const QString &basePath)
 //! Die Namen wurden schon während der Erfassung bereinigt.
 void QueryExecutor::createInputFileNames(const QString &basePath)
 {
-	sqlFileName = basePath + "/" + mQSE->getSqlFile();
-	templFileName = basePath + "/" + mQSE->getTemplateFile();
+	if (nullptr != mQSE)
+	{
+		sqlFileName = basePath + "/" + mQSE->getSqlFile();
+		templFileName = basePath + "/" + mQSE->getTemplateFile();
+	}
+	else
+	{
+		sqlFileName = "";
+		templFileName = "";
+	}
 }
 
 //! Erzeugen einer Liste von Strings, deren maximale Breite
@@ -231,7 +242,7 @@ quint32 QueryExecutor::convertToNumber(QString aNumStr, bool &aOk) const
 		if (binValue.exactMatch(aNumStr))
 		{
 			int l = aNumStr.length() - 1;
-			for (int i = l; l >= 0; --i)
+			for (int i = l; i >= 0; --i)
 			{
 				vRes <<= 1;
 				if ('1' == aNumStr[i])
@@ -315,7 +326,6 @@ bool QueryExecutor::executeInputFiles()
 	}
 
 	// open and read the template file
-	QStringList *tempList = NULL;
 	QFile fileTemplate(templFileName);
 	if (!fileTemplate.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
@@ -325,7 +335,6 @@ bool QueryExecutor::executeInputFiles()
 	
 	QTextStream streamInTemplate(&fileTemplate);
 	name = "";
-	quint32 emptyLineCounter = 0;
 	while ( !streamInTemplate.atEnd())
 	{
 		line = streamInTemplate.readLine();
@@ -333,59 +342,58 @@ bool QueryExecutor::executeInputFiles()
 		{
 			if (line.startsWith("::"))
 			{
+				name = line.mid(2);
 				if (!name.isEmpty())
 				{
-					showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
-					mTemplates[name] = tempList;
+					if (mTemplates.contains(name))
+					{
+						showMsg(tr("Overwrite Template '%1'"), LogLevel::WARN);
+						delete (mTemplates[name]);
+					}
+					else
+					{
+						showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
+					}
+					mTemplates[name] = new QStringList();
 				}
-				name = line.mid(2);
-				tempList = new QStringList();
-				// ignore the last empty lines
-				emptyLineCounter = 0;
 			}
-			else
+			else if (!name.isEmpty())
 			{
-				// adding empty lines in the middle
-				for ( ; emptyLineCounter > 0; --emptyLineCounter)
-				{
-					tempList->append("");
-				}
-				tempList->append(line);
+				mTemplates[name]->append(line);
 			}
+		}
+	}
+
+	if (nullptr != mQSE)
+	{
+		// open the output file, create missing path
+		fileOut.setFileName(mQSE->getLastOutputFile());
+		QFileInfo fileOutInfo(fileOut);
+		if (!fileOutInfo.absoluteDir().exists())
+		{
+			showMsg(tr("create path %1")
+					.arg(fileOutInfo.absoluteDir().absolutePath()));
+			fileOutInfo.absoluteDir().mkpath(fileOutInfo.absoluteDir().absolutePath());
+		}
+
+		if (!fileOut.open(mQSE->getAppendOutput() ? QIODevice::Append : QIODevice::WriteOnly))
+		{
+			showMsg(tr("Can't open file '%1'").arg(mQSE->getLastOutputFile()), LogLevel::ERR);
+			bRet = false;
 		}
 		else
 		{
-			emptyLineCounter++;
+			streamOut.setDevice(&fileOut);
+			if (mQSE->getOutputUtf8())
+			{
+				streamOut.setCodec("UTF-8");
+			}
 		}
 	}
-	// letzten Eintrag machen
-	if (!name.isEmpty())
+	else
 	{
-		showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
-		mTemplates[name] = tempList;
-	}
-
-	// open the output file, create missing path
-	fileOut.setFileName(mQSE->getLastOutputFile());
-	QFileInfo fileOutInfo(fileOut);
-	if (!fileOutInfo.absoluteDir().exists())
-	{
-		showMsg(tr("create path %1")
-				.arg(fileOutInfo.absoluteDir().absolutePath()));
-		fileOutInfo.absoluteDir().mkpath(fileOutInfo.absoluteDir().absolutePath());
-	}
-
-	if (!fileOut.open(mQSE->getAppendOutput() ? QIODevice::Append : QIODevice::WriteOnly))
-	{
-		showMsg(tr("Can't open file '%1'").arg(mQSE->getLastOutputFile()), LogLevel::ERR);
-		return false;
-	}
-
-	streamOut.setDevice(&fileOut);
-
-	if (mQSE->getOutputUtf8())
-	{
-		streamOut.setCodec("UTF-8");
+		showMsg("no active query set", LogLevel::ERR);
+		bRet = false;
 	}
 
 	return bRet;
@@ -670,11 +678,11 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 		}
 		else
 		{
-			result += "?? unknown variable name: '" + tmpName + "' ??";
+			result += "['" + tmpName + "' is unknown]";
 			showMsg(QString("unknown variable name '%1'").arg(tmpName), LogLevel::ERR);
 		}
 	}
-	
+
 	result += aLine.mid(lpos);
 
 	return result;
@@ -683,7 +691,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 QString QueryExecutor::getDate(const QString &aFormat) const
 {
 	QDateTime mNow = QDateTime::currentDateTime();
-	QLocale l(mQSE->getLocale());
+	QLocale l(mQSE != nullptr ? mQSE->getLocale() : "en-en");
 	QString res = l.toString( mNow, aFormat);
 
 	return res;
@@ -760,16 +768,16 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	QHash<QString, QString> overwrittenReplacements;
 
 	// first check the calling template string for more informations
-	if (aTemplate.contains("list"))
+	if (aTemplate.contains(",list") || aTemplate.contains(", list"))
 	{
-		QStringList ll = aTemplate.split(' ');
-		aTemplate = ll.at(0);
+		QStringList ll = aTemplate.split(',');
+		aTemplate = ll.at(0).trimmed();
 
 		if (ll.size() > 2)
 		{
 			ll.removeFirst(); // the template name
 			ll.removeFirst(); // the list modifier
-			listSeperator = ll.join(' ');
+			listSeperator = ll.join(',');
 		}
 		else
 		{

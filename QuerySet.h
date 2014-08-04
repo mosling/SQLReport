@@ -25,6 +25,7 @@ public:
 	QuerySetEntry *getByName(QString aName) const;
 	void append(QuerySetEntry *aEntry);
 	void remove(QuerySetEntry *entry);
+	void clear();
 	QString getQuerySetFileName() const { return querySetFileName; }
 	QString getLastError() const { return lastErrMessage; }
 
@@ -33,7 +34,6 @@ public:
 	QVariant headerData(int section, Qt::Orientation orientation,
 						int role = Qt::DisplayRole) const;
 private:
-	void clear();
 
 	QList<QuerySetEntry* > mQueries;
     QString querySetFileName;

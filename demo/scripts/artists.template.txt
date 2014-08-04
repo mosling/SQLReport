@@ -1,0 +1,6 @@
+::MAIN
+${ArtistId}${__TAB,10}${Name}
+Album List: (#{ALBUM,list, | })
+
+::ALBUM
+${AlbumId}\

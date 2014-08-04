@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SqlReport>
+    <DatabaseSet>
+        <Database>
+            <name>chinook_sqlite_1.4</name>
+            <type>QSQLITE</type>
+            <host></host>
+            <port>0</port>
+            <dbname>C:/Development/moonwave/src/tools/sqlReport/demo/Chinook.sqlite</dbname>
+            <user></user>
+            <pass></pass>
+        </Database>
+    </DatabaseSet>
+    <QuerySet>
+        <Query>
+            <name>Artists</name>
+            <dbname>chinook_sqlite_1.4</dbname>
+            <descr></descr>
+            <defines></defines>
+            <sql>scripts/artist.sql</sql>
+            <template>scripts/artists.template.txt</template>
+            <output>artists.txt</output>
+            <locale>de_DE</locale>
+            <batchrun>no</batchrun>
+            <useTimestamp>no</useTimestamp>
+            <appendOutput>no</appendOutput>
+            <utf8>yes</utf8>
+            <asXml>no</asXml>
+        </Query>
+    </QuerySet>
+</SqlReport>

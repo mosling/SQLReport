@@ -43,17 +43,11 @@ generators/output/
 *.tgz
 *.tar.gz
 *.zip
-# expect the tar- and zip- packages in 3rdparty
-!3rdparty/packages/*.tar
-!3rdparty/packages/*.tar.gz
-!3rdparty/packages/*.tgz
-!3rdparty/packages/*.zip
 
 # Logs and databases #
 # ####################
 *.log
 *.rep
-*.sql
 *.sqlite
 
 # OS generates files #
