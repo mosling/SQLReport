@@ -1,4 +1,4 @@
-::MAIN
+::ARTIST
 select * from artist order by name
 
 ::ALBUM

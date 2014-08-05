@@ -1,0 +1,13 @@
+::MAIN
+List of artists created by ${?username,Who are you?}
+#{ARTIST}
+
+::ARTIST
+${ArtistId}${__TAB,10}${Name}
+Album List: (#{ALBUM,list, | })
+
+::ALBUM
+${AlbumId}\
+
+::ALBUM_EMPTY
+no entry

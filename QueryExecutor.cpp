@@ -73,6 +73,261 @@ void QueryExecutor::clearStructures()
 	mTemplates.clear();
 }
 
+void QueryExecutor::replaceLineUserInput(const QStringList &varList, QString &result, int lineCnt)
+{
+	Q_UNUSED(lineCnt)
+
+	if (varList.size() > 0)
+	{
+		QString tmpName = varList[0];
+		QString tmpDescr = varList[0];
+
+		if (varList.size() > 1)
+		{
+			tmpDescr = varList.at(1);
+		}
+
+		tmpName = tmpName.mid(1);
+		if (mInputs.contains(tmpName))
+		{
+			result += mInputs[tmpName];
+		}
+		else
+		{
+			// ask the user for the value
+			bool ok;
+			QString text = QInputDialog::getText(NULL, tmpName, tmpDescr,
+												 QLineEdit::Normal, "", &ok);
+			result += text;
+			mInputs[tmpName] = text;
+		}
+	}
+}
+
+void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &result, int lineCnt)
+{
+	Q_UNUSED(lineCnt)
+
+	if (varList.size() > 0)
+	{
+		QString tmpName = varList.at(0);
+
+		if (varList.size() > 1)
+		{
+			QString vStr = mReplacements[varList.at(0)];
+			QString vCmd = varList.at(1).trimmed().toUpper();
+			if ("UPPERCASE" == vCmd)
+			{
+				result += vStr.toUpper();
+			}
+			else if ("CAPITALIZE" == vCmd)
+			{
+				vStr[0] = vStr[0].toUpper();
+				result += vStr;
+			}
+			else if ("IFEMPTY" == vCmd)
+			{
+				if ( 0 == vStr.size())
+				{
+					// suche den ersten Wert der nicht leer ist
+					bool foundStr = false;
+					for (qint32 i = 2; !foundStr && i < varList.size(); ++i)
+					{
+						QString tmpName2 = varList.at(i);
+						if (mReplacements.contains(tmpName2))
+						{
+							if ( 0 != mReplacements[tmpName2].size())
+							{
+								result += mReplacements[tmpName2];
+								foundStr = true;
+							}
+						}
+						else
+						{
+							result += tmpName2;
+							foundStr = true;
+						}
+					}
+				}
+				else
+				{
+					result += vStr;
+				}
+			}
+			else if ("HEX" == vCmd)
+			{
+				// hexadecimal output
+				bool bOk = false;
+				int i = vStr.toInt(&bOk);
+				result += QString("%1").arg(i,0,16);
+			}
+			else if ("BOOL" == vCmd)
+			{
+				bool bOk = false;
+				int i = vStr.toInt(&bOk);
+				result += i==0 ? "false" : "true";
+			}
+			else if ("RMLF" == vCmd)
+			{
+				vStr = vStr.replace(QRegExp("[\r\n]"),"");
+				result += vStr.simplified();
+			}
+			else if ("TREEMODE" == vCmd)
+			{
+				// Ausgabe erzeugen wenn 1. sich ein höherer Knoten geändert hat;
+				// 2. beim ersten Mal und 3. wenn sich Daten geändert haben
+				if (mTreeNodeChanged || !mLastReplacements.contains(tmpName)
+						|| mLastReplacements[tmpName] != vStr)
+				{
+					result += vStr;
+					mLastReplacements[tmpName] = vStr;
+					mTreeNodeChanged = true;
+				}
+				else if (varList.size() > 2)
+				{
+					// sonst optionalen Standardwert einsetzen
+					result += varList.at(2);
+				}
+			}
+			else if ("FMT" == vCmd)
+			{
+				// Ausgabe formatieren und alle Folgezeilen mit dem
+				// angegebenen StartOfLine versehen
+				bool bOk = false;
+				qint32 tw = varList.at(2).toInt(&bOk);
+				if (!bOk) tw = 78;
+				QString sol("");
+				if (varList.size() > 2) sol = varList.at(3);
+				QStringList l = splitString(vStr, tw, sol);
+				int ls = l.size();
+				for (int i = 0; i < ls; ++i)
+				{
+					result += l.at(i);
+					if (i < (ls-1)) result += "\n";
+				}
+			}
+			else if ("CUMULATE" == vCmd)
+			{
+				bool bOk = false;
+				quint32 number = vStr.toUInt(&bOk);
+				if (bOk)
+				{
+					quint32 c = number;
+
+					if (mCumulationMap.contains(tmpName))
+					{
+						c += mCumulationMap[tmpName];
+					}
+					mCumulationMap[tmpName] = c;
+					result += QString("%1").arg(c);
+				}
+			}
+			else if (mExpressionMap.contains(vCmd))
+			{
+				// einen einfachen Vergleich gefunden, der zu einer Ausgabe
+				// führt, wenn er wahr ist.
+				bool bOk1 = false;
+				bool bOk2 = false;
+				quint32 op1 = vStr.toUInt(&bOk1);
+				quint32 op2 = varList.at(2).toUInt(&bOk2);
+				if (bOk1 && bOk2)
+				{
+					switch (mExpressionMap[vCmd])
+					{
+					case 1: bOk1 = op1 > op2; break;
+					case 2: bOk1 = op1 >= op2; break;
+					case 3: bOk1 = op1 < op2; break;
+					case 4: bOk1 = op1 <= op2; break;
+					case 5: bOk1 = op1 == op2; break;
+					case 6: bOk1 = op1 != op2; break;
+					default:
+						bOk1 = true; break;
+					}
+
+					if (bOk1 && varList.size() > 2)
+					{
+						result += varList.at(3);
+					}
+				}
+			}
+			else
+			{
+				// es wurde ein zweiter Teil angegeben, dieser wird
+				// als Format verwendet, wenn ein Wert existiert
+				if (!vStr.isEmpty())
+				{
+					result += QString(varList.at(1)).arg(vStr);
+				}
+			}
+		}
+		else
+		{
+			result += mReplacements[tmpName];
+		}
+	}
+}
+
+void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &result, int lineCnt)
+{
+	if (varList.size() > 0)
+	{
+		QString tmpName = varList.at(0);
+		if (tmpName == "__LSEP")
+		{
+			if (!firstQueryResult)
+			{
+				result += varList.size() > 1 ? varList.at(1) : ",";
+			}
+		}
+		else if (tmpName == "__DATE")
+		{
+			QString tmpDateFormat("d MMMM yyyy");
+			if (varList.size() > 1)
+			{
+				tmpDateFormat = varList.at(1);
+			}
+			result += getDate(tmpDateFormat);
+		}
+		else if (tmpName == "__UNIQUEID")
+		{
+			result += QString("%1").arg(uniqueId);
+		}
+		else if (tmpName.startsWith("__LINECNT"))
+		{
+			quint32 tmpNumber = lineCnt;
+			if (varList.size() > 1)
+			{
+				bool bOk;
+				quint32 addNum = convertToNumber(varList.at(1), bOk);
+				if (bOk) tmpNumber += addNum;
+			}
+			result += QString("%1").arg(tmpNumber,0,tmpName=="__LINECNTH" ? 16 : 10);
+		}
+		else if (tmpName == "__TAB")
+		{
+			int tab = 0;
+			bool bOk;
+			if (varList.size() > 1)
+			{
+				tab = varList.at(1).toInt(&bOk);
+				if (!bOk) tab = 0;
+				if (result.length() < tab)
+				{
+					// Leerzeichen anfügen
+					result += QString(tab-result.length(), ' ');
+				}
+			}
+		}
+		else if (tmpName == "__CLEAR")
+		{
+			if (varList.size() > 1)
+			{
+				mCumulationMap.remove(varList.at(1));
+			}
+		}
+	}
+}
+
 //! show message string
 void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 {
@@ -422,13 +677,13 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 	}
 }
 
+
 //! Diese Funktion ersetzt die variablen Vorkommen
 //! innerhalb einer Zeichenkette durch die aktuellen Werte.
 QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 {
 	QRegExp rx("\\$\\{([^\\}]*)\\}"); // all expressions like ${...}
 	QString tmpName;
-	QString tmpDescr;
 	QString result = "";
 	QStringList tmpList;
 	int lpos=0, pos = 0;
@@ -438,243 +693,24 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 		tmpName = rx.cap(1);
 		tmpList = tmpName.split(',');
 		tmpName = tmpList.at(0);
+		// add the first part to the result
 		result += aLine.mid(lpos,pos-lpos);
 		lpos = pos + rx.matchedLength();
-		// now add the variable part
+
+		// first check if we have a user variable
 		if (tmpName.startsWith("?"))
 		{
-			tmpDescr = tmpName;
-			if (tmpList.size() > 1)
-			{
-				tmpDescr = tmpList.at(1);
-			}
-
-			tmpName = tmpName.mid(1);
-			if (mInputs.contains(tmpName))
-			{
-				result += mInputs[tmpName];
-			}
-			else
-			{
-				// ask the user for the value
-				bool ok;
-				QString text = QInputDialog::getText(NULL, tmpName, tmpDescr,
-													 QLineEdit::Normal, "", &ok);
-				result += text;
-				mInputs[tmpName] = text;
-			}
+			replaceLineUserInput(tmpList, result, aLineCnt);
 		}
+		// else check if the variable exists in the replacement list (columns from SQL)
 		else if (mReplacements.contains(tmpName))
 		{
-			if (tmpList.size() > 1)
-			{
-				QString vStr = mReplacements[tmpName];
-				QString vCmd = tmpList.at(1).trimmed().toUpper();
-				if ("UPPERCASE" == vCmd)
-				{
-					result += vStr.toUpper();
-				}
-				else if ("CAPITALIZE" == vCmd)
-				{
-					vStr[0] = vStr[0].toUpper();
-					result += vStr;
-				}
-				else if ("IFEMPTY" == vCmd)
-				{
-					if ( 0 == vStr.size())
-					{
-						// suche den ersten Wert der nicht leer ist
-						bool foundStr = false;
-						for (qint32 i = 2; !foundStr && i < tmpList.size(); ++i)
-						{
-							QString tmpName2 = tmpList.at(i);
-							if (mReplacements.contains(tmpName2))
-							{
-								if ( 0 != mReplacements[tmpName2].size())
-								{
-									result += mReplacements[tmpName2];
-									foundStr = true;
-								}
-							}
-							else
-							{
-								result += tmpName2;
-								foundStr = true;
-							}
-						}
-					}
-					else
-					{
-						result += vStr;
-					}
-				}
-				else if ("HEX" == vCmd)
-				{
-					// hexadecimal output
-					bool bOk = false;
-					int i = vStr.toInt(&bOk);
-					result += QString("%1").arg(i,0,16);
-				}
-				else if ("BOOL" == vCmd)
-				{
-					bool bOk = false;
-					int i = vStr.toInt(&bOk);
-					result += i==0 ? "false" : "true";
-				}
-				else if ("RMLF" == vCmd)
-				{
-					vStr = vStr.replace(QRegExp("[\r\n]"),"");
-					result += vStr.simplified();
-				}
-				else if ("TREEMODE" == vCmd)
-				{
-					// Ausgabe erzeugen wenn 1. sich ein höherer Knoten geändert hat;
-					// 2. beim ersten Mal und 3. wenn sich Daten geändert haben
-					if (mTreeNodeChanged || !mLastReplacements.contains(tmpName)
-							|| mLastReplacements[tmpName] != vStr)
-					{
-						result += vStr;
-						mLastReplacements[tmpName] = vStr;
-						mTreeNodeChanged = true;
-					}
-					else if (tmpList.size() > 2)
-					{
-						// sonst optionalen Standardwert einsetzen
-						result += tmpList.at(2);
-					}
-				}
-				else if ("FMT" == vCmd)
-				{
-					// Ausgabe formatieren und alle Folgezeilen mit dem
-					// angegebenen StartOfLine versehen
-					bool bOk = false;
-					qint32 tw = tmpList.at(2).toInt(&bOk);
-					if (!bOk) tw = 78;
-					QString sol("");
-					if (tmpList.size() > 2) sol = tmpList.at(3);
-					QStringList l = splitString(vStr, tw, sol);
-					int ls = l.size();
-					for (int i = 0; i < ls; ++i)
-					{
-						result += l.at(i);
-						if (i < (ls-1)) result += "\n";
-					}
-				}
-				else if ("CUMULATE" == vCmd)
-				{
-					bool bOk = false;
-					quint32 number = vStr.toUInt(&bOk);
-					if (bOk)
-					{
-						quint32 c = number;
-
-						if (mCumulationMap.contains(tmpName))
-						{
-							c += mCumulationMap[tmpName];
-						}
-						mCumulationMap[tmpName] = c;
-						result += QString("%1").arg(c);
-					}
-				}
-				else if (mExpressionMap.contains(vCmd))
-				{
-					// einen einfachen Vergleich gefunden, der zu einer Ausgabe
-					// führt, wenn er wahr ist.
-					bool bOk1 = false;
-					bool bOk2 = false;
-					quint32 op1 = vStr.toUInt(&bOk1);
-					quint32 op2 = tmpList.at(2).toUInt(&bOk2);
-					if (bOk1 && bOk2)
-					{
-						switch (mExpressionMap[vCmd])
-						{
-						case 1: bOk1 = op1 > op2; break;
-						case 2: bOk1 = op1 >= op2; break;
-						case 3: bOk1 = op1 < op2; break;
-						case 4: bOk1 = op1 <= op2; break;
-						case 5: bOk1 = op1 == op2; break;
-						case 6: bOk1 = op1 != op2; break;
-						default:
-							bOk1 = true; break;
-						}
-
-						if (bOk1 && tmpList.size() > 2)
-						{
-							result += tmpList.at(3);
-						}
-					}
-				}
-				else
-				{
-					// es wurde ein zweiter Teil angegeben, dieser wird
-					// als Format verwendet, wenn ein Wert existiert
-					if (!vStr.isEmpty())
-					{
-						result += QString(tmpList.at(1)).arg(vStr);
-					}
-				}
-			}
-			else
-			{
-				result += mReplacements[tmpName];
-			}
+			replaceLineVariable(tmpList, result, aLineCnt);
 		}
-		else if (tmpName == "__LSEP")
+		// check if we have a global substitution
+		else if (tmpName.startsWith("__"))
 		{
-			if (!firstQueryResult)
-			{
-				result += tmpList.size() > 1 ? tmpList.at(1) : ",";
-			}
-		}
-		else if (tmpName == "__DATE")
-		{
-			QString tmpDateFormat("d MMMM yyyy");
-			if (tmpList.size() > 1)
-			{
-				tmpDateFormat = tmpList.at(1);
-			}
-			result += getDate(tmpDateFormat);
-		}
-		else if (tmpName == "__UNIQUEID")
-		{
-			result += QString("%1").arg(uniqueId);
-		}
-		else if (tmpName.startsWith("__LINECNT"))
-		{
-			quint32 tmpNumber = aLineCnt;
-			if (tmpList.size() > 1)
-			{
-				bool bOk;
-				quint32 addNum = convertToNumber(tmpList.at(1), bOk);
-				if (bOk) tmpNumber += addNum;
-			}
-			result += QString("%1").arg(tmpNumber,0,tmpName=="__LINECNTH" ? 16 : 10);
-		}
-		else if (tmpName == "__TAB")
-		{
-			int tab = 0;
-			bool bOk;
-			if (tmpList.size() > 1)
-			{
-				tab = tmpList.at(1).toInt(&bOk);
-				if (!bOk) tab = 0;
-				if (result.length() < tab)
-				{
-					// Leerzeichen anfügen
-					result += QString(tab-result.length(), ' ');
-				}
-			}
-		}
-		else if (tmpName == "__CLEAR")
-		{
-			if (tmpList.size() > 1)
-			{
-				mCumulationMap.remove(tmpList.at(1));
-			}
-		}
-		else if (tmpName == "__LF")
-		{
-			// do nothing use the line feed from the line :-)
+			replaceLineGlobal(tmpList, result, aLineCnt);
 		}
 		else
 		{
@@ -683,6 +719,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt)
 		}
 	}
 
+	// add the last part to the result
 	result += aLine.mid(lpos);
 
 	return result;

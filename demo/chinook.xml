@@ -18,8 +18,23 @@
             <descr></descr>
             <defines></defines>
             <sql>scripts/artist.sql</sql>
-            <template>scripts/artists.template.txt</template>
+            <template>scripts/artists.txt.template</template>
             <output>artists.txt</output>
+            <locale>de_DE</locale>
+            <batchrun>no</batchrun>
+            <useTimestamp>no</useTimestamp>
+            <appendOutput>no</appendOutput>
+            <utf8>yes</utf8>
+            <asXml>no</asXml>
+        </Query>
+        <Query>
+            <name>Playlist</name>
+            <dbname>chinook_sqlite_1.4</dbname>
+            <descr></descr>
+            <defines></defines>
+            <sql>scripts/playlist.sql</sql>
+            <template>scripts/playlist.txt.template</template>
+            <output>playlist.txt</output>
             <locale>de_DE</locale>
             <batchrun>no</batchrun>
             <useTimestamp>no</useTimestamp>
