@@ -167,9 +167,10 @@ QString SqlReport::getAbsoluteFileName(QString fname) const
 //! Auswahl einer Datei. Ist das Modify-Flag gesetzt wird vor den
 //! übergebenen Dateinamen (def) der aktuelle Path der QuerySet-Datei
 //! gesetzt und danach wieder entfernt.
-QString SqlReport::selectFile(QString desc, QString def, QString pattern, bool modify)
+QString SqlReport::selectFile(QString desc, QString def, QString pattern, bool modify, bool &cancel)
 {
 	QString defName(def);
+	cancel = false;
 
 	if (modify) defName = getAbsoluteFileName(def);
 
@@ -178,6 +179,7 @@ QString SqlReport::selectFile(QString desc, QString def, QString pattern, bool m
 	if (str.isEmpty())
 	{
 		str = def;
+		cancel = true;
 	}
 
 	if (modify)
@@ -252,11 +254,15 @@ void SqlReport::on_but_output_clicked()
 {
 	if (validQuerySet())
 	{
+		bool selectCancel;
 		QString output = selectFile("Please select Target file",
 									activeQuerySetEntry->getOutputFile(),
-									"All Files(*.*)", false);
-		ui.output->setText(output);
-		activeQuerySetEntry->setOutputFile(output);
+									"All Files(*.*)", false, selectCancel);
+		if (!selectCancel)
+		{
+			ui.output->setText(output);
+			activeQuerySetEntry->setOutputFile(output);
+		}
 	}
 }
 
@@ -264,11 +270,16 @@ void SqlReport::on_but_outTemplate_clicked()
 {
 	if (validQuerySet())
 	{
+		bool selectCancel;
 		QString outTemplate = selectFile("Please select Template file",
 										 activeQuerySetEntry->getTemplateFile(),
-										 "Templates (*.template);;All Files(*.*)", true);
-		ui.outTemplate->setText(outTemplate);
-		activeQuerySetEntry->setTemplateFile(outTemplate);
+										 "Templates (*.template);;All Files(*.*)", true, selectCancel);
+
+		if (!selectCancel)
+		{
+			ui.outTemplate->setText(outTemplate);
+			activeQuerySetEntry->setTemplateFile(outTemplate);
+		}
 	}
 }
 
@@ -276,32 +287,53 @@ void SqlReport::on_but_outSql_clicked()
 {
 	if (validQuerySet())
 	{
+		bool selectCancel;
 		QString outSql = selectFile("Please select SQL file",
 									activeQuerySetEntry->getSqlFile(),
-									"SQL-Files (*.sql);;Alle Dateien(*.*)", true);
+									"SQL-Files (*.sql);;Alle Dateien(*.*)", true, selectCancel);
 
-		ui.outSql->setText(outSql);
-		activeQuerySetEntry->setSqlFile(outSql);
+		if (!selectCancel)
+		{
+			ui.outSql->setText(outSql);
+			activeQuerySetEntry->setSqlFile(outSql);
+		}
 	}
 }
 
+//!
+void SqlReport::on_toolButtonQuerySetNew_clicked()
+{
+	QString qsName = QFileDialog::getSaveFileName(this, tr("Please select new QuerySet file"),
+												  mQuerySet.getQuerySetFileName(),
+												  tr("XML-Files (*.xml)"));
+
+	if (!qsName.isEmpty())
+	{
+		mQuerySet.writeXml("", databaseSet);
+		mQuerySet.clear();
+		databaseSet.clear();
+
+		mQuerySet.writeXml(qsName, databaseSet);
+		readQuerySet(qsName);
+	}
+}
+
+//! Select an existing query set xml file
 void SqlReport::on_but_querySet_clicked()
 {
-	QString qsName = QFileDialog::getSaveFileName(this,
-												  tr("Please seletc QuerySet file"),
-												  mQuerySet.getQuerySetFileName(),
-												  tr("XML-Files (*.xml);;All Files(*.*)") );
+	bool selectCancel;
+	QString qsName = selectFile(tr("Please select QuerySet file"),
+								mQuerySet.getQuerySetFileName(),
+								tr("XML-Files (*.xml);;All Files(*.*)"), false, selectCancel);
 	
-	mQuerySet.writeXml("", databaseSet);
-	mQuerySet.clear();
-	databaseSet.clear();
-
-	if (!QFile::exists(qsName))
+	if (!selectCancel)
 	{
-		mQuerySet.writeXml(qsName, databaseSet);
-	}
+		mQuerySet.writeXml("", databaseSet);
+		mQuerySet.clear();
+		databaseSet.clear();
 
-	readQuerySet(qsName);
+		readQuerySet(qsName);
+	}
 }
 
 //! Einlesen einer QueryDatei, dabei werden die Datenbankverbindungen
@@ -322,11 +354,11 @@ void SqlReport::readQuerySet(QString &qsName)
 		QString p = QFileInfo(qsName).absolutePath();
 		if (qsName.startsWith(p))
 		{
-			ui.lblQuerySetName->setText(QString("%1").arg(qsName));
+			ui.lineQuerySetName->setText(QString("%1").arg(qsName));
 		}
 		else
 		{
-			ui.lblQuerySetName->setText(QString("%1 (%2)").arg(qsName).arg(p));
+			ui.lineQuerySetName->setText(QString("%1 (%2)").arg(qsName).arg(p));
 		}
 
 		if (mQuerySet.rowCount() > 0)
@@ -400,6 +432,7 @@ void SqlReport::on_but_DeleteQuerySet_clicked()
 		}
 	}
 }
+
 
 void SqlReport::on_cbQuerySet_currentIndexChanged(int aIndex)
 {

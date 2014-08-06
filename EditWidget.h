@@ -29,6 +29,7 @@ protected:
 private slots:
 	bool on_btnSave_clicked();
 	void on_pushButtonFind_clicked();
+	void on_pushButtonPdf_clicked();
 
 private:
 	bool maybeSave();

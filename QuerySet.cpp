@@ -181,6 +181,8 @@ void QuerySet::writeXml(QString aFileName, DbConnectionSet &dbSet) const
 		{
 			return;
 		}
+		qDebug() << "save to file '" << localFileName << "'";
+
 		QXmlStreamWriter vStream(&file);
 
 		vStream.setAutoFormatting(true);

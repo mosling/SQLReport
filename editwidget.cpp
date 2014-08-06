@@ -1,5 +1,8 @@
 #include <QMessageBox>
 #include <QTextStream>
+#include <QFileDialog>
+#include <QtPrintSupport/QPrinter>
+
 #include "editwidget.h"
 #include "ui_editwidget.h"
 
@@ -83,6 +86,22 @@ void EditWidget::on_pushButtonFind_clicked()
 	}
 
 	ui->teEditor->find(f);
+}
+
+void EditWidget::on_pushButtonPdf_clicked()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, "Export PDF",
+													QString(currentFileName + ".pdf"), "*.pdf");
+	if (!fileName.isEmpty())
+	{
+		if (QFileInfo(fileName).suffix().isEmpty())
+			fileName.append(".pdf");
+
+		QPrinter printer(QPrinter::HighResolution);
+		printer.setOutputFormat(QPrinter::PdfFormat);
+		printer.setOutputFileName(fileName);
+		ui->teEditor->document()->print(&printer);
+	}
 }
 
 //! Wenn die Speichern-Nachfrage abgebrochen wurde, dann wird das

@@ -25,6 +25,7 @@ private slots:
 	void on_cbQuerySet_currentIndexChanged(int);
 	void on_but_AddQuerySet_clicked();
 	void on_but_DeleteQuerySet_clicked();
+	void on_toolButtonQuerySetNew_clicked();
 	void on_but_querySet_clicked();
 	void on_but_outSql_clicked();
 	void on_but_outTemplate_clicked();
@@ -43,8 +44,7 @@ private slots:
 private:
 	bool validQuerySet();
 	QString getAbsoluteFileName(QString fname) const;
-	QString selectFile(QString desc, QString def,
-	QString pattern, bool modify);
+	QString selectFile(QString desc, QString def, QString pattern, bool modify, bool &cancel);
 	void readQuerySet(QString &qsName);
 
 	Ui_SqlReportClass ui;
