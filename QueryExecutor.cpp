@@ -272,14 +272,14 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 	if (varList.size() > 0)
 	{
 		QString tmpName = varList.at(0);
-		if (tmpName == "__LSEP")
+		if ("__LSEP" == tmpName)
 		{
 			if (!firstQueryResult)
 			{
 				result += varList.size() > 1 ? varList.at(1) : ",";
 			}
 		}
-		else if (tmpName == "__DATE")
+		else if ("__DATE" == tmpName)
 		{
 			QString tmpDateFormat("d MMMM yyyy");
 			if (varList.size() > 1)
@@ -288,7 +288,7 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 			}
 			result += getDate(tmpDateFormat);
 		}
-		else if (tmpName == "__UNIQUEID")
+		else if ("__UNIQUEID" == tmpName)
 		{
 			result += QString("%1").arg(uniqueId);
 		}
@@ -303,7 +303,7 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 			}
 			result += QString("%1").arg(tmpNumber,0,tmpName=="__LINECNTH" ? 16 : 10);
 		}
-		else if (tmpName == "__TAB")
+		else if ("__TAB" == tmpName)
 		{
 			int tab = 0;
 			bool bOk;
@@ -318,7 +318,11 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 				}
 			}
 		}
-		else if (tmpName == "__CLEAR")
+		else if ("__LF" == tmpName)
+		{
+			result += "\n";
+		}
+		else if ("__CLEAR" == tmpName)
 		{
 			if (varList.size() > 1)
 			{
@@ -590,13 +594,15 @@ bool QueryExecutor::executeInputFiles()
 	
 	QTextStream streamInTemplate(&fileTemplate);
 	name = "";
+	qint32 emptyLineCnt = 0;
 	while ( !streamInTemplate.atEnd())
 	{
 		line = streamInTemplate.readLine();
-		if (line.length() != 0)  // ignore empty lines first
+		if (line.length() != 0)  // ignore empty lines first, ignore last empty lines only
 		{
 			if (line.startsWith("::"))
 			{
+				emptyLineCnt = 0;
 				name = line.mid(2);
 				if (!name.isEmpty())
 				{
@@ -614,8 +620,17 @@ bool QueryExecutor::executeInputFiles()
 			}
 			else if (!name.isEmpty())
 			{
+				for (qint32 i=0; i < emptyLineCnt; i++)
+				{
+					mTemplates[name]->append("");
+				}
+				emptyLineCnt = 0;
 				mTemplates[name]->append(line);
 			}
+		}
+		else
+		{
+			emptyLineCnt++;
 		}
 	}
 
