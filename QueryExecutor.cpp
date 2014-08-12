@@ -421,35 +421,47 @@ void QueryExecutor::createInputFileNames(const QString &basePath)
 //! width ist.
 QStringList QueryExecutor::splitString(const QString &str, int width, const QString &startOfLine) const
 {
-	int len = str.length();
-	QString sol("");
-	int s = 0, e = 0, cnt = 0;
+	qint32 len = str.length();
 	QStringList l;
+	QString sol("");
 
-	for (int i=0; i < len; ++i)
+	qint32 idx   = 0;
+	qint32 start = 0;
+	qint32 split = 0;
+
+	while (idx < len)
 	{
-		if (str[i]==' ' || str[i]==',' || str[i]=='\t')
+		// gut Möglichkeiten zum Beginn einer neuen Zeile merken
+		if (str[idx]==' ' || str[idx]==',' || str[idx]=='\t')
 		{
-			// ein mögliches Ende
-			e = i;
+			split = idx;
 		}
 
-		cnt++;
-		if (cnt == width)
+		// existiert schon Zeilenumbruch, dann wird er übernommen
+		if (str[idx] == 0x0a || str[idx] == 0x0d)
+		{
+			l.append(sol + str.mid(start, idx-start).trimmed());
+			sol = startOfLine;
+			idx++;
+			start = idx;
+			split = start;
+		}
+		else if ((idx-start) != 0 && (idx-start) % width == 0)
 		{
 			// Eintrag erzeugen
-			if (e == s) e = cnt; // keine Stelle gefunden, es wird einfach getrennt
-			l.append(sol + str.mid(s, e-s).trimmed());
+			if (split == start) split = idx;
+			l.append(sol + str.mid(start, split-start).trimmed());
 			sol = startOfLine;
-			s = e;
-			e = i;
-			cnt = 0;
+			start = split;
+			split = start;
 		}
+
+		idx++;
 	}
 
-	if (cnt != 0)
+	if ((len-1-start) > 0)
 	{
-		l.append(sol + str.mid(s).trimmed());
+		l.append(sol + str.mid(start).trimmed());
 	}
 
 	return l;
