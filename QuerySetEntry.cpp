@@ -1,4 +1,5 @@
 #include "QuerySetEntry.h"
+#include "QDebug"
 
 QuerySetEntry::QuerySetEntry() :
 	name(""),
@@ -43,6 +44,13 @@ QuerySetEntry &QuerySetEntry::operator=(const QuerySetEntry &rhs)
 		appendOutput  = rhs.appendOutput;
 	}
 	return *this;
+}
+
+//! Comparsion of two entries is done by the comparsion
+//! of its names.
+bool QuerySetEntry::operator()(const QuerySetEntry *l, const QuerySetEntry *r)
+{
+	return (l->getName() < r->getName());
 }
 
 void QuerySetEntry::setName(const QString &value)

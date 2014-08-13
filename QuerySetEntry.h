@@ -13,6 +13,7 @@ public:
 	~QuerySetEntry();
 
 	QuerySetEntry& operator=(const QuerySetEntry& rhs);
+	bool operator()(const QuerySetEntry *l, const QuerySetEntry *r);
 
 	QString getName() const { return name; }
 	void setName(const QString &value);

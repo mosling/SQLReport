@@ -37,6 +37,7 @@ void QuerySet::append(QuerySetEntry *aEntry)
 {
 	beginInsertRows(QModelIndex(), 0, 0);
 	mQueries.append(aEntry);
+	qSort(mQueries.begin(), mQueries.end(), QuerySetEntry());
 	endInsertRows();
 }
 
