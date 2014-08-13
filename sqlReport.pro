@@ -16,6 +16,10 @@ greaterThan(QT_MAJOR_VERSION, 4) CONFIG += c++11
 TARGET = sqlReport
 TEMPLATE = app
 
+CONFIG(release, debug|release){
+	DEFINES += QT_NO_DEBUG_OUTPUT QT_NO_WARNING_OUTPUT
+}
+
 SOURCES += main.cpp \
     SqlReportHighlighter.cpp \
     SqlReport.cpp \

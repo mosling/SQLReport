@@ -399,7 +399,7 @@ void SqlReport::on_but_AddQuerySet_clicked()
 
 		mQuerySet.append(tmpQSE);
 		// minimal one existing entry (index 0)
-		ui.cbQuerySet->setCurrentIndex(mQuerySet.rowCount() - 1);
+		ui.cbQuerySet->setCurrentText(newEntryName);
 	}
 	else
 	{
@@ -411,25 +411,32 @@ void SqlReport::on_but_AddQuerySet_clicked()
 
 void SqlReport::on_but_DeleteQuerySet_clicked()
 {
-	QMessageBox msgBox;
-
-	msgBox.setText("Entfernen des Eintrages?");
-	msgBox.setInformativeText("Dateien bleiben erhalten.");
-	msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-	msgBox.setDefaultButton(QMessageBox::No);
-	int ret = msgBox.exec();
-
-	if (ret == QMessageBox::Yes)
+	if (nullptr != activeQuerySetEntry)
 	{
-		QuerySetEntry *tmpQSE = activeQuerySetEntry;
-		mQuerySet.remove(tmpQSE);
+		QMessageBox msgBox;
 
-		if (tmpQSE == activeQuerySetEntry)
+		msgBox.setText(tr("Remove query set '%1'?").arg(activeQuerySetEntry->getName()));
+		msgBox.setInformativeText("Dateien bleiben erhalten.");
+		msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+		msgBox.setDefaultButton(QMessageBox::No);
+		int ret = msgBox.exec();
+
+		if (ret == QMessageBox::Yes)
 		{
-			// no new value set by the model, the old QuerySetEntry was
-			// deleted, set the active set to null.
-			activeQuerySetEntry = nullptr;
+			QuerySetEntry *tmpQSE = activeQuerySetEntry;
+			mQuerySet.remove(tmpQSE);
+
+			if (tmpQSE == activeQuerySetEntry)
+			{
+				// no new value set by the model, the old QuerySetEntry was
+				// deleted, set the active set to null.
+				activeQuerySetEntry = nullptr;
+			}
 		}
+	}
+	else
+	{
+		ui.textEditError->append(tr("There is no active query set, which can removed."));
 	}
 }
 
@@ -438,6 +445,7 @@ void SqlReport::on_cbQuerySet_currentIndexChanged(int aIndex)
 {
 	updateQuerySet();
 	setActiveQuerySetEntry(ui.cbQuerySet->itemText(aIndex));
+	qDebug() << "set active query to " << ui.cbQuerySet->itemText(aIndex);
 }
 
 void SqlReport::on_btnEditSql_clicked()
