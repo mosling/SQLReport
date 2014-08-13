@@ -44,8 +44,11 @@ private slots:
 private:
 	bool validQuerySet();
 	QString getAbsoluteFileName(QString fname) const;
+	QString getSettingsGroupName(QString str) const;
 	QString selectFile(QString desc, QString def, QString pattern, bool modify, bool &cancel);
 	void readQuerySet(QString &qsName);
+	void readLocalDefines(const QString &qsName);
+	void writeLocalDefines(const QString &qsName);
 
 	Ui_SqlReportClass ui;
 	QuerySet mQuerySet;

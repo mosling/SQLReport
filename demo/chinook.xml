@@ -19,7 +19,7 @@
             <defines></defines>
             <sql>scripts/artist.sql</sql>
             <template>scripts/artists.txt.template</template>
-            <output>artists.txt</output>
+            <output>${?outdir}/artists.txt</output>
             <locale>de_DE</locale>
             <batchrun>no</batchrun>
             <useTimestamp>no</useTimestamp>

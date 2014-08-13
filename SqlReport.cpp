@@ -35,7 +35,6 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	// Größe und Position des Hauptfensters anpassen
 
 	QString qsn = rc.value("queryset_name","scripts/queryset.xml").toString();
-	ui.lineEditLocal->setText(rc.value("local_inputs","").toString());
 
 	readQuerySet(qsn);
 }
@@ -47,9 +46,9 @@ SqlReport::~SqlReport()
 		QSettings rc;
 
 		rc.setValue("queryset_name",mQuerySet.getQuerySetFileName());
-		rc.setValue("local_inputs",ui.lineEditLocal->text());
 		rc.setValue("geometry", this->saveGeometry());
 		rc.setValue("windowState", QVariant(this->saveState()));
+		writeLocalDefines(mQuerySet.getQuerySetFileName());
 
 		activeQuerySetEntry = nullptr;
 	}
@@ -162,6 +161,16 @@ QString SqlReport::getAbsoluteFileName(QString fname) const
 	}
 
 	return fname;
+}
+
+//! This method replaces all non usable character with an underline.
+QString SqlReport::getSettingsGroupName(QString str) const
+{
+	QString settingGroup = str;
+	settingGroup.replace(':', '_');
+	settingGroup.replace('/','_');
+	settingGroup.replace('\\', '_');
+	return settingGroup;
 }
 
 //! Auswahl einer Datei. Ist das Modify-Flag gesetzt wird vor den
@@ -328,7 +337,9 @@ void SqlReport::on_but_querySet_clicked()
 	
 	if (!selectCancel)
 	{
+
 		mQuerySet.writeXml("", databaseSet);
+		writeLocalDefines(mQuerySet.getQuerySetFileName());
 		mQuerySet.clear();
 		databaseSet.clear();
 
@@ -365,6 +376,7 @@ void SqlReport::readQuerySet(QString &qsName)
 		{
 			ui.cbQuerySet->setCurrentIndex(0);
 			setActiveQuerySetEntry(ui.cbQuerySet->itemText(0));
+			readLocalDefines(mQuerySet.getQuerySetFileName());
 		}
 		else
 		{
@@ -376,6 +388,32 @@ void SqlReport::readQuerySet(QString &qsName)
 	{
 		ui.textEditError->append(mQuerySet.getLastError());
 	}
+}
+
+void SqlReport::readLocalDefines(const QString &qsName)
+{
+	QSettings rc;
+	QString qsnGroup = getSettingsGroupName(qsName);
+
+	if (rc.childGroups().contains(qsnGroup))
+	{
+		rc.beginGroup(qsnGroup);
+		ui.lineEditLocal->setText(rc.value("local_inputs","").toString());
+		rc.endGroup();
+	}
+	else
+	{
+		ui.lineEditLocal->setText(rc.value("local_inputs","").toString());
+	}
+}
+
+void SqlReport::writeLocalDefines(const QString &qsName)
+{
+	QSettings rc;
+
+	rc.beginGroup(getSettingsGroupName(qsName));
+	rc.setValue("local_inputs",ui.lineEditLocal->text());
+	rc.endGroup();
 }
 
 void SqlReport::on_but_AddQuerySet_clicked()
