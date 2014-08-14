@@ -15,8 +15,8 @@
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
-	a.setOrganizationName("Moonwave");
-	a.setOrganizationDomain("moonwave-systems.com");
+	a.setOrganizationName("sksoft");
+	a.setOrganizationDomain("sksoft.com");
 	a.setApplicationName("SqlReport");
 	a.setApplicationVersion("1.0");
 
