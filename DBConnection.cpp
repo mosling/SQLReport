@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QMessageBox>
+#include <QInputDialog>
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlField>
 #include <QtSql/QSqlIndex>
@@ -15,7 +16,8 @@ DbConnection::DbConnection(QObject *parentObj) :
 	host(""),
 	username(""),
 	password(""),
-	port(0)
+	port(0),
+	passwordSave(false)
 {
 }
 
@@ -40,6 +42,7 @@ void DbConnection::readXmlNode(const QDomNode &aNode)
 		if (ce == "PASS")   { password = te; }
 		if (ce == "TYPE")   { dbType = te; }
 		if (ce == "PORT")   { port = te.toInt(); }
+		if (ce == "SAVE")   { passwordSave = (te == "yes") ? true : false; }
 		cn = cn.nextSibling();
 	}
 }
@@ -53,7 +56,11 @@ void DbConnection::writeXmlNode(QXmlStreamWriter &aStream)
 	aStream.writeTextElement("port", QString("%1").arg(port));
 	aStream.writeTextElement("dbname", dbName);
 	aStream.writeTextElement("user", username);
-	aStream.writeTextElement("pass", password);
+	if (passwordSave)
+	{
+		aStream.writeTextElement("pass", password);
+	}
+	aStream.writeTextElement("save", passwordSave ? "yes" : "no");
 	aStream.writeEndElement();
 }
 
@@ -62,18 +69,9 @@ void DbConnection::setName(const QString &value)
 	name = value;
 }
 
-QString DbConnection::getDbType() const
-{
-	return dbType;
-}
-
 void DbConnection::setDbType(const QString &value)
 {
 	dbType = value;
-}
-QString DbConnection::getDbName() const
-{
-	return dbName;
 }
 
 void DbConnection::setDbName(const QString &value)
@@ -81,19 +79,9 @@ void DbConnection::setDbName(const QString &value)
 	dbName = value;
 }
 
-QString DbConnection::getHost() const
-{
-	return host;
-}
-
 void DbConnection::setHost(const QString &value)
 {
 	host = value;
-}
-
-QString DbConnection::getUsername() const
-{
-	return username;
 }
 
 void DbConnection::setUsername(const QString &value)
@@ -101,24 +89,19 @@ void DbConnection::setUsername(const QString &value)
 	username = value;
 }
 
-QString DbConnection::getPassword() const
-{
-	return password;
-}
-
 void DbConnection::setPassword(const QString &value)
 {
 	password = value;
 }
 
-quint32 DbConnection::getPort() const
-{
-	return port;
-}
-
 void DbConnection::setPort(const quint32 &value)
 {
 	port = value;
+}
+
+void DbConnection::setPasswordSave(const bool value)
+{
+	passwordSave = value;
 }
 
 void DbConnection::showDbError() const
@@ -135,6 +118,7 @@ void DbConnection::showDbError() const
 QString DbConnection::getConnectionName() const
 {
 	QString vDbName = dbName;
+
 	if (vDbName.endsWith(".mdb") || vDbName.endsWith(".accdb"))
 	{
 		vDbName = "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DSN='';DBQ=" + vDbName;
@@ -159,6 +143,17 @@ bool DbConnection::connectDatabase()
 		db = QSqlDatabase::addDatabase(dbType);
 	}
 
+	if (!username.isEmpty() && !passwordSave && password.isEmpty())
+	{
+		// get Password
+		bool ok;
+		QString pwd = QInputDialog::getText(nullptr, "", "Please input password",
+													 QLineEdit::PasswordEchoOnEdit, "", &ok);
+		if (ok)
+		{
+			setPassword(pwd);
+		}
+	}
 	if (!dbName.isEmpty()) db.setDatabaseName(getConnectionName());
 	if (!host.isEmpty()) db.setHostName(host);
 	if (port != 0) db.setPort(port);

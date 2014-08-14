@@ -18,8 +18,9 @@ DbConnectionForm::DbConnectionForm(DbConnection *dbCon, QWidget *parent) :
 	ui->cbDbType->addItem("QPSQL");
 	ui->cbDbType->addItem("QMYSQL");
 	ui->cbDbType->addItem("QSQLITE");
+	ui->cbDbType->addItem("MSSQL");
 
-	if (nullptr != dbCon)
+	if (nullptr != dbc)
 	{
 		ui->lineEditName->setText(dbc->getName());
 		ui->cbDbType->setCurrentText(dbc->getDbType());
@@ -28,6 +29,7 @@ DbConnectionForm::DbConnectionForm(DbConnection *dbCon, QWidget *parent) :
 		ui->lineEditPort->setText(QString("%1").arg(dbc->getPort()));
 		ui->lineEditUser->setText(dbc->getUsername());
 		ui->lineEditPassword->setText(dbc->getPassword());
+		ui->checkBoxPasswordSave->setChecked(dbc->getPasswordSave());
 	}
 }
 
@@ -52,6 +54,7 @@ void DbConnectionForm::on_pushButtonExit_clicked()
 		}
 		dbc->setUsername(ui->lineEditUser->text());
 		dbc->setPassword(ui->lineEditPassword->text());
+		dbc->setPasswordSave(ui->checkBoxPasswordSave->checkState() == Qt::Checked);
 	}
 
 	this->close();

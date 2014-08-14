@@ -34,23 +34,26 @@ public:
 	QString getName() const { return name; }
 	void setName(const QString &value);
 
-	QString getDbType() const;
+	QString getDbType() const {return dbType; }
 	void setDbType(const QString &value);
 
-	QString getDbName() const;
+	QString getDbName() const {return dbName; }
 	void setDbName(const QString &value);
 
-	QString getHost() const;
+	QString getHost() const {return host; }
 	void setHost(const QString &value);
 
-	QString getUsername() const;
+	QString getUsername() const {return username; }
 	void setUsername(const QString &value);
 
-	QString getPassword() const;
+	QString getPassword() const {return password; }
 	void setPassword(const QString &value);
 
-	quint32 getPort() const;
+	quint32 getPort() const {return port; }
 	void setPort(const quint32 &value);
+
+	bool getPasswordSave() const {return passwordSave; }
+	void setPasswordSave(const bool value);
 
 private:
 	QString name;
@@ -60,6 +63,7 @@ private:
 	QString username;
 	QString password;
 	quint32 port;
+	bool passwordSave;
 	
 };
 

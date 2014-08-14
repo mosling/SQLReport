@@ -14,6 +14,26 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="2" column="1" colspan="2">
+    <widget class="QComboBox" name="cbDbType"/>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Type</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QPushButton" name="pushButtonCancel">
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="2">
+    <widget class="QLineEdit" name="lineEditDbName"/>
+   </item>
    <item row="6" column="0">
     <widget class="QLabel" name="labelPassword">
      <property name="text">
@@ -21,23 +41,13 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="labelDbName">
+   <item row="0" column="1" colspan="2">
+    <widget class="QLineEdit" name="lineEditName"/>
+   </item>
+   <item row="6" column="3">
+    <widget class="QCheckBox" name="checkBoxPasswordSave">
      <property name="text">
-      <string>Name</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1" colspan="2">
-    <widget class="QLineEdit" name="lineEditPort"/>
-   </item>
-   <item row="5" column="1" colspan="2">
-    <widget class="QLineEdit" name="lineEditUser"/>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="labelUser">
-     <property name="text">
-      <string>Username</string>
+      <string>Save</string>
      </property>
     </widget>
    </item>
@@ -48,23 +58,17 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="1" colspan="2">
-    <widget class="QLineEdit" name="lineEditDbName"/>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="labelName">
+   <item row="5" column="0">
+    <widget class="QLabel" name="labelUser">
      <property name="text">
-      <string>Connection</string>
+      <string>Username</string>
      </property>
     </widget>
    </item>
-   <item row="6" column="1" colspan="2">
-    <widget class="QLineEdit" name="lineEditPassword"/>
-   </item>
-   <item row="1" column="3">
-    <widget class="QToolButton" name="toolButtonName">
+   <item row="7" column="2">
+    <widget class="QPushButton" name="pushButtonExit">
      <property name="text">
-      <string>...</string>
+      <string>Save</string>
      </property>
     </widget>
    </item>
@@ -75,38 +79,57 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="2">
-    <widget class="QPushButton" name="pushButtonExit">
+   <item row="1" column="3">
+    <widget class="QToolButton" name="toolButtonName">
      <property name="text">
-      <string>Exit</string>
+      <string>...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1" colspan="2">
+    <widget class="QLineEdit" name="lineEditPassword">
+     <property name="echoMode">
+      <enum>QLineEdit::PasswordEchoOnEdit</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="labelName">
+     <property name="text">
+      <string>Connection</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1" colspan="2">
+    <widget class="QLineEdit" name="lineEditUser"/>
+   </item>
+   <item row="4" column="1" colspan="2">
+    <widget class="QLineEdit" name="lineEditPort"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="labelDbName">
+     <property name="text">
+      <string>Name</string>
      </property>
     </widget>
    </item>
    <item row="3" column="1" colspan="2">
     <widget class="QLineEdit" name="lineEditHost"/>
    </item>
-   <item row="0" column="1" colspan="2">
-    <widget class="QLineEdit" name="lineEditName"/>
-   </item>
-   <item row="7" column="1">
-    <widget class="QPushButton" name="pushButtonCancel">
-     <property name="text">
-      <string>Cancel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Type</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1" colspan="2">
-    <widget class="QComboBox" name="cbDbType"/>
-   </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>lineEditName</tabstop>
+  <tabstop>lineEditDbName</tabstop>
+  <tabstop>cbDbType</tabstop>
+  <tabstop>lineEditHost</tabstop>
+  <tabstop>lineEditPort</tabstop>
+  <tabstop>lineEditUser</tabstop>
+  <tabstop>lineEditPassword</tabstop>
+  <tabstop>pushButtonExit</tabstop>
+  <tabstop>pushButtonCancel</tabstop>
+  <tabstop>toolButtonName</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

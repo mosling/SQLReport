@@ -8,13 +8,22 @@
             <port>0</port>
             <dbname>C:/Development/moonwave/src/tools/sqlReport/demo/Chinook.sqlite</dbname>
             <user></user>
-            <pass></pass>
+            <save>no</save>
+        </Database>
+        <Database>
+            <name>DBD</name>
+            <type>MSSQL</type>
+            <host></host>
+            <port>1533</port>
+            <dbname>DeepBlueDevelopment</dbname>
+            <user>steffen</user>
+            <save>no</save>
         </Database>
     </DatabaseSet>
     <QuerySet>
         <Query>
             <name>Artists</name>
-            <dbname>chinook_sqlite_1.4</dbname>
+            <dbname>DBD</dbname>
             <descr></descr>
             <defines></defines>
             <sql>scripts/artist.sql</sql>
