@@ -14,17 +14,18 @@ DbConnectionForm::DbConnectionForm(DbConnection *dbCon, QWidget *parent) :
 	ui->setupUi(this);
 
 	// Combobox füllen
-	ui->cbDbType->addItem("QODBC");
-	ui->cbDbType->addItem("QPSQL");
-	ui->cbDbType->addItem("QMYSQL");
-	ui->cbDbType->addItem("QSQLITE");
-	ui->cbDbType->addItem("MSSQL");
+    QStringList drivers = QSqlDatabase::drivers();
+    ui->cbDbType->addItems(drivers);
 
 	if (nullptr != dbc)
 	{
 		ui->lineEditName->setText(dbc->getName());
+        if (!drivers.contains(dbc->getDbType()))
+        {
+            ui->cbDbType->addItem(dbc->getDbType());
+        }
 		ui->cbDbType->setCurrentText(dbc->getDbType());
-		ui->lineEditDbName->setText(dbCon->getDbName());
+        ui->lineEditDbName->setText(dbc->getDbName());
 		ui->lineEditHost->setText(dbc->getHost());
 		ui->lineEditPort->setText(QString("%1").arg(dbc->getPort()));
 		ui->lineEditUser->setText(dbc->getUsername());

@@ -19,17 +19,15 @@ lint/qt-include-path.lnt
 *.[oa]
 *.so
 *.so.*
-# expect some 3rd party libraries
-!3rdparty/canlib32/canlib32.dll
 
-# backup, output and temporary files #
-# ####################################
+# backup, logs, output and temporary files #
+# ##########################################
 *~
 *.bak
 *.autosave
 *.orig
-tmp/
-generators/output/
+*.log
+*.rep
 
 # Packages #
 # ##########
@@ -43,12 +41,6 @@ generators/output/
 *.tgz
 *.tar.gz
 *.zip
-
-# Logs and databases #
-# ####################
-*.log
-*.rep
-*.sqlite
 
 # OS generates files #
 # ####################
