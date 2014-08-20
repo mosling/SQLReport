@@ -51,7 +51,7 @@ private:
 	void replaceLineVariable(const QStringList &varList, QString &result, int lineCnt);
 	void replaceLineGlobal(const QStringList &varList, QString &result, int lineCnt);
 	void showDbError(QString vErrStr);
-	void showMsg(QString vMsgStr, LogLevel ll = LogLevel::MSG);
+	void showMsg(QString vMsgStr, LogLevel ll);
 	bool connectDatabase();
 	void createOutputFileName(const QString &basePath);
 	void createInputFileNames(const QString &basePath);

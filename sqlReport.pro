@@ -30,7 +30,8 @@ SOURCES += main.cpp \
     editwidget.cpp \
     DbConnectionSet.cpp \
     DbConnection.cpp \
-    DbConnectionForm.cpp
+    DbConnectionForm.cpp \
+    Utility.cpp
 
 HEADERS  += \
     SqlReportHighlighter.h \
@@ -42,7 +43,8 @@ HEADERS  += \
     EditWidget.h \
     DbConnectionSet.h \
     DbConnection.h \
-    DbConnectionForm.h
+    DbConnectionForm.h \
+    Utility.h
 
 FORMS    += \
     SqlReport.ui \

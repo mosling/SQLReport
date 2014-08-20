@@ -1,7 +1,10 @@
 #include "QueryExecutor.h"
+#include "Utility.h"
+
 #include <QInputDialog>
 #include <QUrl>
 #include <QHashIterator>
+#include <QTime>
 
 QueryExecutor::QueryExecutor(QObject *parentObj)
 	: QObject(parentObj),
@@ -395,7 +398,7 @@ void QueryExecutor::createOutputFileName(const QString &basePath)
 						   +"-"+bn+"-"+mNow.toString("hhmm")+"."+sf;
 		}
 
-		showMsg(tr("OUTPUT FILE NAME '%1'").arg(mOutFileName));
+		showMsg(tr("OUTPUT FILE NAME '%1'").arg(mOutFileName), LogLevel::MSG);
 		mQSE->setLastOutputFile(mOutFileName);
 	}
 }
@@ -654,7 +657,7 @@ bool QueryExecutor::executeInputFiles()
 		if (!fileOutInfo.absoluteDir().exists())
 		{
 			showMsg(tr("create path %1")
-					.arg(fileOutInfo.absoluteDir().absolutePath()));
+					.arg(fileOutInfo.absoluteDir().absolutePath()), LogLevel::MSG);
 			fileOutInfo.absoluteDir().mkpath(fileOutInfo.absoluteDir().absolutePath());
 		}
 
@@ -992,7 +995,10 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 {
 	bool b = true;
 	mQSE = aQSE;
+	QTime t;
+	t.start();
 
+	showMsg("start query executor ", LogLevel::MSG);
 	clearStructures();								// Bereinigen der internen Strukturen
 	setInputValues(inputDefines);                   // create mInput Einträge
 	createOutputFileName(basePath);                 // erzeuge mOutFileName
@@ -1001,12 +1007,13 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 	{
 		b = dbc->connectDatabase();                 // Verbindung zur Datenbank herstellen
 	}
+	showMsg(tr("database opened after %1").arg(Utility::formatMilliSeconds(t.elapsed())), LogLevel::MSG);
 	b = b && executeInputFiles();                   // Einlesen der
 	b = b && outputTemplate("MAIN");				// Abarbeitung mit MAIN starten
 	streamOut.flush();								// Ausgabe-Datei schreiben
 	fileOut.close();								// Ausgabe-Datei schließen
 
-	showMsg(QString("%1 result line processed.").arg(uniqueId));
+	showMsg(QString("%1 result line processed after %2.").arg(uniqueId).arg(t.elapsed()), LogLevel::MSG);
 
 	// Verbindung in jedem Fall wieder schließen
 	if (nullptr != dbc)
@@ -1014,5 +1021,6 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 		dbc->closeDatabase();				        // Beenden der Datenbank-Verbindung.
 	}
 
+	showMsg(tr("query execution time: %1").arg(Utility::formatMilliSeconds(t.elapsed())), LogLevel::MSG);
 	return b;
 }

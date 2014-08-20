@@ -15,6 +15,7 @@ EditWidget::EditWidget(QWidget *parentObj) :
 {
     ui->setupUi(this);
 	highlighter = new SqlReportHighlighter(ui->teEditor->document());
+	this->setStyleSheet("selection-color: yellow; selection-background-color: blue");
 }
 
 EditWidget::~EditWidget()
@@ -85,7 +86,14 @@ void EditWidget::on_pushButtonFind_clicked()
 		lastFind = f;
 	}
 
-	ui->teEditor->find(f);
+	bool findSomething = ui->teEditor->find(f);
+
+	if (!findSomething)
+	{
+		// start from beginning
+		ui->teEditor->moveCursor(QTextCursor::Start);
+		ui->teEditor->find(f);
+	}
 }
 
 void EditWidget::on_pushButtonPdf_clicked()

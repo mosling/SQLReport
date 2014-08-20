@@ -10,11 +10,20 @@
             <user></user>
             <save>no</save>
         </Database>
+        <Database>
+            <name>DeepBlue</name>
+            <type>QODBC</type>
+            <host></host>
+            <port>0</port>
+            <dbname>DBD</dbname>
+            <user></user>
+            <save>no</save>
+        </Database>
     </DatabaseSet>
     <QuerySet>
         <Query>
             <name>Artists</name>
-            <dbname>chinook_sqlite_1.4</dbname>
+            <dbname>DeepBlue</dbname>
             <descr></descr>
             <defines></defines>
             <sql>scripts/artist.sql</sql>

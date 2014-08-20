@@ -2,6 +2,7 @@
 #include "editwidget.h"
 #include "QTreeReporter.h"
 #include "DbConnectionForm.h"
+#include "Utility.h"
 
 #include <QRegExp>
 #include <QtSql/QSqlRecord>
@@ -10,6 +11,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QSettings>
+#include <QTime>
 
 SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
     : QMainWindow(parentObj, flags),
@@ -29,10 +31,18 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
     ui.comboBoxDatabase->setModel(&databaseSet);
     ui.cbQuerySet->setModel(&mQuerySet);
 
+	sqlEditor.setWindowTitle(tr("SQL Editor"));
+	templateEditor.setWindowTitle(tr("Template Editor"));
+	outputEditor.setWindowTitle(tr("Show Report Output"));
+
     QSettings rc;
+	// restore the window geometry for the widgets and the
+	// window state for the main window
     this->restoreState(rc.value("windowState").toByteArray());
     this->restoreGeometry(rc.value("geometry").toByteArray());
-    // Größe und Position des Hauptfensters anpassen
+	sqlEditor.restoreGeometry(rc.value("sqledit").toByteArray());
+	templateEditor.restoreGeometry(rc.value("templedit").toByteArray());
+	outputEditor.restoreGeometry(rc.value("outedit").toByteArray());
 
     QString qsn = rc.value("queryset_name","scripts/queryset.xml").toString();
 
@@ -43,10 +53,19 @@ SqlReport::~SqlReport()
 {
     try
     {
-        QSettings rc;
+		updateQuerySet();
+		mQuerySet.writeXml("", databaseSet);
 
+		sqlEditor.close();
+		templateEditor.close();
+		outputEditor.close();
+
+        QSettings rc;
         rc.setValue("queryset_name",mQuerySet.getQuerySetFileName());
         rc.setValue("geometry", this->saveGeometry());
+		rc.setValue("sqledit",sqlEditor.saveGeometry());
+		rc.setValue("templedit", templateEditor.saveGeometry());
+		rc.setValue("outedit", outputEditor.saveGeometry());
         rc.setValue("windowState", QVariant(this->saveState()));
         writeLocalDefines(mQuerySet.getQuerySetFileName());
 
@@ -81,6 +100,8 @@ void SqlReport::on_But_OK_clicked()
 
     if (activeQuerySetEntry->getBatchrun())
     {
+		QTime batchTime;
+		batchTime.start();
         vpExecutor.createOutput(activeQuerySetEntry,
                                 databaseSet.getByName(activeQuerySetEntry->getDbName()),
                                 queryPath,
@@ -135,6 +156,7 @@ void SqlReport::on_But_OK_clicked()
             }
             // remove the before created batch file
             batchFile.remove();
+			ui.teReport->append(tr("Batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
         }
     }
     else
@@ -424,7 +446,7 @@ void SqlReport::writeLocalDefines(const QString &qsName)
 
     rc.beginGroup(getSettingsGroupName(qsName));
     rc.setValue("local_inputs",ui.lineEditLocal->text());
-    rc.endGroup();
+	rc.endGroup();
 }
 
 void SqlReport::on_but_AddQuerySet_clicked()
@@ -560,7 +582,7 @@ void SqlReport::on_btnShowOutput_clicked()
             else
             {
                 QMessageBox::information(this, tr("No file found!"),
-                                         tr("Please create output first (Start)\nOr uncheck batch to see the result."));
+										 tr("Please create output first (Start)\n(Uncheck batch checkbox to see the result.)"));
             }
         }
     }
@@ -577,10 +599,12 @@ void SqlReport::on_btnShowTables_clicked()
         currentDbConnection->connectDatabase();
         QTreeReporter treeReporter;
 
+		ui.teReport->append(tr("Start get database structure, please wait ..."));
         treeReporter.setReportRoot(treeModel.invisibleRootItem());
         currentDbConnection->showDatabaseTables(&treeReporter);
+		ui.teReport->append(tr("Ready."));
 
-        currentDbConnection->closeDatabase();
+		currentDbConnection->closeDatabase();
 
         if (ui.dockWidget->isHidden()) ui.dockWidget->show();
     }
@@ -592,17 +616,11 @@ void SqlReport::on_btnClear_clicked()
     ui.textEditError->clear();
 }
 
-//! After pressing the exit button the we write the existing
-//! query file.
+//! After pressing the exit button we close the
+//! window and the destructor writes the last
+//! query set and close the database.
 void SqlReport::on_pushButtonExit_clicked()
 {
-    updateQuerySet();
-    mQuerySet.writeXml("", databaseSet);
-
-    sqlEditor.close();
-    templateEditor.close();
-    outputEditor.close();
-
     this->close();
 }
 

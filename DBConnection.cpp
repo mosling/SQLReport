@@ -1,5 +1,6 @@
 #include "DBConnection.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QMessageBox>
 #include <QInputDialog>
@@ -224,6 +225,8 @@ void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
 			}
 		}
 		tr->decReportLevel();
+		QCoreApplication::processEvents();
+
 	}
 	tr->decReportLevel();
 }
