@@ -156,7 +156,7 @@ void SqlReport::on_But_OK_clicked()
             }
             // remove the before created batch file
             batchFile.remove();
-			ui.teReport->append(tr("Batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
+			ui.teReport->append(tr("batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
         }
     }
     else

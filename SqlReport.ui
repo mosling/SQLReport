@@ -602,11 +602,24 @@
             <property name="font">
              <font>
               <family>Tahoma</family>
-              <pointsize>10</pointsize>
+              <pointsize>8</pointsize>
              </font>
             </property>
             <property name="text">
              <string>Debug</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxPrepare">
+            <property name="font">
+             <font>
+              <family>Tahoma</family>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Prepare</string>
             </property>
            </widget>
           </item>

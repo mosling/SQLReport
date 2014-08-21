@@ -6,16 +6,7 @@
             <type>QSQLITE</type>
             <host></host>
             <port>0</port>
-            <dbname>C:/Development/src/tools/SQLReport/binaries/chinook.sqlite</dbname>
-            <user></user>
-            <save>no</save>
-        </Database>
-        <Database>
-            <name>DeepBlue</name>
-            <type>QODBC</type>
-            <host></host>
-            <port>0</port>
-            <dbname>DBD</dbname>
+            <dbname>C:/Development/moonwave/src/tools/sqlReport/binaries/chinook.sqlite</dbname>
             <user></user>
             <save>no</save>
         </Database>
@@ -23,9 +14,9 @@
     <QuerySet>
         <Query>
             <name>Artists</name>
-            <dbname>DeepBlue</dbname>
+            <dbname>chinook_sqlite_1.4</dbname>
             <descr></descr>
-            <defines></defines>
+            <defines>username:=unknown</defines>
             <sql>scripts/artist.sql</sql>
             <template>scripts/artists.txt.template</template>
             <output>${?outdir}/artists.txt</output>

@@ -33,6 +33,7 @@ public:
 	void setMsgWindow(QTextEdit *te);
 	void setErrorWindow(QTextEdit *te);
 	void setDebugFlag(bool flag);
+	void setPrepareQueriesFlag(bool flag);
 
 	bool createOutput(QuerySetEntry *aQSE, DbConnection *dbc,
 					  const QString &basePath, const QString &inputDefines);
@@ -41,7 +42,7 @@ public:
 
 protected:
 	bool replaceTemplate(const QStringList *aTemplLines, int aLineCnt);
-	QString replaceLine(const QString &aLine, int aLineCnt);
+	QString replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding);
 	bool outputTemplate(QString aTemplate);
 	QString getDate(const QString &aFormat) const;
 	void clearStructures();
@@ -59,17 +60,19 @@ private:
 	void setInputValues(const QString &inputDefines);
 	QStringList splitString(const QString &str, int width, const QString &startOfLine) const;
 	quint32 convertToNumber(QString aNumStr, bool &aOk) const;
+	void addSqlQuery(const QString &name, const QString &sqlLine);
 
 	bool mTreeNodeChanged;
 	QuerySetEntry *mQSE;
 	QTextEdit *mMsgWin;
 	QTextEdit *mErrorWin;
-	QHash <QString, QString> mInputs;
-	QHash <QString, QString> mReplacements;
-	QHash <QString, QString> mLastReplacements;
-	QMap <QString, quint32> mCumulationMap;
-	QMap <QString, QString> mQueries;
-	QMap <QString, QStringList* > mTemplates;
+	QHash <QString, QString> userInputs;
+	QHash <QString, QString> replacements;
+	QHash <QString, QString> lastReplacements;
+	QMap <QString, quint32> cumulationMap;
+	QMap <QString, QString> queriesMap;
+	QMap <QString, QSqlQuery> preparedQueriesMap;
+	QMap <QString, QStringList* > templatesMap;
 	QString sqlFileName;
 	QString templFileName;
 	QMap<QString, int> mExpressionMap;
@@ -81,6 +84,7 @@ private:
 	bool firstQueryResult;
 	QString lastErrorFilename;
 	bool debugOutput;
+	bool prepareQueries;
 
 };
 
