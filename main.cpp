@@ -12,6 +12,8 @@
 #include <windows.h>
 #include <wincon.h>
 
+//! The application startup, setting some values and the default INI Format
+//! and location. 
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
