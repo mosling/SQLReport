@@ -13,7 +13,8 @@
 #include <wincon.h>
 
 //! The application startup, setting some values and the default INI Format
-//! and location. 
+//! and location. This depends on the system where sqlReport runs, please look
+//! at the Qt documentation.
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
