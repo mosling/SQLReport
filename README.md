@@ -12,3 +12,5 @@ You can include this repository as git submodule using the command
 
 The documentation can be found under https://github.com/mosling/SQLReport/wiki
 
+There is a sqlite database chinook (https://chinookdatabase.codeplex.com/) which is used for the example templates. You can download your own copy or use the stored database from the binaries directory.
+
