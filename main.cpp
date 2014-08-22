@@ -14,19 +14,19 @@
 
 int main(int argc, char *argv[])
 {
-	QApplication application(argc, argv);
-	application.setOrganizationName  ("mosling");
-	application.setApplicationName   ("SqlReport");
-	application.setOrganizationDomain("https://github.com/mosling/SQLReport");
-	application.setApplicationVersion("1.1");
+	QApplication app(argc, argv);
+	app.setOrganizationName  ("mosling");
+	app.setApplicationName   ("SqlReport");
+	app.setOrganizationDomain("https://github.com/mosling/SQLReport");
+	app.setApplicationVersion("1.1");
 
 	QSettings::setDefaultFormat(QSettings::IniFormat);
-	application.connect(&application, SIGNAL(lastWindowClosed()), &application, SLOT(quit()));
+	app.connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
 
 	SqlReport reporter;
 	reporer.setVisible(true);
 
-	qint32 res = application.exec();
+	qint32 res = app.exec();
 	
 	return res;
 }
