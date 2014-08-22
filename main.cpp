@@ -15,10 +15,10 @@
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
-	a.setOrganizationName("mosling");
-	a.setApplicationName("SqlReport");
+	a.setOrganizationName  ("mosling");
+	a.setApplicationName   ("SqlReport");
 	a.setOrganizationDomain("https://github.com/mosling/SQLReport");
-	a.setApplicationVersion("1.0");
+	a.setApplicationVersion("1.1");
 
 	QSettings::setDefaultFormat(QSettings::IniFormat);
 
