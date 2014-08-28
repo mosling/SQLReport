@@ -3,6 +3,7 @@ List of artists created by ${?username,Who are you?}
 #{ARTIST.1}
 
 ::ARTIST.1
+${0.2+0.1,eval}
 ${ArtistId}=${add($ArtistId,x),eval}
 
 ::ARTIST

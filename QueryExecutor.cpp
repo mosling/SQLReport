@@ -773,11 +773,11 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 
 	if (simpleFormat)
 	{
-		rx.setPattern("\\$([a-zA-Z?_]+)"); // all expressions like $...
+		rx.setPattern("\\$([a-zA-Z?_]+)"); // all expressions like $... capture the ... part
 	}
 	else
 	{
-		rx.setPattern("\\$\\{([^\\}]*)\\}"); // all expressions like ${...}
+		rx.setPattern("\\$\\{([^\\}]*)\\}"); // all expressions like ${...} capture the ... part
 	}
 
 	while ((pos = rx.indexIn(aLine, lpos)) != -1)
@@ -854,7 +854,7 @@ QString QueryExecutor::getDate(const QString &aFormat) const
 //! \return true if the calling method has to add a linefeed
 bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt)
 {
-	QRegExp rx("\\#\\{([^\\}]*)\\}"); // all expressions like #{...}
+	QRegExp rx("\\#\\{([^\\}]*)\\}"); // all expressions like #{...} capture the ... part
 	QString tmpName, result;
 	bool vRes = false;
 	int vLineNum=0, pos=0, lpos=0;
