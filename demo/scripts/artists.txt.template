@@ -1,13 +1,23 @@
 ::MAIN
 List of artists created by ${?username,Who are you?}
-#{ARTIST}
+#{ARTIST.1}
+
+::ARTIST.1
+${ArtistId}=${add($ArtistId,x),eval}
 
 ::ARTIST
-${ArtistId}${__TAB,10}${Name}
+${ArtistId}${__TAB,20}${Name}
 Album List: (#{ALBUM,list, | })
 
-::ALBUM
+::ALBUM 
 ${AlbumId}\
 
 ::ALBUM_EMPTY
 no entry
+
+::Javascript
+var x = 0;
+function add(a,b) {
+ x=x+1;
+ return a+b;
+}

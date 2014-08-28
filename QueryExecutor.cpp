@@ -4,6 +4,7 @@
 #include <QInputDialog>
 #include <QUrl>
 #include <QHashIterator>
+#include <QtScript/QScriptValue>
 #include <QTime>
 
 QueryExecutor::QueryExecutor(QObject *parentObj)
@@ -21,6 +22,7 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  sqlFileName(""),
 	  templFileName(""),
 	  mExpressionMap(),
+	  scriptEngine(),
 	  fileOut(),
 	  streamOut(),
 	  uniqueId(0),
@@ -385,7 +387,7 @@ void QueryExecutor::createOutputFileName(const QString &basePath)
 	if (nullptr != mQSE)
 	{
 		QString mOutFileName = mQSE->getOutputFile();
-		mOutFileName = replaceLine(mOutFileName, 0, false);
+		mOutFileName = replaceLine(mOutFileName, 0, false, false);
 
 		if (!(mOutFileName.startsWith("/") || mOutFileName.at(1)==':') )
 		{
@@ -558,7 +560,7 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
 	{
 		showMsg(QString("Adding Prepared SQL Query '%1'").arg(name), LogLevel::DBG);
 
-		QString tempPrepQuery = replaceLine(sqlLine, 0, true);
+		QString tempPrepQuery = replaceLine(sqlLine, 0, true, false);
 		showMsg(tr("prepared sql query: %1").arg(tempPrepQuery), LogLevel::DBG);
 		QSqlQuery q(QSqlDatabase::database());
 		bool qb = q.prepare(tempPrepQuery);
@@ -686,6 +688,17 @@ bool QueryExecutor::executeInputFiles()
 		}
 	}
 
+	if (templatesMap.contains("Javascript"))
+	{
+		scriptEngine.evaluate(templatesMap["Javascript"]->join('\n'));
+		if (scriptEngine.hasUncaughtException())
+		{
+			showMsg(tr("javascript error '%1' at line %2 ")
+					.arg(scriptEngine.uncaughtException().toString())
+					.arg(scriptEngine.uncaughtExceptionLineNumber()) , LogLevel::ERR);
+		}
+	}
+
 	if (nullptr != mQSE)
 	{
 		// open the output file, create missing path
@@ -744,32 +757,60 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 	}
 }
 
-
 //! This methods replaces the all variables with the current value.
 //! All variables has the syntax ${...} and we have normal, global and
 //! user input variables.
 //! Another special case is the flag sqlBinding, if this set all variables
 //! replaced by :varname and can be used in prepared SQL queries.
-QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding)
+//! If the simpleFormat is true we replace a expression line. In expressions every
+//! variable starts with a dollar sign and follow the same naming conventions
+//! as the normal replace name method call.
+QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding, bool simpleFormat)
 {
-	QRegExp rx("\\$\\{([^\\}]*)\\}"); // all expressions like ${...}
-	QString tmpName;
+	QRegExp rx;
 	QString result = "";
-	QStringList tmpList;
 	int lpos=0, pos = 0;
+
+	if (simpleFormat)
+	{
+		rx.setPattern("\\$([a-zA-Z?_]+)"); // all expressions like $...
+	}
+	else
+	{
+		rx.setPattern("\\$\\{([^\\}]*)\\}"); // all expressions like ${...}
+	}
 
 	while ((pos = rx.indexIn(aLine, lpos)) != -1)
 	{
-		tmpName = rx.cap(1);
-		tmpList = tmpName.split(',');
-		tmpName = tmpList.at(0);
+		QString tmpExpression = rx.cap(1);
+		QStringList tmpList = tmpExpression.split(',');
+		QString tmpName     = tmpList.at(0);
+
 		// add the first part to the result
 		result += aLine.mid(lpos,pos-lpos);
 		lpos = pos + rx.matchedLength();
 
-
-		// check if we have a user variable
-		if (tmpName.startsWith("?"))
+		// first look for an expression evaluated by the script engine
+		if ("EVAL" == tmpList.at(tmpList.size()-1).toUpper())
+		{
+			tmpList.removeLast();
+			tmpName = tmpList.join(',');
+			QString expression = replaceLine(tmpName, aLineCnt, false, true);
+			QScriptValue expResult = scriptEngine.evaluate(expression).toString();
+			if (!scriptEngine.hasUncaughtException())
+			{
+				result += expResult.toString();
+			}
+			else
+			{
+				showMsg(tr("error '%1' at line %2 evaluate script /%3/")
+						.arg(scriptEngine.uncaughtException().toString())
+						.arg(scriptEngine.uncaughtExceptionLineNumber())
+						.arg(expression), LogLevel::ERR);
+			}
+		}
+		// else check if we have a user variable
+		else if (tmpName.startsWith("?"))
 		{
 			replaceLineUserInput(tmpList, result, aLineCnt);
 		}
@@ -821,6 +862,7 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 
 	vLineNum = aTemplLines->size();
 	mTreeNodeChanged = false;
+	result = "";
 	for (int i = 0; i < vLineNum; ++i)
 	{
 		bool lastLine = ((i+1) == vLineNum);
@@ -830,14 +872,14 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 		{
 			tmpName = rx.cap(1);
 			result = vStr.mid(lpos,pos-lpos);
-			streamOut << replaceLine(result, aLineCnt, false);
+			streamOut << replaceLine(result, aLineCnt, false, false);
 			lpos = pos + rx.matchedLength();
 			// now add the subtemplate
 			outputTemplate(tmpName);
 		}
 
 		QString tmpStr = vStr.mid(lpos);
-		result = replaceLine(tmpStr, aLineCnt, false);
+		result = replaceLine(tmpStr, aLineCnt, false, false);
 		if (result.endsWith("\\"))
 		{
 			// remove the last backslash sign
@@ -879,16 +921,18 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	bool lastReplaceLinefeed = false;
 	QHash<QString, QString> overwrittenReplacements;
 
-	// first check the calling template string for more informations
-	if (aTemplate.contains(",list") || aTemplate.contains(", list"))
-	{
-		QStringList ll = aTemplate.split(',');
-		aTemplate = ll.at(0).trimmed();
+	// split the given aTemplate into parts separated by comma
+	QStringList ll = aTemplate.split(',');
+	aTemplate = ll.at(0).trimmed();
+	QString outputModifier = ll.size()>1 ? ll.at(1).trimmed().toUpper() : "";
 
+	// first check the calling template string for more informations
+	if ("LIST" == outputModifier)
+	{
 		if (ll.size() > 2)
 		{
 			ll.removeFirst(); // the template name
-			ll.removeFirst(); // the list modifier
+			ll.removeFirst(); // the output modifier
 			listSeperator = ll.join(',');
 		}
 		else
@@ -943,7 +987,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			}
 			else
 			{
-				sqlQuery = replaceLine(queriesMap[queryTemplate], lineCnt, false);
+				sqlQuery = replaceLine(queriesMap[queryTemplate], lineCnt, false, false);
 				bRet = query.exec(sqlQuery);
 			}
 

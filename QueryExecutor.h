@@ -13,6 +13,7 @@
 #include <qdebug>
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlQuery>
+#include <QtScript/QScriptEngine>
 #include <string>
 #include <stdio.h>
 #include <ctime>
@@ -42,7 +43,7 @@ public:
 
 protected:
 	bool replaceTemplate(const QStringList *aTemplLines, int aLineCnt);
-	QString replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding);
+	QString replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding, bool simpleFormat);
 	bool outputTemplate(QString aTemplate);
 	QString getDate(const QString &aFormat) const;
 	void clearStructures();
@@ -76,6 +77,7 @@ private:
 	QString sqlFileName;
 	QString templFileName;
 	QMap<QString, int> mExpressionMap;
+	QScriptEngine scriptEngine;
 
 	QFile fileOut;
 	QTextStream streamOut;

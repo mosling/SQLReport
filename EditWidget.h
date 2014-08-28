@@ -3,6 +3,7 @@
 
 #include "SqlReportHighlighter.h"
 
+#include <QWidget>
 #include <QDialog>
 #include <QFile>
 #include <QCloseEvent>
@@ -21,7 +22,6 @@ public:
 
 	bool newFile(QString aFileName);
 	void saveFile();
-	void reject() override;
 
 protected:
 	void closeEvent(QCloseEvent *event);

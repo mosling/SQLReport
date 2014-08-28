@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 	app.connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
 
 	SqlReport reporter;
-	reporer.setVisible(true);
+	reporter.setVisible(true);
 
 	qint32 res = app.exec();
 	

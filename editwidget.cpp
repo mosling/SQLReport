@@ -11,7 +11,6 @@ EditWidget::EditWidget(QWidget *parentObj) :
 	ui(new Ui::EditWidget),
 	highlighter(nullptr),
 	currentFileName("")
-
 {
     ui->setupUi(this);
 	highlighter = new SqlReportHighlighter(ui->teEditor->document());
@@ -127,10 +126,6 @@ void EditWidget::closeEvent(QCloseEvent *event)
 		ui->teEditor->clear();
 		currentFileName = "";
 	}
-}
-
-void EditWidget::reject()
-{
 }
 
 bool EditWidget::maybeSave()

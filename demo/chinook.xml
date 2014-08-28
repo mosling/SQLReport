@@ -16,7 +16,7 @@
             <name>Artists</name>
             <dbname>chinook_sqlite_1.4</dbname>
             <descr></descr>
-            <defines>username:=unknown</defines>
+            <defines>username:=unknown|const:=2</defines>
             <sql>scripts/artist.sql</sql>
             <template>scripts/artists.txt.template</template>
             <output>${?outdir}/artists.txt</output>
