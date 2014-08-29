@@ -14,6 +14,7 @@ DbConnection::DbConnection(QObject *parentObj) :
 	name(""),
 	dbType(""),
 	dbName(""),
+	tablePrefix(""),
 	host(""),
 	username(""),
 	password(""),
@@ -38,6 +39,7 @@ void DbConnection::readXmlNode(const QDomNode &aNode)
 		ce = ce.toUpper();
 		if (ce == "NAME")   { name = te; }
 		if (ce == "DBNAME") { dbName = te; }
+		if (ce == "PREFIX") { tablePrefix = te; }
 		if (ce == "HOST")   { host = te; }
 		if (ce == "USER")   { username = te; }
 		if (ce == "PASS")   { password = te; }
@@ -51,8 +53,9 @@ void DbConnection::readXmlNode(const QDomNode &aNode)
 void DbConnection::writeXmlNode(QXmlStreamWriter &aStream)
 {
 	aStream.writeStartElement("Database");
-	aStream.writeTextElement("name", name);
 	aStream.writeTextElement("type", dbType);
+	aStream.writeTextElement("name", name);
+	aStream.writeTextElement("prefix", tablePrefix);
 	aStream.writeTextElement("host", host);
 	aStream.writeTextElement("port", QString("%1").arg(port));
 	aStream.writeTextElement("dbname", dbName);
@@ -78,6 +81,11 @@ void DbConnection::setDbType(const QString &value)
 void DbConnection::setDbName(const QString &value)
 {
 	dbName = value;
+}
+
+void DbConnection::setTablePrefix(const QString &value)
+{
+	tablePrefix = value;
 }
 
 void DbConnection::setHost(const QString &value)

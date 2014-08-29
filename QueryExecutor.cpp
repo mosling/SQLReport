@@ -239,6 +239,8 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			{
 				// einen einfachen Vergleich gefunden, der zu einer Ausgabe
 				// führt, wenn er wahr ist.
+				showMsg(tr("DEPRECATED compare operation %1, please replace this with the ,eval equivalent")
+						.arg(vCmd), LogLevel::ERR);
 				bool bOk1 = false;
 				bool bOk2 = false;
 				quint32 op1 = vStr.toUInt(&bOk1);
@@ -420,7 +422,7 @@ void QueryExecutor::createInputFileNames(const QString &basePath)
 {
 	if (nullptr != mQSE)
 	{
-		sqlFileName = basePath + "/" + mQSE->getSqlFile();
+		sqlFileName = mQSE->getSqlFile().isEmpty() ? "" : basePath + "/" + mQSE->getSqlFile();
 		templFileName = basePath + "/" + mQSE->getTemplateFile();
 	}
 	else
@@ -590,49 +592,53 @@ bool QueryExecutor::executeInputFiles()
 	QString name, line;
 	int lineNr = 0;
 
-	// open and read the SQL-statements
-	QFile fileSql(sqlFileName);
-	if (!fileSql.open(QIODevice::ReadOnly | QIODevice::Text))
+	// open and read the SQL-statements if existing
+	if (!sqlFileName.isEmpty())
 	{
-		showMsg(tr("can't open sql file '%1'").arg(templFileName), LogLevel::ERR);
-	}
-	else
-	{
-		QTextStream streamInSql(&fileSql);
-		QString sqlLine;
-		name = "";
-		while ( !streamInSql.atEnd())
+		QFile fileSql(sqlFileName);
+		if (!fileSql.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
-			line = streamInSql.readLine().trimmed();
-			lineNr++;
-			if (line.length() != 0 && !line.startsWith("//"))  // ignore empty lines and comments
+			showMsg(tr("can't open sql file '%1'").arg(sqlFileName), LogLevel::ERR);
+			bRet = false;
+		}
+		else
+		{
+			QTextStream streamInSql(&fileSql);
+			QString sqlLine;
+			name = "";
+			while ( !streamInSql.atEnd())
 			{
-				if (line.startsWith("::"))
+				line = streamInSql.readLine().trimmed();
+				lineNr++;
+				if (line.length() != 0 && !line.startsWith("//"))  // ignore empty lines and comments
 				{
-					if (!name.isEmpty())
+					if (line.startsWith("::"))
 					{
-						addSqlQuery(name, sqlLine);
-					}
-					sqlLine = "";
-					name = line.mid(2);
-				}
-				else
-				{
-					if ( "" == name)
-					{
-						showMsg(QString("no name for SQL at line %2")
-								.arg(lineNr), LogLevel::ERR);
+						if (!name.isEmpty())
+						{
+							addSqlQuery(name, sqlLine);
+						}
+						sqlLine = "";
+						name = line.mid(2);
 					}
 					else
 					{
-						sqlLine += " " + line;  // add a space to prevent concatening input words
+						if ( "" == name)
+						{
+							showMsg(QString("no name for SQL at line %2")
+									.arg(lineNr), LogLevel::ERR);
+						}
+						else
+						{
+							sqlLine += " " + line;  // add a space to prevent concatening input words
+						}
 					}
 				}
 			}
-		}
-		if (!name.isEmpty())
-		{
-			addSqlQuery(name, sqlLine);
+			if (!name.isEmpty())
+			{
+				addSqlQuery(name, sqlLine);
+			}
 		}
 	}
 
@@ -734,12 +740,13 @@ bool QueryExecutor::executeInputFiles()
 	return bRet;
 }
 
-//! Alle Parameter die durch ein {? Feld eingegeben werden können,
-//! können auch beim Start der Eingabe mit übergeben werden. In der Form
-//! parameter:=Wert|...
+//! All parameters starting with ? (i.e. ${?username}) can be used
+//! as command line parameters. The inputDefines holds a number of the
+//! paramerters with the syntax.
+//! parameter1:=Wert|parameter2:=Wert2|...
 void QueryExecutor::setInputValues(const QString &inputDefines)
 {
-	QStringList pList = inputDefines.split("|", QString::SkipEmptyParts);
+	QStringList pList = inputDefines.split('|', QString::SkipEmptyParts);
 	foreach (QString pValue, pList)
 	{
 		QStringList pvList = pValue.split(QRegExp(":="));
@@ -749,10 +756,13 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 			QString value = (pvList.size() > 1) ? pvList.at(1) : "";
 			bool overwrite = userInputs.contains(param);
 			userInputs[param] = value;
-			showMsg(tr("%1 INPUT PARAM '%2' with value '%3'")
-					.arg(overwrite ? "OVERWRITE" : "ADD")
-					.arg(param)
-					.arg(value), LogLevel::DBG);
+			if (debugOutput)
+			{
+				showMsg(tr("%1 INPUT PARAM '%2' with value '%3'")
+						.arg(overwrite ? "OVERWRITE" : "ADD")
+						.arg(param)
+						.arg(value), LogLevel::MSG);
+			}
 		}
 	}
 }
@@ -913,10 +923,10 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 //! method.
 bool QueryExecutor::outputTemplate(QString aTemplate)
 {
-	QSqlQuery query;
-	const QStringList *templLines;
-	QString listSeperator("");
-	int lineCnt = 0;
+	QSqlQuery query;                // hold the sql query
+	const QStringList *templLines;  // the lines of the template
+	QString listSeperator("");      // used with the ,list modifier
+	int lineCnt = 0;                //
 	bool bRet = true;
 	bool lastReplaceLinefeed = false;
 	QHash<QString, QString> overwrittenReplacements;
@@ -1110,29 +1120,38 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 	QTime t;
 	t.start();
 
-	showMsg(tr("development features: debug is %1, prepare is %2")
-			.arg(debugOutput?"true":"false")
-			.arg(prepareQueries?"true":"false"), LogLevel::MSG);
-
-	clearStructures();								// Bereinigen der internen Strukturen
-	setInputValues(inputDefines);                   // create mInput Einträge
-	createOutputFileName(basePath);                 // erzeuge mOutFileName
-	createInputFileNames(basePath);					// ergänzen der Input-Dateien um den Pfad
+	clearStructures();								// remove the internal structure
+	setInputValues(inputDefines);                   // set the input parameters from (input defines and local definese)
+	createOutputFileName(basePath);                 // create variable mOutFileName
+	createInputFileNames(basePath);					// create absolute input file names
 	if (nullptr != dbc)
 	{
-		b = dbc->connectDatabase();                 // Verbindung zur Datenbank herstellen
+		b = dbc->connectDatabase();                 // connect to database and set _tableprefix
+		replacements["_tableprefix"] = dbc->getTablePrefix();
+		if (debugOutput)
+		{
+			showMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]), LogLevel::DBG);
+		}
 	}
-	b = b && executeInputFiles();                   // Einlesen der
-	b = b && outputTemplate("MAIN");				// Abarbeitung mit MAIN starten
-	streamOut.flush();								// Ausgabe-Datei schreiben
-	fileOut.close();								// Ausgabe-Datei schließen
+	b = b && executeInputFiles();                   // read the sql and the template file into the internal structure
+	b = b && outputTemplate("MAIN");				// start process with the MAIN template
+	streamOut.flush();
+	fileOut.close();								// flush and close the output file
 
 	// Verbindung in jedem Fall wieder schließen
 	if (nullptr != dbc)
 	{
-		dbc->closeDatabase();				        // Beenden der Datenbank-Verbindung.
+		dbc->closeDatabase();				        // close the database connection
 	}
 
-	showMsg(tr("query execution time: %1").arg(Utility::formatMilliSeconds(t.elapsed())), LogLevel::MSG);
+	showMsg(tr("query execution time: %1; using %2 different parameters")
+			.arg(Utility::formatMilliSeconds(t.elapsed()))
+			.arg(replacements.size()), LogLevel::MSG);
+
+	if (!b)
+	{
+		showMsg(tr("creating output creates some errors (see error window)"), LogLevel::MSG);
+	}
+
 	return b;
 }

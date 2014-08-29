@@ -26,6 +26,7 @@ DbConnectionForm::DbConnectionForm(DbConnection *dbCon, QWidget *parent) :
         }
 		ui->cbDbType->setCurrentText(dbc->getDbType());
         ui->lineEditDbName->setText(dbc->getDbName());
+		ui->lineEditTablePrefix->setText(dbc->getTablePrefix());
 		ui->lineEditHost->setText(dbc->getHost());
 		ui->lineEditPort->setText(QString("%1").arg(dbc->getPort()));
 		ui->lineEditUser->setText(dbc->getUsername());
@@ -45,6 +46,7 @@ void DbConnectionForm::on_pushButtonExit_clicked()
 	{
 		dbc->setName(ui->lineEditName->text());
 		dbc->setDbName(ui->lineEditDbName->text());
+		dbc->setTablePrefix(ui->lineEditTablePrefix->text());
 		dbc->setHost(ui->lineEditHost->text());
 		dbc->setDbType(ui->cbDbType->currentText());
 		bool bOk;

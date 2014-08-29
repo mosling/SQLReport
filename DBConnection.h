@@ -40,6 +40,9 @@ public:
 	QString getDbName() const {return dbName; }
 	void setDbName(const QString &value);
 
+	QString getTablePrefix() const {return tablePrefix; }
+	void setTablePrefix(const QString &value);
+
 	QString getHost() const {return host; }
 	void setHost(const QString &value);
 
@@ -59,6 +62,7 @@ private:
 	QString name;
 	QString dbType;
 	QString dbName;
+	QString tablePrefix;
 	QString host;
 	QString username;
 	QString password;

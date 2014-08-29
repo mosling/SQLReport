@@ -77,7 +77,7 @@ SqlReport::~SqlReport()
 //! Press the Ok-button starts the processing. At this time we
 //! create the database connection and parse the template file starting
 //! with the ::MAIN entry.
-//! If the active query set is BATCH we execute the
+//! If the active query set is BATCH we execute the generated query statements atsrting with !!
 void SqlReport::on_But_OK_clicked()
 {
     QueryExecutor vpExecutor;
@@ -92,11 +92,11 @@ void SqlReport::on_But_OK_clicked()
     updateQuerySet();
     ui.teReport->clear();
     ui.textEditError->clear();
-    ui.teReport->append(tr("using base path   : %1").arg(queryPath));
 
     vpExecutor.setMsgWindow(ui.teReport);
     vpExecutor.setErrorWindow(ui.textEditError);
     vpExecutor.setDebugFlag(ui.checkBoxDebug->isChecked());
+	vpExecutor.setPrepareQueriesFlag(ui.checkBoxPrepare->isChecked());
 
     if (activeQuerySetEntry->getBatchrun())
     {
