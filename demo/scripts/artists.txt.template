@@ -1,16 +1,12 @@
 ::MAIN
 List of artists created by ${?username,Who are you?}
-#{ARTIST.1}
-
-::ARTIST.1
-${0.2+0.1,eval}
-${ArtistId}=${add($ArtistId,x),eval}
+#{ARTIST}
 
 ::ARTIST
-${ArtistId}${__TAB,20}${Name}
+${1+add(0,x),eval}${__TAB,4}: ${Name}
 Album List: (#{ALBUM,list, | })
 
-::ALBUM 
+::ALBUM
 ${AlbumId}\
 
 ::ALBUM_EMPTY

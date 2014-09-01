@@ -2,8 +2,9 @@
 <SqlReport>
     <DatabaseSet>
         <Database>
-            <name>chinook_sqlite_1.4</name>
             <type>QSQLITE</type>
+            <name>chinook_sqlite_1.4</name>
+            <prefix></prefix>
             <host></host>
             <port>0</port>
             <dbname>C:/Development/moonwave/src/tools/sqlReport/binaries/chinook.sqlite</dbname>

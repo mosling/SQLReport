@@ -619,7 +619,7 @@ bool QueryExecutor::executeInputFiles()
 							addSqlQuery(name, sqlLine);
 						}
 						sqlLine = "";
-						name = line.mid(2);
+						name = line.mid(2).trimmed();
 					}
 					else
 					{
@@ -662,7 +662,7 @@ bool QueryExecutor::executeInputFiles()
 				if (line.startsWith("::"))
 				{
 					emptyLineCnt = 0;
-					name = line.mid(2);
+					name = line.mid(2).trimmed();
 					if (!name.isEmpty())
 					{
 						if (templatesMap.contains(name))
