@@ -14,6 +14,8 @@ class DbConnectionForm;
 class DbConnectionForm : public QDialog
 {
 	Q_OBJECT
+	Q_CLASSINFO ("author", "St. Koehler")
+	Q_CLASSINFO ("company", "com.github.mosling")
 
 public:
 	explicit DbConnectionForm(DbConnection *dbCon, QWidget *parent = 0);

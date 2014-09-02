@@ -24,8 +24,8 @@
 class QueryExecutor : public QObject
 {
 	Q_OBJECT
-	Q_CLASSINFO ("author", "steffen")
-	Q_CLASSINFO ("company", "Moonwave Systems GmbH")
+	Q_CLASSINFO ("author", "St. Koehler")
+	Q_CLASSINFO ("company", "com.github.mosling")
 
 public:
 	explicit QueryExecutor(QObject *parentObj = nullptr);
