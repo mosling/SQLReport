@@ -16,6 +16,8 @@ class DbConnection : public QObject
 {
 
 	Q_OBJECT
+	Q_CLASSINFO ("author", "St. Koehler")
+	Q_CLASSINFO ("company", "com.github.mosling")
 
 public:
 	explicit DbConnection(QObject *parentObj = nullptr);
@@ -25,7 +27,7 @@ public:
 	QString getConnectionName() const;
 	bool connectDatabase();
 	void closeDatabase() const;
-	void showTableList(QSql::TableType aType, QString aHead, QTreeReporter *tr) const;
+	void showTableList(QSql::TableType aType, QString aHead, QTreeReporter *treeReporter) const;
 	void showDatabaseTables(QTreeReporter *tr) const;
 
 	void readXmlNode(const QDomNode &aNode);

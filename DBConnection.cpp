@@ -188,24 +188,24 @@ void DbConnection::closeDatabase() const
 	}
 }
 
-void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeReporter *tr) const
+void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeReporter *treeReporter) const
 {
-	tr->reportMsg(aHead);
-	tr->incReportLevel();
+	treeReporter->reportMsg(aHead);
+	treeReporter->incReportLevel();
 
 	QSqlDatabase db = QSqlDatabase::database();
 	QStringList tableList = db.tables(aType);
 	foreach (QString tn, tableList)
 	{
-		tr->reportMsg(tn);
-		tr->incReportLevel();
+		treeReporter->reportMsg(tn);
+		treeReporter->incReportLevel();
 		QSqlRecord tableRecord = db.record(tn);
 		if (!tableRecord.isEmpty())
 		{
 			for (int c=0; c<tableRecord.count(); ++c)
 			{
 				QSqlField f = tableRecord.field(c);
-				tr->reportMsg(QString("%2 %3 %4,%5 %6 '%7' %8 %9")
+				treeReporter->reportMsg(QString("%2 %3 %4,%5 %6 '%7' %8 %9")
 							  .arg(f.name())
 							  .arg(QVariant::typeToName(f.type()))
 							  .arg(f.length())
@@ -219,24 +219,24 @@ void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
 			QSqlIndex index = db.primaryIndex(tn);
 			if (!index.isEmpty())
 			{
-				tr->reportMsg("primary key " +index.name());
-				tr->incReportLevel();
+				treeReporter->reportMsg("primary key " +index.name());
+				treeReporter->incReportLevel();
 				for (int c=0; c<index.count(); ++c)
 				{
 					QSqlField f = index.field(c);
-					tr->reportMsg(QString(" %1: %2")
+					treeReporter->reportMsg(QString(" %1: %2")
 								  .arg(c)
 								  .arg(f.name())
 								  );
 				}
-				tr->decReportLevel();
+				treeReporter->decReportLevel();
 			}
 		}
-		tr->decReportLevel();
+		treeReporter->decReportLevel();
 		QCoreApplication::processEvents();
 
 	}
-	tr->decReportLevel();
+	treeReporter->decReportLevel();
 }
 
 void DbConnection::showDatabaseTables(QTreeReporter *tr) const
