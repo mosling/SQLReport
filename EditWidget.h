@@ -7,6 +7,7 @@
 #include <QDialog>
 #include <QFile>
 #include <QCloseEvent>
+#include <QString>
 
 namespace Ui {
     class EditWidget;
@@ -26,12 +27,16 @@ public:
 	void saveFile();
 
 protected:
+	void keyPressEvent(QKeyEvent *event) override;
+
+protected:
 	void closeEvent(QCloseEvent *event);
 
 private slots:
 	bool on_btnSave_clicked();
 	void on_pushButtonFind_clicked();
 	void on_pushButtonPdf_clicked();
+	void on_lineEditFind_textChanged(QString str);
 
 private:
 	bool maybeSave();
@@ -39,6 +44,7 @@ private:
     Ui::EditWidget *ui;
 	SqlReportHighlighter *highlighter;
 	QString currentFileName;
+	QString searchString;
 
 };
 

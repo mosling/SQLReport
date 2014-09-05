@@ -40,7 +40,6 @@ private slots:
 	void on_btnEditTemplate_clicked();
 	void on_btnShowOutput_clicked();
 	void on_btnShowTables_clicked();
-	void on_btnClear_clicked();
 	void on_pushButtonExit_clicked();
 
 private:

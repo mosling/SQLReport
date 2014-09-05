@@ -23,7 +23,8 @@ SqlReportHighlighter::SqlReportHighlighter(QTextDocument *parentObj)
 					<< "\\b__UNIQUEID\\b" << "\\bLINECNT\\b"
 					<< "\\bselect\\b" << "\\bfrom\\b" << "\\bwhere\\b"
 					<< "\\border by\\b" << "\\bis\\b" << "\\bNULL\\b"
-					<< "\\band\\b" << "\\bor\\b" << "\\bnot\\b";
+					<< "\\band\\b" << "\\bor\\b" << "\\bnot\\b"
+					<< "\\bUNION\\b" << "\\blike\\b";
 	foreach (const QString &pattern, keywordPatterns)
 	{
 		rule.pattern = QRegExp(pattern);

@@ -374,7 +374,8 @@ void SqlReport::on_but_querySet_clicked()
         writeLocalDefines(mQuerySet.getQuerySetFileName());
         mQuerySet.clear();
         databaseSet.clear();
-        on_btnClear_clicked();
+		ui.teReport->clear();
+		ui.textEditError->clear();
 
         readQuerySet(qsName);
     }
@@ -608,12 +609,6 @@ void SqlReport::on_btnShowTables_clicked()
 
         if (ui.dockWidget->isHidden()) ui.dockWidget->show();
     }
-}
-
-void SqlReport::on_btnClear_clicked()
-{
-    ui.teReport->clear();
-    ui.textEditError->clear();
 }
 
 //! After pressing the exit button we close the

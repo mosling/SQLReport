@@ -10,7 +10,8 @@ EditWidget::EditWidget(QWidget *parentObj) :
 	QDialog(parentObj),
 	ui(new Ui::EditWidget),
 	highlighter(nullptr),
-	currentFileName("")
+	currentFileName(""),
+	searchString("")
 {
     ui->setupUi(this);
 	highlighter = new SqlReportHighlighter(ui->teEditor->document());
@@ -53,6 +54,17 @@ void EditWidget::saveFile()
 	if (this->isVisible()) on_btnSave_clicked();
 }
 
+//!
+void EditWidget::keyPressEvent(QKeyEvent *event)
+{
+	if (Qt::Key_F3 == event->key() && !searchString.isEmpty())
+	{
+		on_pushButtonFind_clicked();
+	}
+
+	QDialog::keyPressEvent(event);
+}
+
 bool EditWidget::on_btnSave_clicked()
 {
 	QFile file(currentFileName);
@@ -76,22 +88,13 @@ bool EditWidget::on_btnSave_clicked()
 
 void EditWidget::on_pushButtonFind_clicked()
 {
-	static QString lastFind = "";
-
-	QString f = ui->lineEditFind->text();
-	if (f != lastFind)
-	{
-		ui->teEditor->moveCursor(QTextCursor::Start);
-		lastFind = f;
-	}
-
-	bool findSomething = ui->teEditor->find(f);
+	bool findSomething = ui->teEditor->find(searchString);
 
 	if (!findSomething)
 	{
 		// start from beginning
 		ui->teEditor->moveCursor(QTextCursor::Start);
-		ui->teEditor->find(f);
+		ui->teEditor->find(searchString);
 	}
 }
 
@@ -109,6 +112,11 @@ void EditWidget::on_pushButtonPdf_clicked()
 		printer.setOutputFileName(fileName);
 		ui->teEditor->document()->print(&printer);
 	}
+}
+
+void EditWidget::on_lineEditFind_textChanged(QString str)
+{
+	searchString = str;
 }
 
 //! Wenn die Speichern-Nachfrage abgebrochen wurde, dann wird das

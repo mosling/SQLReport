@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>991</width>
-    <height>731</height>
+    <height>812</height>
    </rect>
   </property>
   <property name="font">
@@ -20,25 +20,28 @@
    <string>SqlReport</string>
   </property>
   <widget class="QWidget" name="centralWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="maximumSize">
     <size>
      <width>16777215</width>
      <height>16777215</height>
     </size>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
      <widget class="QWidget" name="widgetParameter" native="true">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
       <layout class="QFormLayout" name="formLayout">
-       <property name="fieldGrowthPolicy">
-        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-       </property>
        <item row="0" column="0">
         <widget class="QLabel" name="lblQuerySet">
          <property name="maximumSize">
@@ -543,7 +546,7 @@
         </widget>
        </item>
        <item row="6" column="0">
-        <widget class="QLabel" name="label_3">
+        <widget class="QLabel" name="labelSql">
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -650,7 +653,7 @@
         </widget>
        </item>
        <item row="7" column="0">
-        <widget class="QLabel" name="label6">
+        <widget class="QLabel" name="labelTemplate">
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -754,7 +757,7 @@
         </widget>
        </item>
        <item row="8" column="0">
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="labelOutput">
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -858,7 +861,7 @@
         </widget>
        </item>
        <item row="9" column="0">
-        <widget class="QLabel" name="label_5">
+        <widget class="QLabel" name="labelParameter">
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -1029,7 +1032,7 @@
         </widget>
        </item>
        <item row="10" column="0">
-        <widget class="QLabel" name="label_4">
+        <widget class="QLabel" name="labelInfo">
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -1051,6 +1054,12 @@
        </item>
        <item row="10" column="1">
         <widget class="QTextEdit" name="teReport">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>1</verstretch>
+          </sizepolicy>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -1065,7 +1074,7 @@
         </widget>
        </item>
        <item row="11" column="0">
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="labelErrors">
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -1084,6 +1093,12 @@
        </item>
        <item row="11" column="1">
         <widget class="QTextEdit" name="textEditError">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>1</verstretch>
+          </sizepolicy>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -1113,30 +1128,6 @@
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item>
-           <widget class="QPushButton" name="btnClear">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>75</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>9</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Clear</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
@@ -1240,22 +1231,5 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
- <connections>
-  <connection>
-   <sender>btnClear</sender>
-   <signal>clicked()</signal>
-   <receiver>teReport</receiver>
-   <slot>clear()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>143</x>
-     <y>405</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>160</x>
-     <y>346</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
