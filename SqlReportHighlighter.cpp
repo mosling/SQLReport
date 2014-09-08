@@ -24,7 +24,11 @@ SqlReportHighlighter::SqlReportHighlighter(QTextDocument *parentObj)
 					<< "\\bselect\\b" << "\\bfrom\\b" << "\\bwhere\\b"
 					<< "\\border by\\b" << "\\bis\\b" << "\\bNULL\\b"
 					<< "\\band\\b" << "\\bor\\b" << "\\bnot\\b"
-					<< "\\bUNION\\b" << "\\blike\\b";
+					<< "\\bunion\\b" << "\\blike\\b" << "\\bgroup by\\b"
+					<< "\\bhaving\\b" << "\\bdistinct\\b" << "\\bin\\b"
+					<< "\\bdistinct\\b" << "\\binner join\\b" << "\\bouter join\\b"
+					<< "\\bleft join\\b" << "\\bright join\\b" << "\\bjoin\\b"
+					<< "\\bcount\\b" << "\\bmin\\b" << "\\bmax\\b";
 	foreach (const QString &pattern, keywordPatterns)
 	{
 		rule.pattern = QRegExp(pattern);

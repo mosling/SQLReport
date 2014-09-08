@@ -26,8 +26,8 @@ int main(int argc, char *argv[])
 	QSettings::setDefaultFormat(QSettings::IniFormat);
 	app.connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
 
-	SqlReport reporter;
-	reporter.setVisible(true);
+	SqlReport report;
+	report.setVisible(true);
 
 	qint32 res = app.exec();
 	
