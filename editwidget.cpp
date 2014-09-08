@@ -7,15 +7,18 @@
 #include "ui_editwidget.h"
 
 EditWidget::EditWidget(QWidget *parentObj) :
-	QDialog(parentObj),
+	QWidget(parentObj),
 	ui(new Ui::EditWidget),
 	highlighter(nullptr),
 	currentFileName(""),
 	searchString("")
 {
     ui->setupUi(this);
+	this->setWindowFlags(Qt::Window);
+
 	highlighter = new SqlReportHighlighter(ui->teEditor->document());
 	this->setStyleSheet("selection-color: yellow; selection-background-color: blue");
+
 }
 
 EditWidget::~EditWidget()
@@ -62,7 +65,7 @@ void EditWidget::keyPressEvent(QKeyEvent *event)
 		on_pushButtonFind_clicked();
 	}
 
-	QDialog::keyPressEvent(event);
+	QWidget::keyPressEvent(event);
 }
 
 bool EditWidget::on_btnSave_clicked()
@@ -117,6 +120,12 @@ void EditWidget::on_pushButtonPdf_clicked()
 void EditWidget::on_lineEditFind_textChanged(QString str)
 {
 	searchString = str;
+}
+
+void EditWidget::on_lineEditFind_returnPressed()
+{
+	ui->pushButtonFind->setFocus();
+	on_pushButtonFind_clicked();
 }
 
 //! Wenn die Speichern-Nachfrage abgebrochen wurde, dann wird das

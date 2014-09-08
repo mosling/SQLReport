@@ -13,7 +13,7 @@ namespace Ui {
     class EditWidget;
 }
 
-class EditWidget : public QDialog
+class EditWidget : public QWidget
 {
     Q_OBJECT
 	Q_CLASSINFO ("author", "St. Koehler")
@@ -37,6 +37,7 @@ private slots:
 	void on_pushButtonFind_clicked();
 	void on_pushButtonPdf_clicked();
 	void on_lineEditFind_textChanged(QString str);
+	void on_lineEditFind_returnPressed();
 
 private:
 	bool maybeSave();
