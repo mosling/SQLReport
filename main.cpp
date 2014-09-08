@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	app.setOrganizationName  ("mosling");
 	app.setApplicationName   ("SqlReport");
 	app.setOrganizationDomain("https://github.com/mosling/SQLReport");
-	app.setApplicationVersion("1.1");
+	app.setApplicationVersion("1.2");
 
 	QSettings::setDefaultFormat(QSettings::IniFormat);
 	app.connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
