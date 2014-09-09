@@ -784,7 +784,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 
 	if (simpleFormat)
 	{
-		rx.setPattern("\\$([a-zA-Z?_]+)"); // all expressions like $... capture the ... part
+		rx.setPattern("\\$([?]*[a-zA-Z_]+)"); // all expressions like $[?]... capture the [?]... part
 	}
 	else
 	{

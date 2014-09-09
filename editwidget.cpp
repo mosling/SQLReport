@@ -41,6 +41,7 @@ bool EditWidget::newFile(QString aFileName)
 		{
 			QMessageBox::information(this, tr("Fileinfo"),
 									 tr("File '%1' not found.").arg(aFileName),QMessageBox::Ok);
+			ui->teEditor->clear();
 			bRet = false;
 		}
 
@@ -55,6 +56,12 @@ bool EditWidget::newFile(QString aFileName)
 void EditWidget::saveFile()
 {
 	if (this->isVisible()) on_btnSave_clicked();
+}
+
+void EditWidget::setLineWrapMode(QTextEdit::LineWrapMode lwp)
+{
+	ui->teEditor->setLineWrapMode(lwp);
+	ui->pushButtonWrap->setChecked(lwp!=QTextEdit::NoWrap);
 }
 
 //!
@@ -126,6 +133,12 @@ void EditWidget::on_lineEditFind_returnPressed()
 {
 	ui->pushButtonFind->setFocus();
 	on_pushButtonFind_clicked();
+}
+
+void EditWidget::on_pushButtonWrap_toggled(bool b)
+{
+	if (b) ui->teEditor->setLineWrapMode(QTextEdit::WidgetWidth);
+	else ui->teEditor->setLineWrapMode(QTextEdit::NoWrap);
 }
 
 //! Wenn die Speichern-Nachfrage abgebrochen wurde, dann wird das

@@ -3,11 +3,12 @@
 
 #include "SqlReportHighlighter.h"
 
-#include <QWidget>
+#include <QCloseEvent>
 #include <QDialog>
 #include <QFile>
-#include <QCloseEvent>
 #include <QString>
+#include <QTextEdit>
+#include <QWidget>
 
 namespace Ui {
     class EditWidget;
@@ -25,6 +26,7 @@ public:
 
 	bool newFile(QString aFileName);
 	void saveFile();
+	void setLineWrapMode(QTextEdit::LineWrapMode lwp);
 
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
@@ -38,6 +40,7 @@ private slots:
 	void on_pushButtonPdf_clicked();
 	void on_lineEditFind_textChanged(QString str);
 	void on_lineEditFind_returnPressed();
+	void on_pushButtonWrap_toggled(bool b);
 
 private:
 	bool maybeSave();

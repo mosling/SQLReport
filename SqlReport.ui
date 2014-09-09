@@ -899,6 +899,12 @@
           </property>
           <item>
            <widget class="QLabel" name="lblLocale">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Tahoma</family>
@@ -912,6 +918,12 @@
           </item>
           <item>
            <widget class="QLineEdit" name="leLocale">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <pointsize>9</pointsize>
@@ -921,6 +933,12 @@
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxBatchRun">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Tahoma</family>
@@ -934,6 +952,12 @@
           </item>
           <item>
            <widget class="QCheckBox" name="cbAppendOutput">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="maximumSize">
              <size>
               <width>120</width>
@@ -952,12 +976,18 @@
              </font>
             </property>
             <property name="text">
-             <string>Append Output</string>
+             <string>Append</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="cbTimeStamp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Tahoma</family>
@@ -976,6 +1006,12 @@
           </item>
           <item>
            <widget class="QCheckBox" name="cbOutputUtf8">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Tahoma</family>
@@ -991,6 +1027,12 @@
           </item>
           <item>
            <widget class="QCheckBox" name="cbOutputXml">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Tahoma</family>
@@ -998,12 +1040,18 @@
              </font>
             </property>
             <property name="text">
-             <string>XML-Output</string>
+             <string>XML</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxDebug">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Tahoma</family>
@@ -1017,6 +1065,12 @@
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxPrepare">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Tahoma</family>

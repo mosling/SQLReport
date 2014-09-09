@@ -35,6 +35,8 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	templateEditor.setWindowTitle(tr("Template Editor"));
 	outputEditor.setWindowTitle(tr("Show Report Output"));
 
+	sqlEditor.setLineWrapMode(QTextEdit::WidgetWidth);
+
     QSettings rc;
 	// restore the window geometry for the widgets and the
 	// window state for the main window
@@ -646,8 +648,8 @@ bool SqlReport::validQuerySet()
 
     if (!result)
     {
-        QMessageBox::information(this, "No active query set entry",
-                                 "Please select a query set or create a new.");
+		QMessageBox::information(this, tr("No active query set entry"),
+								 tr("Please select a query set or create a new."));
     }
     else
     {
