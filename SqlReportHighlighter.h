@@ -27,9 +27,10 @@ public:
 	 QRegExp commentEndExpression;
 
 	 QTextCharFormat singleLineCommentFormat;
+	 QTextCharFormat singleBlockLineCommentFormat;
 	 QTextCharFormat multiLineCommentFormat;
 	 QTextCharFormat keywordFormat;
-	 QTextCharFormat classFormat;
+	 QTextCharFormat blockFormat;
 	 QTextCharFormat substitutionFormat;
 	 QTextCharFormat templateFormat;
 };

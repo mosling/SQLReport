@@ -6,9 +6,10 @@ SqlReportHighlighter::SqlReportHighlighter(QTextDocument *parentObj)
 	  commentStartExpression(QRegExp("/\\*")),
 	  commentEndExpression(QRegExp("\\*/")),
 	  singleLineCommentFormat(),
+	  singleBlockLineCommentFormat(),
 	  multiLineCommentFormat(),
 	  keywordFormat(),
-	  classFormat(),
+	  blockFormat(),
 	  substitutionFormat(),
 	  templateFormat()
 {
@@ -37,10 +38,10 @@ SqlReportHighlighter::SqlReportHighlighter(QTextDocument *parentObj)
 		highlightingRules.append(rule);
 	}
 
-	classFormat.setFontWeight(QFont::Bold);
-	classFormat.setForeground(Qt::darkMagenta);
+	blockFormat.setForeground(Qt::darkMagenta);
+	blockFormat.setFontWeight(QFont::Bold);
 	rule.pattern = QRegExp("^::.+");
-	rule.format = classFormat;
+	rule.format = blockFormat;
 	highlightingRules.append(rule);
 
 	substitutionFormat.setForeground(Qt::red);
@@ -56,6 +57,11 @@ SqlReportHighlighter::SqlReportHighlighter(QTextDocument *parentObj)
 	singleLineCommentFormat.setForeground(Qt::green);
 	rule.pattern = QRegExp("^//.*");
 	rule.format = singleLineCommentFormat;
+	highlightingRules.append(rule);
+
+	singleBlockLineCommentFormat.setForeground(Qt::darkGreen);
+	rule.pattern = QRegExp("^::#.*");
+	rule.format = singleBlockLineCommentFormat;
 	highlightingRules.append(rule);
 
 	multiLineCommentFormat.setForeground(Qt::green);

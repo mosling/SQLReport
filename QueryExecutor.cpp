@@ -658,34 +658,37 @@ bool QueryExecutor::executeInputFiles()
 		while ( !streamInTemplate.atEnd())
 		{
 			line = streamInTemplate.readLine();
-			if (line.length() != 0)  // ignore empty lines first, ignore last empty lines only
+			if (line.length() != 0)  // extra handling for empty lines using emptyLineCnt
 			{
-				if (line.startsWith("::"))
+				if (!line.startsWith("::#")) //ignore Template comment lines
 				{
-					emptyLineCnt = 0;
-					name = line.mid(2).trimmed();
-					if (!name.isEmpty())
+					if (line.startsWith("::"))
 					{
-						if (templatesMap.contains(name))
+						emptyLineCnt = 0;
+						name = line.mid(2).trimmed();
+						if (!name.isEmpty())
 						{
-							showMsg(tr("Overwrite Template '%1'"), LogLevel::WARN);
-							delete (templatesMap[name]);
+							if (templatesMap.contains(name))
+							{
+								showMsg(tr("Overwrite Template '%1'"), LogLevel::WARN);
+								delete (templatesMap[name]);
+							}
+							else
+							{
+								showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
+							}
+							templatesMap[name] = new QStringList();
 						}
-						else
-						{
-							showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
-						}
-						templatesMap[name] = new QStringList();
 					}
-				}
-				else if (!name.isEmpty())
-				{
-					for (qint32 i=0; i < emptyLineCnt; i++)
+					else if (!name.isEmpty())
 					{
-						templatesMap[name]->append("");
+						for (qint32 i=0; i < emptyLineCnt; i++)
+						{
+							templatesMap[name]->append("");
+						}
+						emptyLineCnt = 0;
+						templatesMap[name]->append(line);
 					}
-					emptyLineCnt = 0;
-					templatesMap[name]->append(line);
 				}
 			}
 			else
