@@ -611,7 +611,7 @@ bool QueryExecutor::executeInputFiles()
 			{
 				line = streamInSql.readLine().trimmed();
 				lineNr++;
-				if (line.length() != 0 && !line.startsWith("//"))  // ignore empty lines and comments
+				if (line.length() != 0 && !line.startsWith("::#"))  // ignore empty lines and comments
 				{
 					if (line.startsWith("::"))
 					{
@@ -660,7 +660,7 @@ bool QueryExecutor::executeInputFiles()
 			line = streamInTemplate.readLine();
 			if (line.length() != 0)  // extra handling for empty lines using emptyLineCnt
 			{
-				if (!line.startsWith("::#")) //ignore Template comment lines
+				if (!line.startsWith("::#")) //ignore comment lines
 				{
 					if (line.startsWith("::"))
 					{
