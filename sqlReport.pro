@@ -54,4 +54,5 @@ FORMS    += \
     DbConnectionForm.ui
 
 OTHER_FILES += \
-    README.md
+    README.md \
+    sqlreport.ico
