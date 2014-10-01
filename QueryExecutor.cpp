@@ -30,7 +30,10 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  firstQueryResult(false),
 	  lastErrorFilename(""),
 	  debugOutput(false),
-	  prepareQueries(false)
+	  prepareQueries(false),
+	  currentTemplateBlockName(""),
+	  msgHash(),
+	  traceOutput(false)
 {
 	mExpressionMap["GT"]	= 1;
 	mExpressionMap["GE"]	= 2;
@@ -66,9 +69,10 @@ void QueryExecutor::setErrorWindow(QTextEdit *te)
 	mErrorWin = te;
 }
 
-void QueryExecutor::setDebugFlag(bool flag)
+void QueryExecutor::setDebugFlag(Qt::CheckState flag)
 {
-	debugOutput = flag;
+	traceOutput = (flag == Qt::Checked);
+	debugOutput = (flag == Qt::PartiallyChecked) || traceOutput;
 }
 
 void QueryExecutor::setPrepareQueriesFlag(bool flag)
@@ -364,16 +368,22 @@ void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 			QString logStr("");
 			switch (ll)
 			{
-			case LogLevel::DBG:  logStr = "DEBUG"; break;
+			case LogLevel::DBG:  logStr = traceOutput ? "TRACE" : "DEBUG"; break;
 			case LogLevel::ERR:  logStr = "ERROR"; break;
 			case LogLevel::WARN: logStr = "WARN "; break;
 			case LogLevel::MSG:  logStr = "INFO "; break;
 			default: break;
 			}
 
-			mErrorWin->append(QString("%1: %2")
+			QString showStr = QString("%1: %2 %3")
 							  .arg(logStr)
-							  .arg(vMsgStr));
+							  .arg(currentTemplateBlockName.isEmpty() ? "" : "[" + currentTemplateBlockName + "]")
+							  .arg(vMsgStr);
+			if (!msgHash.contains(showStr))
+			{
+				msgHash.insert(showStr, 1);
+				mErrorWin->append(showStr);
+			}
 		}
 		else if (nullptr != mMsgWin)
 		{
@@ -805,8 +815,13 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		lpos = pos + rx.matchedLength();
 
 		// first look for an expression evaluated by the script engine
-		if ("EVAL" == tmpList.at(tmpList.size()-1).toUpper())
+		if ("EVAL" == tmpList.at(tmpList.size()-1).trimmed().toUpper())
 		{
+			if ("EVAL" != tmpList.at(tmpList.size()-1).toUpper())
+			{
+				showMsg(tr("sqlReport interprets <b>'%1'</b> as <b>'eval'</b>, please remove the surrounding whitspaces")
+						.arg(tmpList.at(tmpList.size()-1)), LogLevel::WARN);
+			}
 			tmpList.removeLast();
 			tmpName = tmpList.join(',');
 			QString expression = replaceLine(tmpName, aLineCnt, false, true);
@@ -845,7 +860,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		else
 		{
 			result += "['" + tmpName + "' is unknown]";
-			showMsg(QString("unknown variable name '%1'").arg(tmpName), LogLevel::ERR);
+			showMsg(QString("unknown variable name <b>'%1'</b>").arg(tmpName), LogLevel::ERR);
 		}
 	}
 
@@ -934,6 +949,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	bool bRet = true;
 	bool lastReplaceLinefeed = false;
 	QHash<QString, QString> overwrittenReplacements;
+	QString lastTemplateName = currentTemplateBlockName;
 
 	// split the given aTemplate into parts separated by comma
 	QStringList ll = aTemplate.split(',');
@@ -958,6 +974,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	// exists a template with this name
 	if (templatesMap.contains(aTemplate))
 	{
+		currentTemplateBlockName = aTemplate;
 		templLines = templatesMap[aTemplate];
 
 		// exists a query with the template name ?
@@ -993,11 +1010,11 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 					QString bv = bvIt.key();
 					QString bv2= bv;
 					bv2.remove(0,1);
-					if (debugOutput) showMsg(tr("bound %1 to value %2").arg(bv).arg(replacements[bv2]), LogLevel::DBG);
+					if (traceOutput) showMsg(tr("bound %1 to value %2").arg(bv).arg(replacements[bv2]), LogLevel::DBG);
 					query.bindValue(bv, replacements[bv2]);
 				}
 				bRet = query.exec();
-				if (debugOutput) showMsg(tr("last query %1").arg(query.lastQuery()), LogLevel::DBG);
+				if (traceOutput) showMsg(tr("last query %1").arg(query.lastQuery()), LogLevel::DBG);
 			}
 			else
 			{
@@ -1014,11 +1031,14 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 				if (debugOutput)
 				{
 					showMsg("SQL-Query: "+sqlQuery, LogLevel::DBG);
-					for (int i=0; i<numCols; ++i)
+					if (traceOutput)
 					{
-						showMsg(QString("column %1 name '%2'").arg(i).arg(rec.fieldName(i)), LogLevel::DBG );
+						for (int i=0; i<numCols; ++i)
+						{
+							showMsg(QString("column %1 name '%2'").arg(i).arg(rec.fieldName(i)), LogLevel::DBG );
+						}
+						showMsg(tr("Size of result is %1").arg(query.size()), LogLevel::DBG );
 					}
-					showMsg(tr("Size of result is %1").arg(query.size()), LogLevel::DBG );
 				}
 
 				firstQueryResult = true;
@@ -1054,14 +1074,13 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 							overwrittenReplacements[tmpFieldName] = replacements[tmpFieldName];
 						}
 						replacements[tmpFieldName] = tmpStr;
-						showMsg(tr("column %1 is /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
+						if (traceOutput) showMsg(tr("column %1 is /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
 					}
 					if (!empty)
 					{
 						lastReplaceLinefeed = replaceTemplate(templLines, lineCnt);
 						uniqueId++;
 						lineCnt++;
-						showMsg(QString("%1 %2").arg(aTemplate).arg(uniqueId), LogLevel::DBG);
 					}
 					firstQueryResult = false;
 				}
@@ -1110,6 +1129,8 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 		replacements[it.key()] = it.value();
 	}
 
+	currentTemplateBlockName = lastTemplateName;
+
 	return bRet;
 }
 
@@ -1131,10 +1152,17 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 	if (nullptr != dbc)
 	{
 		b = dbc->connectDatabase();                 // connect to database and set _tableprefix
-		replacements["_tableprefix"] = dbc->getTablePrefix();
-		if (debugOutput)
+		if (b)
 		{
-			showMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]), LogLevel::DBG);
+			replacements["_tableprefix"] = dbc->getTablePrefix();
+			if (debugOutput)
+			{
+				showMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]), LogLevel::DBG);
+			}
+		}
+		else
+		{
+			showMsg(dbc->getLastErrorString(), LogLevel::ERR);
 		}
 	}
 	b = b && executeInputFiles();                   // read the sql and the template file into the internal structure
@@ -1142,7 +1170,7 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 	streamOut.flush();
 	fileOut.close();								// flush and close the output file
 
-	// Verbindung in jedem Fall wieder schließen
+	// close the database connection
 	if (nullptr != dbc)
 	{
 		dbc->closeDatabase();				        // close the database connection

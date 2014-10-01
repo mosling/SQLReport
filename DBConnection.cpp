@@ -113,14 +113,14 @@ void DbConnection::setPasswordSave(const bool value)
 	passwordSave = value;
 }
 
-void DbConnection::showDbError() const
+void DbConnection::showDbError()
 {
 	QSqlDatabase db = QSqlDatabase::database();
 
 	if (db.lastError().isValid())
 	{
-		QString err = QString("%1").arg(db.lastError().text());
-		QMessageBox::critical(NULL, "DB-Error", err, QMessageBox::Ok);
+		lastErrorStr = QString("%1").arg(db.lastError().text());
+		QMessageBox::critical(NULL, "DB-Error", lastErrorStr, QMessageBox::Ok);
 	}
 }
 

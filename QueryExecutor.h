@@ -33,7 +33,7 @@ public:
 
 	void setMsgWindow(QTextEdit *te);
 	void setErrorWindow(QTextEdit *te);
-	void setDebugFlag(bool flag);
+	void setDebugFlag(Qt::CheckState flag);
 	void setPrepareQueriesFlag(bool flag);
 
 	bool createOutput(QuerySetEntry *aQSE, DbConnection *dbc,
@@ -87,6 +87,9 @@ private:
 	QString lastErrorFilename;
 	bool debugOutput;
 	bool prepareQueries;
+	QString currentTemplateBlockName;
+	QHash <QString, int> msgHash;
+	bool traceOutput;
 
 };
 

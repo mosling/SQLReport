@@ -23,7 +23,7 @@ public:
 	explicit DbConnection(QObject *parentObj = nullptr);
 	virtual ~DbConnection();
 
-	void showDbError() const;
+	void showDbError();
 	QString getConnectionName() const;
 	bool connectDatabase();
 	void closeDatabase() const;
@@ -60,6 +60,8 @@ public:
 	bool getPasswordSave() const {return passwordSave; }
 	void setPasswordSave(const bool value);
 
+	QString getLastErrorString() { QString le = lastErrorStr; lastErrorStr=""; return le; }
+
 private:
 	QString name;
 	QString dbType;
@@ -70,6 +72,7 @@ private:
 	QString password;
 	quint32 port;
 	bool passwordSave;
+	QString lastErrorStr;
 	
 };
 

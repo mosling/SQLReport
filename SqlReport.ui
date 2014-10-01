@@ -1061,6 +1061,9 @@
             <property name="text">
              <string>Debug</string>
             </property>
+            <property name="tristate">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
