@@ -15,4 +15,3 @@ The documentation is available at https://github.com/mosling/SQLReport/wiki
 
 There is a sqlite database chinook (https://chinookdatabase.codeplex.com/) which is used for the example templates. You can download your own copy or use the stored database from the binaries directory.
 
-A simple sentence to change something for Michael.
