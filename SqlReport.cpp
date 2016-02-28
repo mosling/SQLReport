@@ -237,29 +237,28 @@ QString SqlReport::selectFile(QString desc, QString def, QString pattern, bool m
 }
 
 //! Here we enter die Database connection dialog. If we have no existing database
-//! we start with the 'new connection' connection.
+//! we start with the 'new connection' connection. This works also without
+//! active query, (normally at the start by impatient customer:-)
 void SqlReport::on_but_database_clicked()
 {
 
-	if (validQuerySet())
-	{
-		DbConnection *currentDbConnection = databaseSet.getByName(activeQuerySetEntry->getDbName());
+    DbConnection *currentDbConnection = databaseSet.getByName(ui.comboBoxDatabase->currentText());
 
-		if (nullptr == currentDbConnection)
-		{
-			QString nc("new connection");
-			currentDbConnection = databaseSet.getByName(nc);
-			if (nullptr == currentDbConnection)
-			{
-				currentDbConnection = new DbConnection(&databaseSet);
-				currentDbConnection->setName(nc);
-				databaseSet.append(currentDbConnection);
-			}
-		}
+    if (nullptr == currentDbConnection)
+    {
+        QString nc("new connection");
+        currentDbConnection = databaseSet.getByName(nc);
+        if (nullptr == currentDbConnection)
+        {
+            currentDbConnection = new DbConnection(&databaseSet);
+            currentDbConnection->setName(nc);
+            databaseSet.append(currentDbConnection);
+        }
+    }
 
-		DbConnectionForm dbForm(currentDbConnection, this);
-		dbForm.exec();
-	}
+    DbConnectionForm dbForm(currentDbConnection, this);
+    dbForm.exec();
+
 }
 
 //! Add a new database connection to the system. This is named 'new connection'
@@ -652,7 +651,7 @@ bool SqlReport::validQuerySet()
 	if (!result)
 	{
 		QMessageBox::information(this, tr("No active query set entry"),
-								 tr("Please select a query set or create a new."));
+                                 tr("Please select a query entry or create a new."));
 	}
 	else
 	{
