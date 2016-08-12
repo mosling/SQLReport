@@ -56,3 +56,6 @@ FORMS    += \
 OTHER_FILES += \
     README.md \
     sqlreport.ico
+
+DISTFILES += \
+    sqlreport.asciidoc
