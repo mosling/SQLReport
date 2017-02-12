@@ -650,8 +650,8 @@ bool SqlReport::validQuerySet()
 
 	if (!result)
 	{
-		QMessageBox::information(this, tr("No active query set entry"),
-                                 tr("Please select a query entry or create a new."));
+        QMessageBox::information(this, tr("No active query entry"),
+                                 tr("Please select a query or create a new."));
 	}
 	else
 	{

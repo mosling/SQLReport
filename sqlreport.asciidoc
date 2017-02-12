@@ -1,0 +1,15 @@
+= SqlReporter =
+
+== Usage ==
+
+== Syntax ==
+
+There are a small number of syntax elements.
+
+* block syntax, blocks starts at the line starting with the block identifier **::** end ends with the next block start
+** **::#** start a comment, this block is ignored during execution
+** **::<name>** start a named block, this can be referenced by his name
+* variable syntay, inline reference
+** **#{<name>}** call the named template block, this includes the output of the called block at this position
+** **${<varname>}** output the variable content at this position
+

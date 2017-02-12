@@ -11,6 +11,12 @@ int main(int argc, char *argv[])
 	app.setOrganizationDomain("https://github.com/mosling/SQLReport");
 	app.setApplicationVersion("1.2");
 
+    QStringList l = QCoreApplication::libraryPaths ();
+    foreach (QString s, l)
+    {
+        qDebug() << "library path: " << s;
+    }
+
 	QSettings::setDefaultFormat(QSettings::IniFormat);
 	app.connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
 

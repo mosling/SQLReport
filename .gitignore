@@ -51,3 +51,7 @@ lint/qt-include-path.lnt
 ehthumbs.db
 Thumbs.db
 
+# Project generates files #
+# #########################
+sqlreport.html
+

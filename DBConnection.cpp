@@ -7,7 +7,6 @@
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlField>
 #include <QtSql/QSqlIndex>
-#include <QDebug>
 
 DbConnection::DbConnection(QObject *parentObj) :
     QObject(parentObj),
