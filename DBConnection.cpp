@@ -10,16 +10,16 @@
 #include <QDebug>
 
 DbConnection::DbConnection(QObject *parentObj) :
-	QObject(parentObj),
-	name(""),
-	dbType(""),
-	dbName(""),
-	tablePrefix(""),
-	host(""),
-	username(""),
-	password(""),
-	port(0),
-	passwordSave(false)
+    QObject(parentObj),
+    name(""),
+    dbType(""),
+    dbName(""),
+    tablePrefix(""),
+    host(""),
+    username(""),
+    password(""),
+    port(0),
+    passwordSave(false)
 {
 }
 
@@ -30,245 +30,248 @@ DbConnection::~DbConnection()
 
 void DbConnection::readXmlNode(const QDomNode &aNode)
 {
-	QDomNode cn = aNode.firstChild();
-	while (!cn.isNull())
-	{
-		QString ce = cn.toElement().tagName();
-		qDebug() << "adding element " << ce;
-		QString te = cn.firstChild().toText().data();
-		ce = ce.toUpper();
-		if (ce == "NAME")   { name = te; }
-		if (ce == "DBNAME") { dbName = te; }
-		if (ce == "PREFIX") { tablePrefix = te; }
-		if (ce == "HOST")   { host = te; }
-		if (ce == "USER")   { username = te; }
-		if (ce == "PASS")   { password = te; }
-		if (ce == "TYPE")   { dbType = te; }
-		if (ce == "PORT")   { port = te.toInt(); }
-		if (ce == "SAVE")   { passwordSave = (te == "yes") ? true : false; }
-		cn = cn.nextSibling();
-	}
+    QDomNode cn = aNode.firstChild();
+    while(!cn.isNull())
+    {
+        QString ce = cn.toElement().tagName();
+        qDebug() << "adding element " << ce;
+        QString te = cn.firstChild().toText().data();
+        ce = ce.toUpper();
+        if(ce == "NAME")   { name = te; }
+        if(ce == "DBNAME") { dbName = te; }
+        if(ce == "PREFIX") { tablePrefix = te; }
+        if(ce == "HOST")   { host = te; }
+        if(ce == "USER")   { username = te; }
+        if(ce == "PASS")   { password = te; }
+        if(ce == "TYPE")   { dbType = te; }
+        if(ce == "PORT")   { port = te.toInt(); }
+        if(ce == "SAVE")   { passwordSave = (te == "yes") ? true : false; }
+        cn = cn.nextSibling();
+    }
 }
 
 void DbConnection::writeXmlNode(QXmlStreamWriter &aStream)
 {
-	aStream.writeStartElement("Database");
-	aStream.writeTextElement("type", dbType);
-	aStream.writeTextElement("name", name);
-	aStream.writeTextElement("prefix", tablePrefix);
-	aStream.writeTextElement("host", host);
-	aStream.writeTextElement("port", QString("%1").arg(port));
-	aStream.writeTextElement("dbname", dbName);
-	aStream.writeTextElement("user", username);
-	if (passwordSave)
-	{
-		aStream.writeTextElement("pass", password);
-	}
-	aStream.writeTextElement("save", passwordSave ? "yes" : "no");
-	aStream.writeEndElement();
+    aStream.writeStartElement("Database");
+    aStream.writeTextElement("type", dbType);
+    aStream.writeTextElement("name", name);
+    aStream.writeTextElement("prefix", tablePrefix);
+    aStream.writeTextElement("host", host);
+    aStream.writeTextElement("port", QString("%1").arg(port));
+    aStream.writeTextElement("dbname", dbName);
+    aStream.writeTextElement("user", username);
+    if(passwordSave)
+    {
+        aStream.writeTextElement("pass", password);
+    }
+    aStream.writeTextElement("save", passwordSave ? "yes" : "no");
+    aStream.writeEndElement();
 }
 
 void DbConnection::setName(const QString &value)
 {
-	name = value;
+    name = value;
 }
 
 void DbConnection::setDbType(const QString &value)
 {
-	dbType = value;
+    dbType = value;
 }
 
 void DbConnection::setDbName(const QString &value)
 {
-	dbName = value;
+    dbName = value;
 }
 
 void DbConnection::setTablePrefix(const QString &value)
 {
-	tablePrefix = value;
+    tablePrefix = value;
 }
 
 void DbConnection::setHost(const QString &value)
 {
-	host = value;
+    host = value;
 }
 
 void DbConnection::setUsername(const QString &value)
 {
-	username = value;
+    username = value;
 }
 
 void DbConnection::setPassword(const QString &value)
 {
-	password = value;
+    password = value;
 }
 
 void DbConnection::setPort(const quint32 &value)
 {
-	port = value;
+    port = value;
 }
 
 void DbConnection::setPasswordSave(const bool value)
 {
-	passwordSave = value;
+    passwordSave = value;
 }
 
 void DbConnection::showDbError()
 {
-	QSqlDatabase db = QSqlDatabase::database();
+    QSqlDatabase db = QSqlDatabase::database();
 
-	if (db.lastError().isValid())
-	{
-		lastErrorStr = QString("%1").arg(db.lastError().text());
-		QMessageBox::critical(NULL, "DB-Error", lastErrorStr, QMessageBox::Ok);
-	}
+    if(db.lastError().isValid())
+    {
+        lastErrorStr = QString("%1").arg(db.lastError().text());
+        QMessageBox::critical(NULL, "DB-Error", lastErrorStr, QMessageBox::Ok);
+    }
 }
 
 QString DbConnection::getConnectionName() const
 {
-	QString vDbName = dbName;
+    QString vDbName = dbName;
 
-	if (vDbName.endsWith(".mdb") || vDbName.endsWith(".accdb"))
-	{
-		vDbName = "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DSN='';DBQ=" + vDbName;
-	}
+    if(vDbName.endsWith(".mdb") || vDbName.endsWith(".accdb"))
+    {
+        vDbName = "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DSN='';DBQ=" + vDbName;
+    }
 
-	return vDbName;
+    return vDbName;
 }
 
 bool DbConnection::connectDatabase()
 {
-	QSqlDatabase db = QSqlDatabase::database();
+    QSqlDatabase db = QSqlDatabase::database();
 
-	qDebug() << "connect database";
+    qDebug() << "connect database";
 
-	if (!QSqlDatabase::contains() || db.driverName() != dbType)
-	{
-		if (QSqlDatabase::contains())
-		{
-			QSqlDatabase::removeDatabase(db.connectionName());
-		}
-		qDebug() << "adding database type connection " << dbType;
-		db = QSqlDatabase::addDatabase(dbType);
-	}
+    if(!QSqlDatabase::contains() || db.driverName() != dbType)
+    {
+        if(QSqlDatabase::contains())
+        {
+            QSqlDatabase::removeDatabase(db.connectionName());
+        }
+        qDebug() << "adding database type connection " << dbType;
+        db = QSqlDatabase::addDatabase(dbType);
+    }
 
-	if (!username.isEmpty() && !passwordSave && password.isEmpty())
-	{
-		// get Password
-		bool ok;
-		QString pwd = QInputDialog::getText(nullptr, "", "Please input password",
-													 QLineEdit::PasswordEchoOnEdit, "", &ok);
-		if (ok)
-		{
-			setPassword(pwd);
-		}
-	}
-	if (!dbName.isEmpty()) db.setDatabaseName(getConnectionName());
-	if (!host.isEmpty()) db.setHostName(host);
-	if (port != 0) db.setPort(port);
-	if (!username.isEmpty()) db.setUserName(username);
-	if (!password.isEmpty()) db.setPassword(password);
+    if(!username.isEmpty() && !passwordSave && password.isEmpty())
+    {
+        // get Password
+        bool ok;
+        QString pwd = QInputDialog::getText(nullptr, "", "Please input password",
+                                            QLineEdit::PasswordEchoOnEdit, "", &ok);
+        if(ok)
+        {
+            setPassword(pwd);
+        }
+    }
+    if(!dbName.isEmpty()) db.setDatabaseName(getConnectionName());
+    if(!host.isEmpty()) db.setHostName(host);
+    if(port != 0) db.setPort(port);
+    if(!username.isEmpty()) db.setUserName(username);
+    if(!password.isEmpty()) db.setPassword(password);
 
-	bool ok = db.open();
-	if (ok != true)
-	{
-		showDbError();
-	}
+    bool ok = db.open();
+    if(ok != true)
+    {
+        showDbError();
+    }
 
-	return ok;
+    return ok;
 }
 
 void DbConnection::closeDatabase() const
 {
-	qDebug() << "close database";
-	QSqlDatabase db = QSqlDatabase::database();
-	if ( db.isOpen() )
-	{
-		db.close();
-	}
+    qDebug() << "close database";
+    QSqlDatabase db = QSqlDatabase::database();
+    if(db.isOpen())
+    {
+        db.close();
+    }
 }
 
 void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeReporter *treeReporter) const
 {
-	treeReporter->reportMsg(aHead);
-	treeReporter->incReportLevel();
+    qDebug() << aHead;
+    treeReporter->reportMsg(aHead);
+    treeReporter->incReportLevel();
 
-	QSqlDatabase db = QSqlDatabase::database();
-	QStringList tableList = db.tables(aType);
-	foreach (QString tn, tableList)
-	{
-		treeReporter->reportMsg(tn);
-		treeReporter->incReportLevel();
-		QSqlRecord tableRecord = db.record(tn);
-		if (!tableRecord.isEmpty())
-		{
-			for (int c=0; c<tableRecord.count(); ++c)
-			{
-				QSqlField f = tableRecord.field(c);
-				treeReporter->reportMsg(QString("%2 %3 %4,%5 %6 '%7' %8 %9")
-							  .arg(f.name())
-							  .arg(QVariant::typeToName(f.type()))
-							  .arg(f.length())
-							  .arg(f.precision())
-							  .arg(f.isNull()?"NULL":"")
-							  .arg(f.defaultValue().toString())
-							  .arg(f.isAutoValue()?"serial":"")
-							  .arg(f.requiredStatus()==QSqlField::Required?"required":(f.requiredStatus()==QSqlField::Optional?"optional":""))
-							  );
-			}
-			QSqlIndex index = db.primaryIndex(tn);
-			if (!index.isEmpty())
-			{
-				treeReporter->reportMsg("primary key " +index.name());
-				treeReporter->incReportLevel();
-				for (int c=0; c<index.count(); ++c)
-				{
-					QSqlField f = index.field(c);
-					treeReporter->reportMsg(QString(" %1: %2")
-								  .arg(c)
-								  .arg(f.name())
-								  );
-				}
-				treeReporter->decReportLevel();
-			}
-		}
-		treeReporter->decReportLevel();
-		QCoreApplication::processEvents();
+    QSqlDatabase db = QSqlDatabase::database();
+    QStringList tableList = db.tables(aType);
+    foreach(QString tn, tableList)
+    {
+        qDebug() << "    " << tn;
+        treeReporter->reportMsg(tn);
+        treeReporter->incReportLevel();
+        QSqlRecord tableRecord = db.record(tn);
+        if(!tableRecord.isEmpty())
+        {
+            for(int c = 0; c < tableRecord.count(); ++c)
+            {
+                QSqlField f = tableRecord.field(c);
+                treeReporter->reportMsg(QString("%2 %3 %4,%5 %6 '%7' %8 %9")
+                                        .arg(f.name())
+                                        .arg(QVariant::typeToName(f.type()))
+                                        .arg(f.length())
+                                        .arg(f.precision())
+                                        .arg(f.isNull() ? "NULL" : "")
+                                        .arg(f.defaultValue().toString())
+                                        .arg(f.isAutoValue() ? "serial" : "")
+                                        .arg(f.requiredStatus() == QSqlField::Required ? "required" : (f.requiredStatus() == QSqlField::Optional ? "optional" : ""))
+                                       );
+            }
+            QSqlIndex index = db.primaryIndex(tn);
+            if(!index.isEmpty())
+            {
+                treeReporter->reportMsg("primary key " + index.name());
+                treeReporter->incReportLevel();
+                for(int c = 0; c < index.count(); ++c)
+                {
+                    QSqlField f = index.field(c);
+                    treeReporter->reportMsg(QString(" %1: %2")
+                                            .arg(c)
+                                            .arg(f.name())
+                                           );
+                }
+                treeReporter->decReportLevel();
+            }
+        }
+        treeReporter->decReportLevel();
+        QCoreApplication::processEvents();
 
-	}
-	treeReporter->decReportLevel();
+    }
+    treeReporter->decReportLevel();
 }
 
 void DbConnection::showDatabaseTables(QTreeReporter *tr) const
 {
-	QSqlDatabase db = QSqlDatabase::database();
-	bool b;
+    QSqlDatabase db = QSqlDatabase::database();
+    bool b;
 
-	tr->reportMsg("database info <" + dbName + ">");
-	tr->incReportLevel();
+    tr->reportMsg("database info <" + dbName + ">");
+    tr->incReportLevel();
 
-	QString features[] = {
-		"Transactions","QuerySize","BLOB","Unicode",
-		"PreparedQueries","NamedPlaceHolders","PositionalPlaceHolders",
-		"LastInsertId", "BatchOperations", "SimpleLocking",
-		"LowPrecisionNumbers", "EventNotification", "FinishQuery",
-		"MultipleResultSets", ""};
+    QString features[] = {
+        "Transactions", "QuerySize", "BLOB", "Unicode",
+        "PreparedQueries", "NamedPlaceHolders", "PositionalPlaceHolders",
+        "LastInsertId", "BatchOperations", "SimpleLocking",
+        "LowPrecisionNumbers", "EventNotification", "FinishQuery",
+        "MultipleResultSets", ""
+    };
 
-	QString s;
+    QString s;
 
-	tr->reportMsg("Capabilities");
-	tr->incReportLevel();
+    tr->reportMsg("Capabilities");
+    tr->incReportLevel();
 
-	for (int i=0; !features[i].isEmpty(); ++i)
-	{
-		s = features[i]+": ";
-		b = db.driver()->hasFeature(static_cast<QSqlDriver::DriverFeature>(i));
-		s+=b?"yes":"no";
-		tr->reportMsg(s);
-	}
-	tr->decReportLevel();
+    for(int i = 0; !features[i].isEmpty(); ++i)
+    {
+        s = features[i] + ": ";
+        b = db.driver()->hasFeature(static_cast<QSqlDriver::DriverFeature>(i));
+        s += b ? "yes" : "no";
+        tr->reportMsg(s);
+    }
+    tr->decReportLevel();
 
-	showTableList(QSql::Tables,"List of Tables", tr);
-	showTableList(QSql::Views,"List of Views", tr);
-	showTableList(QSql::SystemTables,"List of System Tables", tr);
+    showTableList(QSql::Tables, "List of Tables", tr);
+    showTableList(QSql::Views, "List of Views", tr);
+    showTableList(QSql::SystemTables, "List of System Tables", tr);
 }

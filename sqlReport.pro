@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui xml sql printsupport script
+QT       += core gui xml sql printsupport qml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

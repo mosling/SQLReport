@@ -3,7 +3,7 @@
 #include <QFileDialog>
 #include <QtPrintSupport/QPrinter>
 
-#include "editwidget.h"
+#include "EditWidget.h"
 #include "ui_editwidget.h"
 
 EditWidget::EditWidget(QWidget *parentObj) :

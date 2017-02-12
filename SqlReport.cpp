@@ -93,10 +93,10 @@ void SqlReport::on_But_OK_clicked()
 
 	// do the action
 	updateQuerySet();
-	ui.teReport->clear();
+    ui.textEditReport->clear();
 	ui.textEditError->clear();
 
-	vpExecutor.setMsgWindow(ui.teReport);
+    vpExecutor.setMsgWindow(ui.textEditReport);
 	vpExecutor.setErrorWindow(ui.textEditError);
 	vpExecutor.setDebugFlag(ui.checkBoxDebug->checkState());
 	vpExecutor.setPrepareQueriesFlag(ui.checkBoxPrepare->isChecked());
@@ -160,7 +160,7 @@ void SqlReport::on_But_OK_clicked()
 				}
 				// remove the before created batch file
 				batchFile.remove();
-				ui.teReport->append(tr("batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
+                ui.textEditReport->append(tr("batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
 			}
 		}
 	}
@@ -378,7 +378,7 @@ void SqlReport::on_but_querySet_clicked()
 		writeLocalDefines(mQuerySet.getQuerySetFileName());
 		mQuerySet.clear();
 		databaseSet.clear();
-		ui.teReport->clear();
+        ui.textEditReport->clear();
 		ui.textEditError->clear();
 
 		readQuerySet(qsName);
@@ -394,7 +394,7 @@ void SqlReport::readQuerySet(QString &qsName)
 
 	if (!qsFile.exists())
 	{
-		ui.teReport->append("query file doesn't exists -> write existing data");
+        ui.textEditReport->append("query file doesn't exists -> write existing data");
 		mQuerySet.writeXml(qsName, databaseSet);
 	}
 
@@ -604,10 +604,10 @@ void SqlReport::on_btnShowTables_clicked()
 		currentDbConnection->connectDatabase();
 		QTreeReporter treeReporter;
 
-		ui.teReport->append(tr("Start get database structure, please wait ..."));
+        ui.textEditReport->append(tr("Start get database structure, please wait ..."));
 		treeReporter.setReportRoot(treeModel.invisibleRootItem());
 		currentDbConnection->showDatabaseTables(&treeReporter);
-		ui.teReport->append(tr("Ready."));
+        ui.textEditReport->append(tr("Ready."));
 
 		currentDbConnection->closeDatabase();
 
@@ -629,7 +629,7 @@ void SqlReport::updateQuerySet()
 	if ( nullptr != activeQuerySetEntry)
 	{
 		activeQuerySetEntry->setDbName(ui.comboBoxDatabase->currentText());
-		activeQuerySetEntry->setDescr(ui.leDescr->text());
+        activeQuerySetEntry->setDescr(ui.lineEditDescr->text());
 		activeQuerySetEntry->setInputDefines(ui.lineEditInput->text());
 		activeQuerySetEntry->setSqlFile(ui.outSql->text());
 		activeQuerySetEntry->setTemplateFile(ui.outTemplate->text());
@@ -669,7 +669,7 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 	if (activeQuerySetEntry != nullptr)
 	{
 		ui.comboBoxDatabase->setCurrentText(activeQuerySetEntry->getDbName());
-		ui.leDescr->setText(activeQuerySetEntry->getDescr());
+        ui.lineEditDescr->setText(activeQuerySetEntry->getDescr());
 		ui.lineEditInput->setText(activeQuerySetEntry->getInputDefines());
 		ui.outSql->setText(activeQuerySetEntry->getSqlFile());
 		ui.outTemplate->setText(activeQuerySetEntry->getTemplateFile());
@@ -685,7 +685,7 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 	{
 		ui.comboBoxDatabase->setCurrentIndex(0);
 		ui.lineEditInput->setText("");
-		ui.leDescr->setText("");
+        ui.lineEditDescr->setText("");
 		ui.outSql->setText("");
 		ui.outTemplate->setText("");
 		ui.output->setText("");

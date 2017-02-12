@@ -13,7 +13,7 @@
 #include <qdebug>
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlQuery>
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <string>
 #include <stdio.h>
 #include <ctime>
@@ -77,7 +77,7 @@ private:
 	QString sqlFileName;
 	QString templFileName;
 	QMap<QString, int> mExpressionMap;
-	QScriptEngine scriptEngine;
+    QJSEngine scriptEngine;
 
 	QFile fileOut;
 	QTextStream streamOut;

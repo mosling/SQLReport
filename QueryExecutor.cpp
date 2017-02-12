@@ -4,8 +4,9 @@
 #include <QInputDialog>
 #include <QUrl>
 #include <QHashIterator>
-#include <QtScript/QScriptValue>
+#include <QtQml/QJSValue>
 #include <QTime>
+#include <QtQml/QJSValue>
 
 QueryExecutor::QueryExecutor(QObject *parentObj)
 	: QObject(parentObj),
@@ -710,12 +711,12 @@ bool QueryExecutor::executeInputFiles()
 
 	if (templatesMap.contains("Javascript"))
 	{
-		scriptEngine.evaluate(templatesMap["Javascript"]->join('\n'));
-		if (scriptEngine.hasUncaughtException())
+        QJSValue result = scriptEngine.evaluate(templatesMap["Javascript"]->join('\n'));
+        if (result.isError())
 		{
 			showMsg(tr("javascript error '%1' at line %2 ")
-					.arg(scriptEngine.uncaughtException().toString())
-					.arg(scriptEngine.uncaughtExceptionLineNumber()) , LogLevel::ERR);
+                    .arg(result.toString())
+                    .arg(result.property("lineNumber").toInt()) , LogLevel::ERR);
 		}
 	}
 
@@ -825,16 +826,16 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 			tmpList.removeLast();
 			tmpName = tmpList.join(',');
 			QString expression = replaceLine(tmpName, aLineCnt, false, true);
-			QScriptValue expResult = scriptEngine.evaluate(expression).toString();
-			if (!scriptEngine.hasUncaughtException())
+            QJSValue expResult = scriptEngine.evaluate(expression).toString();
+            if (!expResult.isError())
 			{
 				result += expResult.toString();
 			}
 			else
 			{
 				showMsg(tr("error '%1' at line %2 evaluate script /%3/")
-						.arg(scriptEngine.uncaughtException().toString())
-						.arg(scriptEngine.uncaughtExceptionLineNumber())
+                        .arg(expResult.toString())
+                        .arg(expResult.property("lineNumber").toInt())
 						.arg(expression), LogLevel::ERR);
 			}
 		}
