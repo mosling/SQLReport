@@ -1,5 +1,5 @@
 #include "SqlReport.h"
-#include "editwidget.h"
+#include "EditWidget.h"
 #include "QTreeReporter.h"
 #include "DbConnectionForm.h"
 #include "Utility.h"

@@ -32,7 +32,7 @@ protected:
 	void keyPressEvent(QKeyEvent *event) override;
 
 protected:
-	void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
 	bool on_btnSave_clicked();

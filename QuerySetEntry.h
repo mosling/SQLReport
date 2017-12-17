@@ -1,7 +1,7 @@
 #ifndef QUERYSETENTRY_H
 #define QUERYSETENTRY_H
 
-#include "DBConnection.h"
+#include "DbConnection.h"
 
 #include <QDomNode>
 

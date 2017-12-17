@@ -10,7 +10,7 @@
 #include <QTextStream>
 #include <QStringList>
 
-#include <qdebug>
+#include <QDebug>
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlQuery>
 #include <QtQml/QJSEngine>

@@ -3,7 +3,7 @@
 
 #include "EditWidget.h"
 #include "QueryExecutor.h"
-#include "ui_sqlReport.h"
+#include "ui_SqlReport.h"
 #include "QuerySet.h"
 #include "DbConnectionSet.h"
 
