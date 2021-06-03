@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include "QuerySet.h"
-#include "DbConnection.h"
+#include "DBConnection.h"
 #include <QDateTime>
 #include <QFile>
 #include <QtSql/QtSql>

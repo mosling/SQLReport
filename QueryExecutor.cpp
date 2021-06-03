@@ -1,6 +1,7 @@
 #include "QueryExecutor.h"
 #include "Utility.h"
 
+#include <QRegularExpression>
 #include <QInputDialog>
 #include <QUrl>
 #include <QHashIterator>
@@ -188,7 +189,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
 			else if ("RMLF" == vCmd)
 			{
-				vStr = vStr.replace(QRegExp("[\r\n]"),"");
+                vStr = vStr.replace(QRegularExpression("[\r\n]"),"");
 				result += vStr.simplified();
 			}
 			else if ("TREEMODE" == vCmd)
@@ -465,7 +466,7 @@ QStringList QueryExecutor::splitString(const QString &str, int width, const QStr
 		}
 
 		// existiert schon Zeilenumbruch, dann wird er übernommen
-		if (str[idx] == 0x0a || str[idx] == 0x0d)
+        if (str[idx] == QChar(0x0a) || str[idx] == QChar(0x0d))
 		{
 			l.append(sol + str.mid(start, idx-start).trimmed());
 			sol = startOfLine;
@@ -535,9 +536,9 @@ quint32 QueryExecutor::convertToNumber(QString aNumStr, bool &aOk) const
 	}
 	else if (2 == vBase)
 	{
-		QRegExp binValue("[01]+");
+        QRegularExpression binValue("[01]+");
 
-		if (binValue.exactMatch(aNumStr))
+        if (binValue.match(aNumStr).hasMatch())
 		{
 			int l = aNumStr.length() - 1;
 			for (int i = l; i >= 0; --i)
@@ -742,7 +743,7 @@ bool QueryExecutor::executeInputFiles()
 			streamOut.setDevice(&fileOut);
 			if (mQSE->getOutputUtf8())
 			{
-				streamOut.setCodec("UTF-8");
+                streamOut.setEncoding(QStringEncoder::Encoding::Utf8);
 			}
 		}
 	}
@@ -761,10 +762,10 @@ bool QueryExecutor::executeInputFiles()
 //! parameter1:=Wert|parameter2:=Wert2|...
 void QueryExecutor::setInputValues(const QString &inputDefines)
 {
-	QStringList pList = inputDefines.split('|', QString::SkipEmptyParts);
+    QStringList pList = inputDefines.split(QLatin1Char('|'), Qt::SkipEmptyParts);
 	foreach (QString pValue, pList)
 	{
-		QStringList pvList = pValue.split(QRegExp(":="));
+        QStringList pvList = pValue.split(QRegularExpression(":="));
 		if (pvList.size() > 0)
 		{
 			QString param = pvList.at(0);
@@ -792,7 +793,7 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 //! as the normal replace name method call.
 QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding, bool simpleFormat)
 {
-	QRegExp rx;
+    QRegularExpression rx;
 	QString result = "";
 	int lpos=0, pos = 0;
 
@@ -805,15 +806,19 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		rx.setPattern("\\$\\{([^\\}]*)\\}"); // all expressions like ${...} capture the ... part
 	}
 
-	while ((pos = rx.indexIn(aLine, lpos)) != -1)
-	{
-		QString tmpExpression = rx.cap(1);
-		QStringList tmpList = tmpExpression.split(',');
-		QString tmpName     = tmpList.at(0);
+    QRegularExpressionMatchIterator i = rx.globalMatch(aLine);
+    while (i.hasNext())
+    {
+      QRegularExpressionMatch match = i.next();
+
+      QString tmpExpression = match.captured();
+      QStringList tmpList = tmpExpression.split(',');
+      QString tmpName     = tmpList.at(0);
+      pos = match.capturedStart();
 
 		// add the first part to the result
 		result += aLine.mid(lpos,pos-lpos);
-		lpos = pos + rx.matchedLength();
+        lpos = pos + match.capturedLength();
 
 		// first look for an expression evaluated by the script engine
 		if ("EVAL" == tmpList.at(tmpList.size()-1).trimmed().toUpper())
@@ -884,7 +889,7 @@ QString QueryExecutor::getDate(const QString &aFormat) const
 //! \return true if the calling method has to add a linefeed
 bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt)
 {
-	QRegExp rx("\\#\\{([^\\}]*)\\}"); // all expressions like #{...} capture the ... part
+    QRegularExpression rx("\\#\\{([^\\}]*)\\}"); // all expressions like #{...} capture the ... part
 	QString tmpName, result;
 	bool vRes = false;
 	int vLineNum=0, pos=0, lpos=0;
@@ -898,12 +903,17 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 		bool lastLine = ((i+1) == vLineNum);
 		vStr = aTemplLines->at(i);
 		lpos = 0;
-		while ((pos = rx.indexIn(vStr, lpos)) != -1)
-		{
-			tmpName = rx.cap(1);
+
+        QRegularExpressionMatchIterator expit = rx.globalMatch(vStr);
+        while (expit.hasNext())
+        {
+          QRegularExpressionMatch match = expit.next();
+          pos = match.capturedStart();
+
+            tmpName = match.captured();
 			result = vStr.mid(lpos,pos-lpos);
 			streamOut << replaceLine(result, aLineCnt, false, false);
-			lpos = pos + rx.matchedLength();
+            lpos = pos + match.capturedLength();
 			// now add the subtemplate
 			outputTemplate(tmpName);
 		}
@@ -1003,7 +1013,9 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			{
 				// development case prepared queris
 				query = preparedQueriesMap[queryTemplate];
-				QMap<QString, QVariant> bvMap = query.boundValues();
+                QVariantList vList = query.boundValues();
+                QMap<QString, QVariant> bvMap = vList.
+
 				QMapIterator<QString, QVariant> bvIt(bvMap);
 				while (bvIt.hasNext())
 				{
@@ -1143,7 +1155,7 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 {
 	bool b = true;
 	mQSE = aQSE;
-	QTime t;
+    QElapsedTimer t;
 	t.start();
 
 	clearStructures();								// remove the internal structure

@@ -4,7 +4,7 @@
 #include "DbConnectionForm.h"
 #include "Utility.h"
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QtSql/QSqlRecord>
 #include <QFileInfo>
 #include <QInputDialog>
