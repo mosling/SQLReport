@@ -9,7 +9,7 @@
 class Utility
 {
 public:
-	static QString formatMilliSeconds(int ms);
+    static QString formatMilliSeconds(qint64 ms);
 
 private:
 	Utility();

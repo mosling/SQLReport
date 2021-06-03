@@ -103,7 +103,7 @@ void SqlReport::on_But_OK_clicked()
 
 	if (activeQuerySetEntry->getBatchrun())
 	{
-		QTime batchTime;
+        QElapsedTimer batchTime;
 		batchTime.start();
 		vRes = vpExecutor.createOutput(activeQuerySetEntry,
 									   databaseSet.getByName(activeQuerySetEntry->getDbName()),
@@ -133,7 +133,7 @@ void SqlReport::on_But_OK_clicked()
 					lineNr++;
 					if (line.startsWith("!!"))
 					{
-						QStringList qList = line.split("!!", QString::SkipEmptyParts);
+                        QStringList qList = line.split("!!", Qt::SkipEmptyParts);
 						QString queryName("");
 						QString queryInput = baseInput;
 						if (qList.size() > 0)

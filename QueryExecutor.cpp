@@ -795,7 +795,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 {
     QRegularExpression rx;
 	QString result = "";
-	int lpos=0, pos = 0;
+    long long lpos=0, pos = 0;
 
 	if (simpleFormat)
 	{
@@ -811,13 +811,13 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
     {
       QRegularExpressionMatch match = i.next();
 
-      QString tmpExpression = match.captured();
+      QString tmpExpression = match.captured(1);
       QStringList tmpList = tmpExpression.split(',');
       QString tmpName     = tmpList.at(0);
       pos = match.capturedStart();
 
 		// add the first part to the result
-		result += aLine.mid(lpos,pos-lpos);
+        result += aLine.mid(lpos,pos-lpos);
         lpos = pos + match.capturedLength();
 
 		// first look for an expression evaluated by the script engine
@@ -910,7 +910,7 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
           QRegularExpressionMatch match = expit.next();
           pos = match.capturedStart();
 
-            tmpName = match.captured();
+            tmpName = match.captured(1);
 			result = vStr.mid(lpos,pos-lpos);
 			streamOut << replaceLine(result, aLineCnt, false, false);
             lpos = pos + match.capturedLength();
@@ -1013,18 +1013,15 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			{
 				// development case prepared queris
 				query = preparedQueriesMap[queryTemplate];
-                QVariantList vList = query.boundValues();
-                QMap<QString, QVariant> bvMap = vList.
+                QVariantList list = query.boundValues();
 
-				QMapIterator<QString, QVariant> bvIt(bvMap);
-				while (bvIt.hasNext())
+                for (int i = 0; i < list.size(); ++i)
 				{
-					bvIt.next();
-					QString bv = bvIt.key();
-					QString bv2= bv;
+                    QString bv = list.at(i).toString().toUtf8().data();
+                    QString bv2= bv;
 					bv2.remove(0,1);
-					if (traceOutput) showMsg(tr("bound %1 to value %2").arg(bv).arg(replacements[bv2]), LogLevel::DBG);
-					query.bindValue(bv, replacements[bv2]);
+                    if (traceOutput) showMsg(tr("bound %1 to value %2").arg(i).arg(replacements[bv2]), LogLevel::DBG);
+                    query.bindValue(i, replacements[bv2]);
 				}
 				bRet = query.exec();
 				if (traceOutput) showMsg(tr("last query %1").arg(query.lastQuery()), LogLevel::DBG);

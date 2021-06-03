@@ -5,13 +5,13 @@
 
 //! \param ms time intervall in milli seconds
 //! \return formatted string HH:MM.ss,mmm
-QString Utility::formatMilliSeconds(int ms)
+QString Utility::formatMilliSeconds(qint64 ms)
 {
-    int sec = ms / 1000;
+    qint64 sec = ms / 1000;
     ms = ms - (sec * 1000);
-    int min = sec / 60;
+    qint64 min = sec / 60;
     sec = sec - min * 60;
-    int hrs = min / 60;
+    qint64 hrs = min / 60;
     min = min - hrs * 60;
 
     bool b = false;

@@ -16,8 +16,8 @@ class SqlReport : public QMainWindow
 	Q_CLASSINFO ("company", "com.github.mosling")
 
 public:
-	explicit SqlReport(QWidget *parentObj = 0, Qt::WindowFlags = 0);
-	~SqlReport();
+    explicit SqlReport(QWidget *parentObj = nullptr, Qt::WindowFlags = Qt::WindowType::Widget);
+    ~SqlReport() override;
 
 protected:
 	void setActiveQuerySetEntry(const QString aIdxName);
