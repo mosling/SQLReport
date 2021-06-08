@@ -78,6 +78,7 @@ private:
 	QString templFileName;
 	QMap<QString, int> mExpressionMap;
     QJSEngine scriptEngine;
+    QStringDecoder decodeDatabase;
 
 	QFile fileOut;
 	QTextStream streamOut;

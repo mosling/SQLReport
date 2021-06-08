@@ -26,6 +26,7 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  templFileName(""),
 	  mExpressionMap(),
 	  scriptEngine(),
+      decodeDatabase(QStringDecoder(QStringDecoder::Utf8)),
 	  fileOut(),
 	  streamOut(),
 	  uniqueId(0),
@@ -145,6 +146,131 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 				vStr[0] = vStr[0].toUpper();
 				result += vStr;
 			}
+            else if ("RTF" == vCmd)
+            {
+                if (vStr.startsWith("{\\rtf"))
+                {
+                    QString resultType = varList.size() > 2 ? varList.at(2) : "html";
+                    //QString unrtfCmd="\"c:/Program Files (x86)/GnuWin32/bin/unrtf\"";
+                    QString unrtfCmd="unrtf";
+
+                    QProcess unrtfVersion;
+                    QStringList unrtfArgs;
+                    unrtfArgs.append("--version");
+                    unrtfVersion.setProgram(unrtfCmd);
+                    unrtfVersion.setArguments(unrtfArgs);
+                    unrtfVersion.start();
+                    bool started = false;
+                    if (!unrtfVersion.waitForFinished(10000))
+                    {
+                        // 10 Second timeout
+                        unrtfVersion.kill();
+                    }
+                    else
+                    {
+                        started = unrtfVersion.exitCode() == 0;
+                    }
+
+                    if(started)
+                    {
+                        if (!msgHash.contains("RTF-CONVERTER"))
+                        {
+                            msgHash.insert("RTF-CONVERTER", 1);
+                            showMsg(QString("using unrtf version %1 to convert rtf -> %2")
+                                    .arg(QString::fromLocal8Bit(unrtfVersion.readAllStandardError()).trimmed(), resultType), LogLevel::MSG);
+                        }
+
+                        // write to file
+                        QString pathRtf= QCoreApplication::applicationDirPath() + QString("/myfile.rtf");
+                        QFile fileRtf(pathRtf);
+                        if(!fileRtf.open(QIODevice::WriteOnly)){
+                                fileRtf.close();
+                            } else {
+                                QTextStream out(&fileRtf);
+                                out << vStr.toLatin1();
+                                fileRtf.close();
+                            }
+
+                        QProcess program;
+                        unrtfArgs.clear();
+                        unrtfArgs.append(QString("--%1").arg(resultType.toLower()));
+                        unrtfArgs.append(pathRtf);
+                        program.setProgram(unrtfCmd);
+                        program.setArguments(unrtfArgs);
+                        program.start();
+                        int exitCode = 1;
+                        QString stdError;
+                        QString stdOutput = "";
+                        if (!program.waitForFinished(10000))
+                        {
+                            // 10 Second timeout
+                            program.kill();
+                            stdError = "RTF converter not ready within 10s.";
+                        }
+                        else
+                        {
+                            exitCode = program.exitCode();
+                            stdOutput = QString::fromLocal8Bit(program.readAllStandardOutput());
+                            stdError = QString::fromLocal8Bit(program.readAllStandardError());
+                        }
+
+                        if (exitCode != 0)
+                        {
+                            showMsg(QString("%1").arg(stdError), LogLevel::ERR);
+                        }
+                        else
+                        {
+                            // etract body content from generated html
+                            QRegularExpression htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>");
+                            QRegularExpressionMatch htmlMatch = htmlBody.match(stdOutput);
+                            if (htmlMatch.hasMatch())
+                            {
+                                result += htmlMatch.captured(1);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        showMsg("Please add unrtf to your PATH for better results.", LogLevel::WARN);
+                        QRegularExpression rtfText("lang1031 ([^}]*)");
+                        QRegularExpressionMatch rtfMatch= rtfText.match(vStr);
+                        if (rtfMatch.hasMatch())
+                        {
+                            QString part = rtfMatch.captured(1);
+
+                            QMap<QString, QString> rtfToHtml;
+                            rtfToHtml.insert("\\'f6", "ö");
+                            rtfToHtml.insert("\\'e4", "ä");
+                            rtfToHtml.insert("\\'fc", "ü");
+                            rtfToHtml.insert("\\'c4", "Ä");
+                            rtfToHtml.insert("\\'d6", "Ö");
+                            rtfToHtml.insert("\\'dc", "Ü");
+                            rtfToHtml.insert("\\'df", "ß");
+                            if (mQSE->getOutputXml())
+                            {
+                                rtfToHtml.insert("\\par", "</p>");
+                            }
+                            else
+                            {
+                                rtfToHtml.insert("\\par", "");
+                            }
+
+                            QMapIterator<QString, QString> iter(rtfToHtml);
+                            while(iter.hasNext())
+                            {
+                                iter.next();
+                                part.replace(iter.key(), iter.value());
+                            }
+                            result += part;
+                        }
+                    }
+                }
+                else
+                {
+                    showMsg(tr("No RTF String found -- use given string"), LogLevel::DBG);
+                    result += vStr;
+                }
+            }
 			else if ("IFEMPTY" == vCmd)
 			{
 				if ( 0 == vStr.size())
@@ -213,11 +339,11 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			{
 				// Ausgabe formatieren und alle Folgezeilen mit dem
 				// angegebenen StartOfLine versehen
-				bool bOk = false;
-				qint32 tw = varList.at(2).toInt(&bOk);
-				if (!bOk) tw = 78;
-				QString sol("");
-				if (varList.size() > 2) sol = varList.at(3);
+                qint32 tw = 78;
+                bool bOk = varList.size() > 2 ? tw = varList.at(2).toInt(&bOk) : true;
+				if (!bOk) tw = 78;                
+                QString sol(varList.size() > 3 ? varList.at(3) : "");
+
 				QStringList l = splitString(vStr, tw, sol);
 				int ls = l.size();
 				for (int i = 0; i < ls; ++i)
@@ -272,7 +398,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 					}
 				}
 			}
-			else
+            else if (varList.at(1).contains("%1"))
 			{
 				// es wurde ein zweiter Teil angegeben, dieser wird
 				// als Format verwendet, wenn ein Wert existiert
@@ -281,6 +407,10 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 					result += QString(varList.at(1)).arg(vStr);
 				}
 			}
+            else
+            {
+                showMsg(tr("Not supported variable conversion %1.").arg(varList.at(1)), LogLevel::ERR);
+            }
 		}
 		else
 		{
@@ -377,9 +507,9 @@ void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 			default: break;
 			}
 
-			QString showStr = QString("%1: %2 %3")
+            QString showStr = QString("%1:%2 %3")
 							  .arg(logStr)
-							  .arg(currentTemplateBlockName.isEmpty() ? "" : "[" + currentTemplateBlockName + "]")
+                              .arg(currentTemplateBlockName.isEmpty() ? "" : " [" + currentTemplateBlockName + "]")
 							  .arg(vMsgStr);
 			if (!msgHash.contains(showStr))
 			{
@@ -403,6 +533,12 @@ void QueryExecutor::createOutputFileName(const QString &basePath)
 	{
 		QString mOutFileName = mQSE->getOutputFile();
 		mOutFileName = replaceLine(mOutFileName, 0, false, false);
+
+        if (mOutFileName.isEmpty())
+        {
+            mOutFileName = "output.txt";
+            mQSE->setOutputFile(mOutFileName);
+        }
 
 		if (!(mOutFileName.startsWith("/") || mOutFileName.at(1)==':') )
 		{
@@ -1003,7 +1139,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			}
 		}
 
-		showMsg(tr("output template %1 using query %2").arg(aTemplate).arg(queryTemplate), LogLevel::DBG);
+        showMsg(tr("output template %1 using query %2").arg(aTemplate, queryTemplate), LogLevel::DBG);
 
 		if (queriesMap.contains(queryTemplate))
 		{
@@ -1068,10 +1204,11 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 
 					//get the sql values
 					for (int i=0; i<numCols; ++i)
-					{
-						QString tmpStr = query.value(i).toString();
+					{                   
 
-						if (empty) empty = query.isNull(i);
+                        QString tmpStr = decodeDatabase(query.value(i).toByteArray());
+
+                        if (empty) empty = query.isNull(i);
 						if (mQSE->getOutputXml())
 						{
 							tmpStr.replace("<", "&lt;");
@@ -1084,7 +1221,11 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 							overwrittenReplacements[tmpFieldName] = replacements[tmpFieldName];
 						}
 						replacements[tmpFieldName] = tmpStr;
-						if (traceOutput) showMsg(tr("column %1 is /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
+
+                        if (traceOutput)
+                        {
+                            showMsg(tr("column %1 with /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
+                        }
 					}
 					if (!empty)
 					{
@@ -1174,7 +1315,14 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 		{
 			showMsg(dbc->getLastErrorString(), LogLevel::ERR);
 		}
+
+        if (QStringConverter::encodingForName(dbc->getDbEncoding().toStdString().c_str()) != QStringConverter::Utf8)
+        {
+
+            decodeDatabase = QStringDecoder(dbc->getDbEncoding().toStdString().c_str());
+        }
 	}
+
 	b = b && executeInputFiles();                   // read the sql and the template file into the internal structure
 	b = b && outputTemplate("MAIN");				// start process with the MAIN template
 	streamOut.flush();

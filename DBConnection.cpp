@@ -12,7 +12,9 @@ DbConnection::DbConnection(QObject *parentObj) :
     QObject(parentObj),
     name(""),
     dbType(""),
+    dbEncoding("ISO-8859-1"), // the internal name for Latin1
     dbName(""),
+    dbOptions(""),
     tablePrefix(""),
     host(""),
     username(""),
@@ -38,6 +40,8 @@ void DbConnection::readXmlNode(const QDomNode &aNode)
         ce = ce.toUpper();
         if(ce == "NAME")   { name = te; }
         if(ce == "DBNAME") { dbName = te; }
+        if(ce == "DBENCODING") { dbEncoding = te; }
+        if(ce == "DBOPTIONS") { dbOptions = te; }
         if(ce == "PREFIX") { tablePrefix = te; }
         if(ce == "HOST")   { host = te; }
         if(ce == "USER")   { username = te; }
@@ -54,10 +58,12 @@ void DbConnection::writeXmlNode(QXmlStreamWriter &aStream)
     aStream.writeStartElement("Database");
     aStream.writeTextElement("type", dbType);
     aStream.writeTextElement("name", name);
+    aStream.writeTextElement("dbencoding", dbEncoding);
     aStream.writeTextElement("prefix", tablePrefix);
     aStream.writeTextElement("host", host);
     aStream.writeTextElement("port", QString("%1").arg(port));
     aStream.writeTextElement("dbname", dbName);
+    aStream.writeTextElement("dboptions", dbOptions);
     aStream.writeTextElement("user", username);
     if(passwordSave)
     {
@@ -80,6 +86,16 @@ void DbConnection::setDbType(const QString &value)
 void DbConnection::setDbName(const QString &value)
 {
     dbName = value;
+}
+
+void DbConnection::setDbEncoding(const QString &value)
+{
+    dbEncoding = value;
+}
+
+void DbConnection::setDbOptions(const QString &value)
+{
+    dbOptions = value;
 }
 
 void DbConnection::setTablePrefix(const QString &value)
@@ -168,6 +184,14 @@ bool DbConnection::connectDatabase()
     if(!username.isEmpty()) db.setUserName(username);
     if(!password.isEmpty()) db.setPassword(password);
 
+    if (!dbOptions.isEmpty()) {
+        QStringList ol = dbOptions.split(QLatin1Char('|'), Qt::SkipEmptyParts);
+        foreach(QString o, ol)
+        {
+            db.setConnectOptions(o);
+        }
+    }
+
     bool ok = db.open();
     if(ok != true)
     {
@@ -203,20 +227,30 @@ void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
         QSqlRecord tableRecord = db.record(tn);
         if(!tableRecord.isEmpty())
         {
+            // Create a List with entries
+            QStringList fieldList;
             for(int c = 0; c < tableRecord.count(); ++c)
             {
                 QSqlField f = tableRecord.field(c);
-                treeReporter->reportMsg(QString("%2 %3 %4,%5 %6 '%7' %8 %9")
-                                        .arg(f.name())
-                                        .arg(QVariant::typeToName(f.type()))
-                                        .arg(f.length())
-                                        .arg(f.precision())
-                                        .arg(f.isNull() ? "NULL" : "")
-                                        .arg(f.defaultValue().toString())
-                                        .arg(f.isAutoValue() ? "serial" : "")
-                                        .arg(f.requiredStatus() == QSqlField::Required ? "required" : (f.requiredStatus() == QSqlField::Optional ? "optional" : ""))
-                                       );
+                fieldList << QString("%2 %3 %4,%5 %6 '%7' %8 %9")
+                               .arg(f.name())
+                               .arg(f.metaType().name())
+                               .arg(f.length())
+                               .arg(f.precision())
+                               .arg(f.isNull() ? "NULL" : "")
+                               .arg(f.defaultValue().toString())
+                               .arg(f.isAutoValue() ? "serial" : "")
+                               .arg(f.requiredStatus() == QSqlField::Required ? "required" : (f.requiredStatus() == QSqlField::Optional ? "optional" : ""))
+                               ;
             }
+
+            fieldList.sort();
+            foreach(QString f, fieldList)
+            {
+                treeReporter->reportMsg(f);
+            }
+
+
             QSqlIndex index = db.primaryIndex(tn);
             if(!index.isEmpty())
             {
@@ -232,6 +266,8 @@ void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
                 }
                 treeReporter->decReportLevel();
             }
+
+
         }
         treeReporter->decReportLevel();
         QCoreApplication::processEvents();

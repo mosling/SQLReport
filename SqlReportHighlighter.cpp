@@ -30,7 +30,7 @@ SqlReportHighlighter::SqlReportHighlighter(QTextDocument *parentObj)
 					<< "\\bhaving\\b" << "\\bdistinct\\b" << "\\bin\\b"
 					<< "\\bdistinct\\b" << "\\binner join\\b" << "\\bouter join\\b"
 					<< "\\bleft join\\b" << "\\bright join\\b" << "\\bjoin\\b"
-					<< "\\bcount\\b" << "\\bmin\\b" << "\\bmax\\b";
+                    << "\\bcount\\b" << "\\bmin\\b" << "\\bmax\\b" << "\\bon\\b";
 	foreach (const QString &pattern, keywordPatterns)
 	{
         rule.pattern = QRegularExpression(pattern);

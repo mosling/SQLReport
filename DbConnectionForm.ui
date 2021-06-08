@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
-    <height>296</height>
+    <width>478</width>
+    <height>399</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,11 @@
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="QLineEdit" name="lineEditName"/>
+    <widget class="QLineEdit" name="lineEditName">
+     <property name="toolTip">
+      <string>Identifying name for data source connection.</string>
+     </property>
+    </widget>
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="labelDbName">
@@ -71,7 +75,11 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QLineEdit" name="lineEditDbName"/>
+       <widget class="QLineEdit" name="lineEditDbName">
+        <property name="toolTip">
+         <string>Name of database (filename or simple name using a database server)</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QToolButton" name="toolButtonName">
@@ -100,9 +108,13 @@
     </widget>
    </item>
    <item row="2" column="1">
-    <widget class="QComboBox" name="cbDbType"/>
+    <widget class="QComboBox" name="cbDbType">
+     <property name="toolTip">
+      <string>The database type, controlled by Qt plugins.</string>
+     </property>
+    </widget>
    </item>
-   <item row="3" column="0">
+   <item row="4" column="0">
     <widget class="QLabel" name="labelTablePrefix">
      <property name="font">
       <font>
@@ -118,10 +130,14 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QLineEdit" name="lineEditTablePrefix"/>
+   <item row="4" column="1">
+    <widget class="QLineEdit" name="lineEditTablePrefix">
+     <property name="toolTip">
+      <string>Can be used by variable ${_tableprefix}.</string>
+     </property>
+    </widget>
    </item>
-   <item row="4" column="0">
+   <item row="5" column="0">
     <widget class="QLabel" name="labelHost">
      <property name="font">
       <font>
@@ -137,10 +153,14 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
-    <widget class="QLineEdit" name="lineEditHost"/>
+   <item row="5" column="1">
+    <widget class="QLineEdit" name="lineEditHost">
+     <property name="toolTip">
+      <string>The hostname or IP address.</string>
+     </property>
+    </widget>
    </item>
-   <item row="5" column="0">
+   <item row="6" column="0">
     <widget class="QLabel" name="labelPort">
      <property name="font">
       <font>
@@ -156,10 +176,14 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="1">
-    <widget class="QLineEdit" name="lineEditPort"/>
+   <item row="6" column="1">
+    <widget class="QLineEdit" name="lineEditPort">
+     <property name="toolTip">
+      <string>The port for the database server.</string>
+     </property>
+    </widget>
    </item>
-   <item row="6" column="0">
+   <item row="7" column="0">
     <widget class="QLabel" name="labelUser">
      <property name="font">
       <font>
@@ -175,10 +199,14 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="1">
-    <widget class="QLineEdit" name="lineEditUser"/>
+   <item row="7" column="1">
+    <widget class="QLineEdit" name="lineEditUser">
+     <property name="toolTip">
+      <string>Username to login into database.</string>
+     </property>
+    </widget>
    </item>
-   <item row="7" column="0">
+   <item row="8" column="0">
     <widget class="QLabel" name="labelPassword">
      <property name="font">
       <font>
@@ -194,14 +222,17 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="1">
+   <item row="8" column="1">
     <widget class="QLineEdit" name="lineEditPassword">
+     <property name="toolTip">
+      <string>Password for the given username.</string>
+     </property>
      <property name="echoMode">
       <enum>QLineEdit::PasswordEchoOnEdit</enum>
      </property>
     </widget>
    </item>
-   <item row="8" column="1">
+   <item row="10" column="1">
     <widget class="QCheckBox" name="checkBoxPasswordSave">
      <property name="font">
       <font>
@@ -214,7 +245,7 @@
      </property>
     </widget>
    </item>
-   <item row="9" column="1">
+   <item row="11" column="1">
     <widget class="QFrame" name="frame">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -296,6 +327,46 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QLineEdit" name="lineEditOptions">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Option1|Option2|...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
+    <widget class="QLabel" name="labelOptions">
+     <property name="font">
+      <font>
+       <family>Tahoma</family>
+       <pointsize>9</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Connection Options</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="labelDbEncoding">
+     <property name="font">
+      <font>
+       <family>Tahoma</family>
+       <pointsize>9</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Database Encoding</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QComboBox" name="cbDbEncoding">
+     <property name="toolTip">
+      <string>The encoding for the database results to convert to UTF-8</string>
+     </property>
     </widget>
    </item>
   </layout>

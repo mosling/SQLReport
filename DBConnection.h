@@ -42,6 +42,12 @@ public:
 	QString getDbName() const {return dbName; }
 	void setDbName(const QString &value);
 
+    QString getDbEncoding() const {return dbEncoding; }
+    void setDbEncoding(const QString &value);
+
+    QString getDbOptions() const {return dbOptions; }
+    void setDbOptions(const QString &value);
+
 	QString getTablePrefix() const {return tablePrefix; }
 	void setTablePrefix(const QString &value);
 
@@ -65,7 +71,9 @@ public:
 private:
 	QString name;
 	QString dbType;
+    QString dbEncoding;
 	QString dbName;
+    QString dbOptions;
 	QString tablePrefix;
 	QString host;
 	QString username;

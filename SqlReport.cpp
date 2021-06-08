@@ -170,6 +170,7 @@ void SqlReport::on_But_OK_clicked()
 								databaseSet.getByName(activeQuerySetEntry->getDbName()),
 								queryPath,
 								baseInput );
+        ui.output->setText(activeQuerySetEntry->getOutputFile());
 	}
 }
 
@@ -208,7 +209,10 @@ QString SqlReport::selectFile(QString desc, QString def, QString pattern, bool m
 	QString defName(def);
 	cancel = false;
 
-	if (modify) defName = getAbsoluteFileName(def);
+    if (modify)
+    {
+        defName = getAbsoluteFileName(def);
+    }
 
 	QString str = QFileDialog::getOpenFileName(this, desc, defName, pattern);
 
@@ -302,7 +306,7 @@ void SqlReport::on_but_output_clicked()
 		bool selectCancel;
 		QString output = selectFile("Please select Target file",
 									activeQuerySetEntry->getOutputFile(),
-									"All Files(*.*)", false, selectCancel);
+                                    "All Files(*.*)", true, selectCancel);
 		if (!selectCancel)
 		{
 			ui.output->setText(output);
@@ -601,17 +605,19 @@ void SqlReport::on_btnShowTables_clicked()
 
 	if (nullptr != currentDbConnection)
 	{
-		currentDbConnection->connectDatabase();
-		QTreeReporter treeReporter;
+        if (currentDbConnection->connectDatabase())
+        {
+            QTreeReporter treeReporter;
 
-        ui.textEditReport->append(tr("Start get database structure, please wait ..."));
-		treeReporter.setReportRoot(treeModel.invisibleRootItem());
-		currentDbConnection->showDatabaseTables(&treeReporter);
-        ui.textEditReport->append(tr("Ready."));
+            ui.textEditReport->append(tr("Start get database structure, please wait ..."));
+            treeReporter.setReportRoot(treeModel.invisibleRootItem());
+            currentDbConnection->showDatabaseTables(&treeReporter);
+            ui.textEditReport->append(tr("Ready."));
 
-		currentDbConnection->closeDatabase();
+            currentDbConnection->closeDatabase();
 
-		if (ui.dockWidget->isHidden()) ui.dockWidget->show();
+            if (ui.dockWidget->isHidden()) ui.dockWidget->show();
+        }
 	}
 }
 

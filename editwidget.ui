@@ -7,8 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>640</width>
-    <height>320</height>
+    <height>647</height>
    </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Tahoma</family>
+    <pointsize>10</pointsize>
+   </font>
   </property>
   <property name="windowTitle">
    <string>Form</string>

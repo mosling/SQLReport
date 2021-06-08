@@ -1,6 +1,3 @@
-//! MOONWAVE SYSTEM GMBH
-//! copyright 2014
-
 #include "DbConnectionSet.h"
 #include <QDebug>
 
