@@ -31,10 +31,10 @@ public:
 	void showDatabaseTables(QTreeReporter *tr) const;
 
 	void readXmlNode(const QDomNode &aNode);
-	void writeXmlNode(QXmlStreamWriter &aStream);
+    void writeXmlNode(QXmlStreamWriter &aStream);
 
-	QString getName() const { return name; }
-	void setName(const QString &value);
+    QString getName() const { return name; }
+    void setName(const QString &value);
 
 	QString getDbType() const {return dbType; }
 	void setDbType(const QString &value);

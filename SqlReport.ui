@@ -90,6 +90,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="toolTip">
@@ -127,6 +129,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -152,6 +156,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -168,13 +174,15 @@
           <font>
            <family>Tahoma</family>
            <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="toolTip">
           <string/>
          </property>
          <property name="text">
-          <string>Local-Defines:</string>
+          <string>Global Defines:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -187,10 +195,12 @@
           <font>
            <family>Tahoma</family>
            <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="toolTip">
-          <string>Format param1:=value1|param2:=value2...</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This defines are set for all queries within this query set and can be overwritten by the same query define.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -200,6 +210,8 @@
           <font>
            <family>Tahoma</family>
            <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="text">
@@ -250,6 +262,9 @@
               <strikeout>false</strikeout>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;A query set contains a number of queries. Each with its own definitions. By clicking &amp;quot;Add&amp;quot; the current definitions are copied in the new query and can be edited.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="editable">
              <bool>false</bool>
             </property>
@@ -273,6 +288,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -298,6 +315,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -422,6 +441,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="layoutDirection">
@@ -450,6 +471,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -481,6 +504,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -500,6 +525,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -516,10 +543,12 @@
           <font>
            <family>Tahoma</family>
            <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="text">
-          <string>Input-Defines:</string>
+          <string>Query Defines:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -532,10 +561,12 @@
           <font>
            <family>Tahoma</family>
            <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="toolTip">
-          <string>Format param1:=value1|param2:=value2...</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This defines are used to set input defines or overwrite the global defines from the query set.&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -553,7 +584,7 @@
           </font>
          </property>
          <property name="text">
-          <string>SQL-File:</string>
+          <string>SQL File:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -614,6 +645,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="focusPolicy">
@@ -636,6 +669,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -660,7 +695,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Template-File:</string>
+          <string>Template File:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -721,6 +756,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -740,6 +777,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -764,7 +803,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Output-File:</string>
+          <string>Output File:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -825,6 +864,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -844,6 +885,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -860,6 +903,8 @@
           <font>
            <family>Tahoma</family>
            <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="text">
@@ -903,6 +948,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -921,9 +968,27 @@
             <property name="font">
              <font>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This is used to format the ${__DATE} parameter.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
            </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxBatchRun">
@@ -937,6 +1002,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -1031,6 +1098,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -1050,7 +1119,12 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Switch between &lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Info&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;/&lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Debug&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;/&lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Trace&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; output level.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Debug</string>
@@ -1072,6 +1146,8 @@
              <font>
               <family>Tahoma</family>
               <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
@@ -1154,6 +1230,8 @@
           <font>
            <family>Tahoma</family>
            <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
         </widget>

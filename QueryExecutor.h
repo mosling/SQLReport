@@ -62,6 +62,7 @@ private:
 	QStringList splitString(const QString &str, int width, const QString &startOfLine) const;
 	quint32 convertToNumber(QString aNumStr, bool &aOk) const;
 	void addSqlQuery(const QString &name, const QString &sqlLine);
+    QString convertRtf(QString rtfText, QString resultType);
 
 	bool mTreeNodeChanged;
 	QuerySetEntry *mQSE;

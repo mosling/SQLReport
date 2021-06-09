@@ -151,119 +151,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
                 if (vStr.startsWith("{\\rtf"))
                 {
                     QString resultType = varList.size() > 2 ? varList.at(2) : "html";
-                    //QString unrtfCmd="\"c:/Program Files (x86)/GnuWin32/bin/unrtf\"";
-                    QString unrtfCmd="unrtf";
-
-                    QProcess unrtfVersion;
-                    QStringList unrtfArgs;
-                    unrtfArgs.append("--version");
-                    unrtfVersion.setProgram(unrtfCmd);
-                    unrtfVersion.setArguments(unrtfArgs);
-                    unrtfVersion.start();
-                    bool started = false;
-                    if (!unrtfVersion.waitForFinished(10000))
-                    {
-                        // 10 Second timeout
-                        unrtfVersion.kill();
-                    }
-                    else
-                    {
-                        started = unrtfVersion.exitCode() == 0;
-                    }
-
-                    if(started)
-                    {
-                        if (!msgHash.contains("RTF-CONVERTER"))
-                        {
-                            msgHash.insert("RTF-CONVERTER", 1);
-                            showMsg(QString("using unrtf version %1 to convert rtf -> %2")
-                                    .arg(QString::fromLocal8Bit(unrtfVersion.readAllStandardError()).trimmed(), resultType), LogLevel::MSG);
-                        }
-
-                        // write to file
-                        QString pathRtf= QCoreApplication::applicationDirPath() + QString("/myfile.rtf");
-                        QFile fileRtf(pathRtf);
-                        if(!fileRtf.open(QIODevice::WriteOnly)){
-                                fileRtf.close();
-                            } else {
-                                QTextStream out(&fileRtf);
-                                out << vStr.toLatin1();
-                                fileRtf.close();
-                            }
-
-                        QProcess program;
-                        unrtfArgs.clear();
-                        unrtfArgs.append(QString("--%1").arg(resultType.toLower()));
-                        unrtfArgs.append(pathRtf);
-                        program.setProgram(unrtfCmd);
-                        program.setArguments(unrtfArgs);
-                        program.start();
-                        int exitCode = 1;
-                        QString stdError;
-                        QString stdOutput = "";
-                        if (!program.waitForFinished(10000))
-                        {
-                            // 10 Second timeout
-                            program.kill();
-                            stdError = "RTF converter not ready within 10s.";
-                        }
-                        else
-                        {
-                            exitCode = program.exitCode();
-                            stdOutput = QString::fromLocal8Bit(program.readAllStandardOutput());
-                            stdError = QString::fromLocal8Bit(program.readAllStandardError());
-                        }
-
-                        if (exitCode != 0)
-                        {
-                            showMsg(QString("%1").arg(stdError), LogLevel::ERR);
-                        }
-                        else
-                        {
-                            // etract body content from generated html
-                            QRegularExpression htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>");
-                            QRegularExpressionMatch htmlMatch = htmlBody.match(stdOutput);
-                            if (htmlMatch.hasMatch())
-                            {
-                                result += htmlMatch.captured(1);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        showMsg("Please add unrtf to your PATH for better results.", LogLevel::WARN);
-                        QRegularExpression rtfText("lang1031 ([^}]*)");
-                        QRegularExpressionMatch rtfMatch= rtfText.match(vStr);
-                        if (rtfMatch.hasMatch())
-                        {
-                            QString part = rtfMatch.captured(1);
-
-                            QMap<QString, QString> rtfToHtml;
-                            rtfToHtml.insert("\\'f6", "ö");
-                            rtfToHtml.insert("\\'e4", "ä");
-                            rtfToHtml.insert("\\'fc", "ü");
-                            rtfToHtml.insert("\\'c4", "Ä");
-                            rtfToHtml.insert("\\'d6", "Ö");
-                            rtfToHtml.insert("\\'dc", "Ü");
-                            rtfToHtml.insert("\\'df", "ß");
-                            if (mQSE->getOutputXml())
-                            {
-                                rtfToHtml.insert("\\par", "</p>");
-                            }
-                            else
-                            {
-                                rtfToHtml.insert("\\par", "");
-                            }
-
-                            QMapIterator<QString, QString> iter(rtfToHtml);
-                            while(iter.hasNext())
-                            {
-                                iter.next();
-                                part.replace(iter.key(), iter.value());
-                            }
-                            result += part;
-                        }
-                    }
+                    result += convertRtf(vStr, resultType);
                 }
                 else
                 {
@@ -729,7 +617,125 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
 		showMsg(QString("Adding SQL Query '%1'").arg(name), LogLevel::DBG);
 
 		queriesMap[name] = sqlLine;
-	}
+    }
+}
+
+QString QueryExecutor::convertRtf(QString rtfText, QString resultType)
+{
+    QString unrtfCmd="unrtf";
+
+    QProcess unrtfVersion;
+    QStringList unrtfArgs;
+    unrtfArgs.append("--version");
+    unrtfVersion.setProgram(unrtfCmd);
+    unrtfVersion.setArguments(unrtfArgs);
+    unrtfVersion.start();
+    bool started = false;
+    if (!unrtfVersion.waitForFinished(10000))
+    {
+        // 10 Second timeout
+        unrtfVersion.kill();
+    }
+    else
+    {
+        started = unrtfVersion.exitCode() == 0;
+    }
+
+    if(started)
+    {
+        if (!msgHash.contains("RTF-CONVERTER"))
+        {
+            msgHash.insert("RTF-CONVERTER", 1);
+            showMsg(QString("using unrtf version %1 to convert rtf -> %2")
+                    .arg(QString::fromLocal8Bit(unrtfVersion.readAllStandardError()).trimmed(), resultType), LogLevel::MSG);
+        }
+
+        // write to file
+        QString pathRtf= QCoreApplication::applicationDirPath() + QString("/myfile.rtf");
+        QFile fileRtf(pathRtf);
+        if(!fileRtf.open(QIODevice::WriteOnly)){
+                fileRtf.close();
+            } else {
+                QTextStream out(&fileRtf);
+                out << rtfText.toLatin1();
+                fileRtf.close();
+            }
+
+        QProcess program;
+        unrtfArgs.clear();
+        unrtfArgs.append(QString("--%1").arg(resultType.toLower()));
+        unrtfArgs.append(pathRtf);
+        program.setProgram(unrtfCmd);
+        program.setArguments(unrtfArgs);
+        program.start();
+        int exitCode = 1;
+        QString stdError;
+        QString stdOutput = "";
+        if (!program.waitForFinished(10000))
+        {
+            // 10 Second timeout
+            program.kill();
+            stdError = "RTF converter not ready within 10s.";
+        }
+        else
+        {
+            exitCode = program.exitCode();
+            stdOutput = QString::fromLocal8Bit(program.readAllStandardOutput());
+            stdError = QString::fromLocal8Bit(program.readAllStandardError());
+        }
+
+        if (exitCode != 0)
+        {
+            showMsg(QString("%1").arg(stdError), LogLevel::ERR);
+        }
+        else
+        {
+            // etract body content from generated html
+            QRegularExpression htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>");
+            QRegularExpressionMatch htmlMatch = htmlBody.match(stdOutput);
+            if (htmlMatch.hasMatch())
+            {
+                return htmlMatch.captured(1);
+            }
+        }
+    }
+    else
+    {
+        showMsg("Please add unrtf to your PATH for better results.", LogLevel::WARN);
+        QRegularExpression rtfTextExp("lang1031 ([^}]*)");
+        QRegularExpressionMatch rtfMatch= rtfTextExp.match(rtfText);
+        if (rtfMatch.hasMatch())
+        {
+            QString part = rtfMatch.captured(1);
+
+            QMap<QString, QString> rtfToHtml;
+            rtfToHtml.insert("\\'f6", "ö");
+            rtfToHtml.insert("\\'e4", "ä");
+            rtfToHtml.insert("\\'fc", "ü");
+            rtfToHtml.insert("\\'c4", "Ä");
+            rtfToHtml.insert("\\'d6", "Ö");
+            rtfToHtml.insert("\\'dc", "Ü");
+            rtfToHtml.insert("\\'df", "ß");
+            if (mQSE->getOutputXml())
+            {
+                rtfToHtml.insert("\\par", "</p>");
+            }
+            else
+            {
+                rtfToHtml.insert("\\par", "");
+            }
+
+            QMapIterator<QString, QString> iter(rtfToHtml);
+            while(iter.hasNext())
+            {
+                iter.next();
+                part.replace(iter.key(), iter.value());
+            }
+            return part;
+        }
+    }
+
+    return "";
 }
 
 //! This is the start method to fill the internal structures
@@ -911,9 +917,7 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 			if (debugOutput)
 			{
 				showMsg(tr("%1 INPUT PARAM '%2' with value '%3'")
-						.arg(overwrite ? "OVERWRITE" : "ADD")
-						.arg(param)
-						.arg(value), LogLevel::MSG);
+                        .arg(overwrite ? "OVERWRITE" : "      ADD", param, value), LogLevel::MSG);
 			}
 		}
 	}
