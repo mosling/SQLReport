@@ -31,16 +31,22 @@ public:
 	void showDatabaseTables(QTreeReporter *tr) const;
 
 	void readXmlNode(const QDomNode &aNode);
-	void writeXmlNode(QXmlStreamWriter &aStream);
+    void writeXmlNode(QXmlStreamWriter &aStream);
 
-	QString getName() const { return name; }
-	void setName(const QString &value);
+    QString getName() const { return name; }
+    void setName(const QString &value);
 
 	QString getDbType() const {return dbType; }
 	void setDbType(const QString &value);
 
 	QString getDbName() const {return dbName; }
 	void setDbName(const QString &value);
+
+    QString getDbEncoding() const {return dbEncoding; }
+    void setDbEncoding(const QString &value);
+
+    QString getDbOptions() const {return dbOptions; }
+    void setDbOptions(const QString &value);
 
 	QString getTablePrefix() const {return tablePrefix; }
 	void setTablePrefix(const QString &value);
@@ -65,7 +71,9 @@ public:
 private:
 	QString name;
 	QString dbType;
+    QString dbEncoding;
 	QString dbName;
+    QString dbOptions;
 	QString tablePrefix;
 	QString host;
 	QString username;

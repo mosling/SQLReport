@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include "QuerySet.h"
-#include "DbConnection.h"
+#include "DBConnection.h"
 #include <QDateTime>
 #include <QFile>
 #include <QtSql/QtSql>
@@ -62,6 +62,7 @@ private:
 	QStringList splitString(const QString &str, int width, const QString &startOfLine) const;
 	quint32 convertToNumber(QString aNumStr, bool &aOk) const;
 	void addSqlQuery(const QString &name, const QString &sqlLine);
+    QString convertRtf(QString rtfText, QString resultType);
 
 	bool mTreeNodeChanged;
 	QuerySetEntry *mQSE;
@@ -78,6 +79,7 @@ private:
 	QString templFileName;
 	QMap<QString, int> mExpressionMap;
     QJSEngine scriptEngine;
+    QStringDecoder decodeDatabase;
 
 	QFile fileOut;
 	QTextStream streamOut;

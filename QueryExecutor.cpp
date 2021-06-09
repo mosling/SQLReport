@@ -1,6 +1,7 @@
 #include "QueryExecutor.h"
 #include "Utility.h"
 
+#include <QRegularExpression>
 #include <QInputDialog>
 #include <QUrl>
 #include <QHashIterator>
@@ -25,6 +26,7 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  templFileName(""),
 	  mExpressionMap(),
 	  scriptEngine(),
+      decodeDatabase(QStringDecoder(QStringDecoder::Utf8)),
 	  fileOut(),
 	  streamOut(),
 	  uniqueId(0),
@@ -144,6 +146,19 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 				vStr[0] = vStr[0].toUpper();
 				result += vStr;
 			}
+            else if ("RTF" == vCmd)
+            {
+                if (vStr.startsWith("{\\rtf"))
+                {
+                    QString resultType = varList.size() > 2 ? varList.at(2) : "html";
+                    result += convertRtf(vStr, resultType);
+                }
+                else
+                {
+                    showMsg(tr("No RTF String found -- use given string"), LogLevel::DBG);
+                    result += vStr;
+                }
+            }
 			else if ("IFEMPTY" == vCmd)
 			{
 				if ( 0 == vStr.size())
@@ -188,7 +203,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
 			else if ("RMLF" == vCmd)
 			{
-				vStr = vStr.replace(QRegExp("[\r\n]"),"");
+                vStr = vStr.replace(QRegularExpression("[\r\n]"),"");
 				result += vStr.simplified();
 			}
 			else if ("TREEMODE" == vCmd)
@@ -212,11 +227,11 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			{
 				// Ausgabe formatieren und alle Folgezeilen mit dem
 				// angegebenen StartOfLine versehen
-				bool bOk = false;
-				qint32 tw = varList.at(2).toInt(&bOk);
-				if (!bOk) tw = 78;
-				QString sol("");
-				if (varList.size() > 2) sol = varList.at(3);
+                qint32 tw = 78;
+                bool bOk = varList.size() > 2 ? tw = varList.at(2).toInt(&bOk) : true;
+				if (!bOk) tw = 78;                
+                QString sol(varList.size() > 3 ? varList.at(3) : "");
+
 				QStringList l = splitString(vStr, tw, sol);
 				int ls = l.size();
 				for (int i = 0; i < ls; ++i)
@@ -271,7 +286,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 					}
 				}
 			}
-			else
+            else if (varList.at(1).contains("%1"))
 			{
 				// es wurde ein zweiter Teil angegeben, dieser wird
 				// als Format verwendet, wenn ein Wert existiert
@@ -280,6 +295,10 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 					result += QString(varList.at(1)).arg(vStr);
 				}
 			}
+            else
+            {
+                showMsg(tr("Not supported variable conversion %1.").arg(varList.at(1)), LogLevel::ERR);
+            }
 		}
 		else
 		{
@@ -376,9 +395,9 @@ void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 			default: break;
 			}
 
-			QString showStr = QString("%1: %2 %3")
+            QString showStr = QString("%1:%2 %3")
 							  .arg(logStr)
-							  .arg(currentTemplateBlockName.isEmpty() ? "" : "[" + currentTemplateBlockName + "]")
+                              .arg(currentTemplateBlockName.isEmpty() ? "" : " [" + currentTemplateBlockName + "]")
 							  .arg(vMsgStr);
 			if (!msgHash.contains(showStr))
 			{
@@ -402,6 +421,12 @@ void QueryExecutor::createOutputFileName(const QString &basePath)
 	{
 		QString mOutFileName = mQSE->getOutputFile();
 		mOutFileName = replaceLine(mOutFileName, 0, false, false);
+
+        if (mOutFileName.isEmpty())
+        {
+            mOutFileName = "output.txt";
+            mQSE->setOutputFile(mOutFileName);
+        }
 
 		if (!(mOutFileName.startsWith("/") || mOutFileName.at(1)==':') )
 		{
@@ -465,7 +490,7 @@ QStringList QueryExecutor::splitString(const QString &str, int width, const QStr
 		}
 
 		// existiert schon Zeilenumbruch, dann wird er übernommen
-		if (str[idx] == 0x0a || str[idx] == 0x0d)
+        if (str[idx] == QChar(0x0a) || str[idx] == QChar(0x0d))
 		{
 			l.append(sol + str.mid(start, idx-start).trimmed());
 			sol = startOfLine;
@@ -535,9 +560,9 @@ quint32 QueryExecutor::convertToNumber(QString aNumStr, bool &aOk) const
 	}
 	else if (2 == vBase)
 	{
-		QRegExp binValue("[01]+");
+        QRegularExpression binValue("[01]+");
 
-		if (binValue.exactMatch(aNumStr))
+        if (binValue.match(aNumStr).hasMatch())
 		{
 			int l = aNumStr.length() - 1;
 			for (int i = l; i >= 0; --i)
@@ -592,7 +617,125 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
 		showMsg(QString("Adding SQL Query '%1'").arg(name), LogLevel::DBG);
 
 		queriesMap[name] = sqlLine;
-	}
+    }
+}
+
+QString QueryExecutor::convertRtf(QString rtfText, QString resultType)
+{
+    QString unrtfCmd="unrtf";
+
+    QProcess unrtfVersion;
+    QStringList unrtfArgs;
+    unrtfArgs.append("--version");
+    unrtfVersion.setProgram(unrtfCmd);
+    unrtfVersion.setArguments(unrtfArgs);
+    unrtfVersion.start();
+    bool started = false;
+    if (!unrtfVersion.waitForFinished(10000))
+    {
+        // 10 Second timeout
+        unrtfVersion.kill();
+    }
+    else
+    {
+        started = unrtfVersion.exitCode() == 0;
+    }
+
+    if(started)
+    {
+        if (!msgHash.contains("RTF-CONVERTER"))
+        {
+            msgHash.insert("RTF-CONVERTER", 1);
+            showMsg(QString("using unrtf version %1 to convert rtf -> %2")
+                    .arg(QString::fromLocal8Bit(unrtfVersion.readAllStandardError()).trimmed(), resultType), LogLevel::MSG);
+        }
+
+        // write to file
+        QString pathRtf= QCoreApplication::applicationDirPath() + QString("/myfile.rtf");
+        QFile fileRtf(pathRtf);
+        if(!fileRtf.open(QIODevice::WriteOnly)){
+                fileRtf.close();
+            } else {
+                QTextStream out(&fileRtf);
+                out << rtfText.toLatin1();
+                fileRtf.close();
+            }
+
+        QProcess program;
+        unrtfArgs.clear();
+        unrtfArgs.append(QString("--%1").arg(resultType.toLower()));
+        unrtfArgs.append(pathRtf);
+        program.setProgram(unrtfCmd);
+        program.setArguments(unrtfArgs);
+        program.start();
+        int exitCode = 1;
+        QString stdError;
+        QString stdOutput = "";
+        if (!program.waitForFinished(10000))
+        {
+            // 10 Second timeout
+            program.kill();
+            stdError = "RTF converter not ready within 10s.";
+        }
+        else
+        {
+            exitCode = program.exitCode();
+            stdOutput = QString::fromLocal8Bit(program.readAllStandardOutput());
+            stdError = QString::fromLocal8Bit(program.readAllStandardError());
+        }
+
+        if (exitCode != 0)
+        {
+            showMsg(QString("%1").arg(stdError), LogLevel::ERR);
+        }
+        else
+        {
+            // etract body content from generated html
+            QRegularExpression htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>");
+            QRegularExpressionMatch htmlMatch = htmlBody.match(stdOutput);
+            if (htmlMatch.hasMatch())
+            {
+                return htmlMatch.captured(1);
+            }
+        }
+    }
+    else
+    {
+        showMsg("Please add unrtf to your PATH for better results.", LogLevel::WARN);
+        QRegularExpression rtfTextExp("lang1031 ([^}]*)");
+        QRegularExpressionMatch rtfMatch= rtfTextExp.match(rtfText);
+        if (rtfMatch.hasMatch())
+        {
+            QString part = rtfMatch.captured(1);
+
+            QMap<QString, QString> rtfToHtml;
+            rtfToHtml.insert("\\'f6", "ö");
+            rtfToHtml.insert("\\'e4", "ä");
+            rtfToHtml.insert("\\'fc", "ü");
+            rtfToHtml.insert("\\'c4", "Ä");
+            rtfToHtml.insert("\\'d6", "Ö");
+            rtfToHtml.insert("\\'dc", "Ü");
+            rtfToHtml.insert("\\'df", "ß");
+            if (mQSE->getOutputXml())
+            {
+                rtfToHtml.insert("\\par", "</p>");
+            }
+            else
+            {
+                rtfToHtml.insert("\\par", "");
+            }
+
+            QMapIterator<QString, QString> iter(rtfToHtml);
+            while(iter.hasNext())
+            {
+                iter.next();
+                part.replace(iter.key(), iter.value());
+            }
+            return part;
+        }
+    }
+
+    return "";
 }
 
 //! This is the start method to fill the internal structures
@@ -742,7 +885,7 @@ bool QueryExecutor::executeInputFiles()
 			streamOut.setDevice(&fileOut);
 			if (mQSE->getOutputUtf8())
 			{
-				streamOut.setCodec("UTF-8");
+                streamOut.setEncoding(QStringEncoder::Encoding::Utf8);
 			}
 		}
 	}
@@ -761,10 +904,10 @@ bool QueryExecutor::executeInputFiles()
 //! parameter1:=Wert|parameter2:=Wert2|...
 void QueryExecutor::setInputValues(const QString &inputDefines)
 {
-	QStringList pList = inputDefines.split('|', QString::SkipEmptyParts);
+    QStringList pList = inputDefines.split(QLatin1Char('|'), Qt::SkipEmptyParts);
 	foreach (QString pValue, pList)
 	{
-		QStringList pvList = pValue.split(QRegExp(":="));
+        QStringList pvList = pValue.split(QRegularExpression(":="));
 		if (pvList.size() > 0)
 		{
 			QString param = pvList.at(0);
@@ -774,9 +917,7 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 			if (debugOutput)
 			{
 				showMsg(tr("%1 INPUT PARAM '%2' with value '%3'")
-						.arg(overwrite ? "OVERWRITE" : "ADD")
-						.arg(param)
-						.arg(value), LogLevel::MSG);
+                        .arg(overwrite ? "OVERWRITE" : "      ADD", param, value), LogLevel::MSG);
 			}
 		}
 	}
@@ -792,9 +933,9 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 //! as the normal replace name method call.
 QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding, bool simpleFormat)
 {
-	QRegExp rx;
+    QRegularExpression rx;
 	QString result = "";
-	int lpos=0, pos = 0;
+    long long lpos=0, pos = 0;
 
 	if (simpleFormat)
 	{
@@ -805,15 +946,19 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		rx.setPattern("\\$\\{([^\\}]*)\\}"); // all expressions like ${...} capture the ... part
 	}
 
-	while ((pos = rx.indexIn(aLine, lpos)) != -1)
-	{
-		QString tmpExpression = rx.cap(1);
-		QStringList tmpList = tmpExpression.split(',');
-		QString tmpName     = tmpList.at(0);
+    QRegularExpressionMatchIterator i = rx.globalMatch(aLine);
+    while (i.hasNext())
+    {
+      QRegularExpressionMatch match = i.next();
+
+      QString tmpExpression = match.captured(1);
+      QStringList tmpList = tmpExpression.split(',');
+      QString tmpName     = tmpList.at(0);
+      pos = match.capturedStart();
 
 		// add the first part to the result
-		result += aLine.mid(lpos,pos-lpos);
-		lpos = pos + rx.matchedLength();
+        result += aLine.mid(lpos,pos-lpos);
+        lpos = pos + match.capturedLength();
 
 		// first look for an expression evaluated by the script engine
 		if ("EVAL" == tmpList.at(tmpList.size()-1).trimmed().toUpper())
@@ -884,7 +1029,7 @@ QString QueryExecutor::getDate(const QString &aFormat) const
 //! \return true if the calling method has to add a linefeed
 bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt)
 {
-	QRegExp rx("\\#\\{([^\\}]*)\\}"); // all expressions like #{...} capture the ... part
+    QRegularExpression rx("\\#\\{([^\\}]*)\\}"); // all expressions like #{...} capture the ... part
 	QString tmpName, result;
 	bool vRes = false;
 	int vLineNum=0, pos=0, lpos=0;
@@ -898,12 +1043,17 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 		bool lastLine = ((i+1) == vLineNum);
 		vStr = aTemplLines->at(i);
 		lpos = 0;
-		while ((pos = rx.indexIn(vStr, lpos)) != -1)
-		{
-			tmpName = rx.cap(1);
+
+        QRegularExpressionMatchIterator expit = rx.globalMatch(vStr);
+        while (expit.hasNext())
+        {
+          QRegularExpressionMatch match = expit.next();
+          pos = match.capturedStart();
+
+            tmpName = match.captured(1);
 			result = vStr.mid(lpos,pos-lpos);
 			streamOut << replaceLine(result, aLineCnt, false, false);
-			lpos = pos + rx.matchedLength();
+            lpos = pos + match.capturedLength();
 			// now add the subtemplate
 			outputTemplate(tmpName);
 		}
@@ -993,7 +1143,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			}
 		}
 
-		showMsg(tr("output template %1 using query %2").arg(aTemplate).arg(queryTemplate), LogLevel::DBG);
+        showMsg(tr("output template %1 using query %2").arg(aTemplate, queryTemplate), LogLevel::DBG);
 
 		if (queriesMap.contains(queryTemplate))
 		{
@@ -1003,16 +1153,15 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			{
 				// development case prepared queris
 				query = preparedQueriesMap[queryTemplate];
-				QMap<QString, QVariant> bvMap = query.boundValues();
-				QMapIterator<QString, QVariant> bvIt(bvMap);
-				while (bvIt.hasNext())
+                QVariantList list = query.boundValues();
+
+                for (int i = 0; i < list.size(); ++i)
 				{
-					bvIt.next();
-					QString bv = bvIt.key();
-					QString bv2= bv;
+                    QString bv = list.at(i).toString().toUtf8().data();
+                    QString bv2= bv;
 					bv2.remove(0,1);
-					if (traceOutput) showMsg(tr("bound %1 to value %2").arg(bv).arg(replacements[bv2]), LogLevel::DBG);
-					query.bindValue(bv, replacements[bv2]);
+                    if (traceOutput) showMsg(tr("bound %1 to value %2").arg(i).arg(replacements[bv2]), LogLevel::DBG);
+                    query.bindValue(i, replacements[bv2]);
 				}
 				bRet = query.exec();
 				if (traceOutput) showMsg(tr("last query %1").arg(query.lastQuery()), LogLevel::DBG);
@@ -1059,10 +1208,11 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 
 					//get the sql values
 					for (int i=0; i<numCols; ++i)
-					{
-						QString tmpStr = query.value(i).toString();
+					{                   
 
-						if (empty) empty = query.isNull(i);
+                        QString tmpStr = decodeDatabase(query.value(i).toByteArray());
+
+                        if (empty) empty = query.isNull(i);
 						if (mQSE->getOutputXml())
 						{
 							tmpStr.replace("<", "&lt;");
@@ -1075,7 +1225,11 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 							overwrittenReplacements[tmpFieldName] = replacements[tmpFieldName];
 						}
 						replacements[tmpFieldName] = tmpStr;
-						if (traceOutput) showMsg(tr("column %1 is /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
+
+                        if (traceOutput)
+                        {
+                            showMsg(tr("column %1 with /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
+                        }
 					}
 					if (!empty)
 					{
@@ -1143,7 +1297,7 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 {
 	bool b = true;
 	mQSE = aQSE;
-	QTime t;
+    QElapsedTimer t;
 	t.start();
 
 	clearStructures();								// remove the internal structure
@@ -1165,7 +1319,14 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 		{
 			showMsg(dbc->getLastErrorString(), LogLevel::ERR);
 		}
+
+        if (QStringConverter::encodingForName(dbc->getDbEncoding().toStdString().c_str()) != QStringConverter::Utf8)
+        {
+
+            decodeDatabase = QStringDecoder(dbc->getDbEncoding().toStdString().c_str());
+        }
 	}
+
 	b = b && executeInputFiles();                   // read the sql and the template file into the internal structure
 	b = b && outputTemplate("MAIN");				// start process with the MAIN template
 	streamOut.flush();

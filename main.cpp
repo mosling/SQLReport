@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	app.setOrganizationName  ("mosling");
 	app.setApplicationName   ("SqlReport");
 	app.setOrganizationDomain("https://github.com/mosling/SQLReport");
-	app.setApplicationVersion("1.2");
+    app.setApplicationVersion("1.2.1");
 
     QStringList l = QCoreApplication::libraryPaths ();
     foreach (QString s, l)

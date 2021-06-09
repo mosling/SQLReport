@@ -17,15 +17,26 @@ DbConnectionForm::DbConnectionForm(DbConnection *dbCon, QWidget *parent) :
     QStringList drivers = QSqlDatabase::drivers();
     ui->cbDbType->addItems(drivers);
 
+    QStringList dbEncList;
+    for (int i = QStringConverter::Utf8; i != QStringConverter::LastEncoding; ++i )
+    {
+        dbEncList.append(QStringConverter::nameForEncoding(static_cast<QStringConverter::Encoding>(i)));
+    }
+    ui->cbDbEncoding->addItems(dbEncList);
+
+
 	if (nullptr != dbc)
 	{
 		ui->lineEditName->setText(dbc->getName());
         if (!drivers.contains(dbc->getDbType()))
         {
+            // add unknown database connection type
             ui->cbDbType->addItem(dbc->getDbType());
         }
 		ui->cbDbType->setCurrentText(dbc->getDbType());
+        ui->cbDbEncoding->setCurrentText(dbc->getDbEncoding());
         ui->lineEditDbName->setText(dbc->getDbName());
+        ui->lineEditOptions->setText(dbc->getDbOptions());
 		ui->lineEditTablePrefix->setText(dbc->getTablePrefix());
 		ui->lineEditHost->setText(dbc->getHost());
 		ui->lineEditPort->setText(QString("%1").arg(dbc->getPort()));
@@ -46,16 +57,15 @@ void DbConnectionForm::on_pushButtonExit_clicked()
 	{
 		dbc->setName(ui->lineEditName->text());
 		dbc->setDbName(ui->lineEditDbName->text());
+        dbc->setDbEncoding(ui->cbDbEncoding->currentText());
+        dbc->setDbOptions(ui->lineEditOptions->text());
 		dbc->setTablePrefix(ui->lineEditTablePrefix->text());
 		dbc->setHost(ui->lineEditHost->text());
 		dbc->setDbType(ui->cbDbType->currentText());
 		bool bOk;
 		quint32 p = ui->lineEditPort->text().toUInt(&bOk, 10);
-		if (bOk)
-		{
-			dbc->setPort(p);
-		}
-		dbc->setUsername(ui->lineEditUser->text());
+        dbc->setPort(bOk ? p : 0);
+        dbc->setUsername(ui->lineEditUser->text());
 		dbc->setPassword(ui->lineEditPassword->text());
 		dbc->setPasswordSave(ui->checkBoxPasswordSave->checkState() == Qt::Checked);
 	}

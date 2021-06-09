@@ -7,7 +7,7 @@
             <prefix></prefix>
             <host></host>
             <port>0</port>
-            <dbname>C:/Development/moonwave/src/tools/sqlReport/binaries/chinook.sqlite</dbname>
+            <dbname>C:/Users/msk/development/src/tools/SQLReport/binaries/chinook.sqlite</dbname>
             <user></user>
             <save>no</save>
         </Database>
@@ -17,10 +17,10 @@
             <name>Artists</name>
             <dbname>chinook_sqlite_1.4</dbname>
             <descr></descr>
-            <defines>username:=unknown|const:=2</defines>
+            <defines>username:=Steffen Köhler|const:=2</defines>
             <sql>scripts/artist.sql</sql>
             <template>scripts/artists.txt.template</template>
-            <output>${?outdir}/artists.txt</output>
+            <output>output/artists.txt</output>
             <locale>de_DE</locale>
             <batchrun>no</batchrun>
             <useTimestamp>no</useTimestamp>
@@ -35,7 +35,7 @@
             <defines></defines>
             <sql>scripts/playlist.sql</sql>
             <template>scripts/playlist.txt.template</template>
-            <output>playlist.txt</output>
+            <output>output/playlist.txt</output>
             <locale>de_DE</locale>
             <batchrun>no</batchrun>
             <useTimestamp>no</useTimestamp>
