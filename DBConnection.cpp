@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QStringBuilder>
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlField>
 #include <QtSql/QSqlIndex>
@@ -211,6 +212,20 @@ void DbConnection::closeDatabase() const
     }
 }
 
+QString DbConnection::getFieldString(const QSqlField field) const
+{
+    return QString("%2 %3 %4,%5 %6 '%7' %8 %9")
+      .arg(field.name(), field.metaType().name())
+      .arg(field.length())
+      .arg(field.precision())
+      .arg(field.isNull() ? "NULL" : "",
+           field.defaultValue().toString(),
+           field.isAutoValue() ? "auto" : "",
+           field.requiredStatus() == QSqlField::Required ? "required"
+           : (field.requiredStatus() == QSqlField::Optional ? "optional" : ""))
+      ;
+}
+
 void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeReporter *treeReporter) const
 {
     qDebug() << aHead;
@@ -231,17 +246,7 @@ void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
             QStringList fieldList;
             for(int c = 0; c < tableRecord.count(); ++c)
             {
-                QSqlField f = tableRecord.field(c);
-                fieldList << QString("%2 %3 %4,%5 %6 '%7' %8 %9")
-                               .arg(f.name())
-                               .arg(f.metaType().name())
-                               .arg(f.length())
-                               .arg(f.precision())
-                               .arg(f.isNull() ? "NULL" : "")
-                               .arg(f.defaultValue().toString())
-                               .arg(f.isAutoValue() ? "serial" : "")
-                               .arg(f.requiredStatus() == QSqlField::Required ? "required" : (f.requiredStatus() == QSqlField::Optional ? "optional" : ""))
-                               ;
+                fieldList << getFieldString(tableRecord.field(c));
             }
 
             fieldList.sort();

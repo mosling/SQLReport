@@ -81,6 +81,8 @@ private:
 	quint32 port;
 	bool passwordSave;
 	QString lastErrorStr;
+
+    QString getFieldString(const QSqlField field) const;
 	
 };
 

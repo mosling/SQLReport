@@ -396,9 +396,7 @@ void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 			}
 
             QString showStr = QString("%1:%2 %3")
-							  .arg(logStr)
-                              .arg(currentTemplateBlockName.isEmpty() ? "" : " [" + currentTemplateBlockName + "]")
-							  .arg(vMsgStr);
+                    .arg(logStr, currentTemplateBlockName.isEmpty() ? "" : " [" + currentTemplateBlockName + "]", vMsgStr);
 			if (!msgHash.contains(showStr))
 			{
 				msgHash.insert(showStr, 1);
@@ -1257,7 +1255,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			{
 				QString errText = query.lastError().text();
 				streamOut << "## error executing " << sqlQuery << " ## " << errText << "##";
-				showMsg(tr("executing SQL '%1' (%2)").arg(sqlQuery).arg(errText), LogLevel::ERR);
+                showMsg(tr("executing SQL '%1' (%2)").arg(sqlQuery, errText), LogLevel::ERR);
 			}
 		}
 		else

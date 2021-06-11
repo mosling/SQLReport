@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QList>
-#include <QtXML/QDomDocument>
+#include <QDomDocument>
 #include <QAbstractListModel>
 
 #include "DbConnectionSet.h"
