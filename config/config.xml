@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>sqlreporter</Name>
+    <Version>1.0.0</Version>
+    <Title>SQL Report Generator</Title>
+    <Publisher>Steffen Köhler</Publisher>
+    <StartMenuDir>SQL-Reporter</StartMenuDir>
+    <TargetDir>@HomeDir@/sqlreporter</TargetDir>
+</Installer>
+

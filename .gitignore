@@ -56,4 +56,5 @@ Thumbs.db
 # #########################
 sqlreport.html
 demo/output
+packages/com.koehlers.sqlreporter/data
 

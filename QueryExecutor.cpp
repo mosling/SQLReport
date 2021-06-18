@@ -396,7 +396,9 @@ void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 			}
 
             QString showStr = QString("%1:%2 %3")
-                    .arg(logStr, currentTemplateBlockName.isEmpty() ? "" : " [" + currentTemplateBlockName + "]", vMsgStr);
+                    .arg(logStr)
+                    .arg(currentTemplateBlockName.isEmpty() ? QString("") : " [" + currentTemplateBlockName + "]")
+                    .arg(vMsgStr);
 			if (!msgHash.contains(showStr))
 			{
 				msgHash.insert(showStr, 1);
@@ -457,7 +459,7 @@ void QueryExecutor::createInputFileNames(const QString &basePath)
 {
 	if (nullptr != mQSE)
 	{
-		sqlFileName = mQSE->getSqlFile().isEmpty() ? "" : basePath + "/" + mQSE->getSqlFile();
+        sqlFileName = mQSE->getSqlFile().isEmpty() ? QString("") : basePath + "/" + mQSE->getSqlFile();
 		templFileName = basePath + "/" + mQSE->getTemplateFile();
 	}
 	else

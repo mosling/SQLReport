@@ -54,6 +54,9 @@ public:
 	bool getOutputXml() const;
 	void setOutputXml(bool value);
 
+    bool getShowFirst() const;
+    void setShowFirst(bool value);
+
 	QString getLocale() const;
 	void setLocale(const QString &value);
 
@@ -71,6 +74,7 @@ private:
 	bool appendOutput;
 	bool outputUtf8;
 	bool outputXml;
+    bool showFirst;
 	QString locale;
 };
 

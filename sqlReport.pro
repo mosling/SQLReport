@@ -15,6 +15,7 @@ greaterThan(QT_MAJOR_VERSION, 4) CONFIG += c++11
 
 TARGET = sqlReport
 TEMPLATE = app
+DEFINES *= QT_USE_QSTRINGBUILDER
 
 CONFIG(release, debug|release){
 	DEFINES += QT_NO_DEBUG_OUTPUT QT_NO_WARNING_OUTPUT
@@ -58,4 +59,8 @@ OTHER_FILES += \
     sqlreport.ico
 
 DISTFILES += \
+    config/config.xml \
+    packages/com.koehlers.sqlreporter/meta/installscript.qs \
+    packages/com.koehlers.sqlreporter/meta/license.txt \
+    packages/com.koehlers.sqlreporter/meta/package.xml \
     sqlreport.asciidoc

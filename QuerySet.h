@@ -25,12 +25,14 @@ public:
 	void getNames(QStringList &aList) const;
 	bool contains(const QString &aName) const;
 	QuerySetEntry *getByName(QString aName) const;
+    QuerySetEntry *getShowFirst() const;
 	void append(QuerySetEntry *aEntry);
 	void remove(QuerySetEntry *entry);
 	void clear();
 	QString getQuerySetFileName() const { return querySetFileName; }
 	QString getLastError() const { return lastErrMessage; }
 
+    void setShowFirst(QuerySetEntry *entry, bool b);
 	qint32 rowCount(const QModelIndex &parent = QModelIndex()) const;
 	QVariant data(const QModelIndex &index, int role) const;
 	QVariant headerData(int section, Qt::Orientation orientation,

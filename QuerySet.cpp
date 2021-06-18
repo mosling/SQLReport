@@ -29,7 +29,24 @@ QuerySetEntry *QuerySet::getByName(QString aName) const
 		QuerySetEntry *qse = it.next();
 		if (qse->getName() == aName) return qse;
 	}
-	return nullptr;
+    return nullptr;
+}
+
+QuerySetEntry *QuerySet::getShowFirst() const
+{
+    QListIterator<QuerySetEntry* > it(mQueries);
+    while (it.hasNext())
+    {
+        QuerySetEntry *qse = it.next();
+        if (qse->getShowFirst()) return qse;
+    }
+
+    if (mQueries.count() > 0)
+    {
+        return mQueries.at(0);
+    }
+
+    return nullptr;
 }
 
 //! add a new entry to the model
@@ -56,7 +73,21 @@ void QuerySet::clear()
 	{
 		remove(qse);
 	}
-	mQueries.clear();
+    mQueries.clear();
+}
+
+void QuerySet::setShowFirst(QuerySetEntry *entry, bool b)
+{
+    if (b)
+    {
+        QListIterator<QuerySetEntry* > it(mQueries);
+        while (it.hasNext())
+        {
+            QuerySetEntry *qse = it.next();
+            qse->setShowFirst(false);
+        }
+    }
+    entry->setShowFirst(b);
 }
 
 //! Read the XML file
@@ -141,6 +172,7 @@ bool QuerySet::readXml(QString aFilename, DbConnectionSet &dbSet)
 							if (ce == "APPENDOUTPUT") { vQEntry->setAppendOutput((te.toUpper()=="YES")); }
 							if (ce == "UTF8")         { vQEntry->setOutputUtf8((te.toUpper()=="YES")); }
 							if (ce == "ASXML")        { vQEntry->setOutputXml((te.toUpper()=="YES")); }
+                            if (ce == "SHOWFIRST")    { vQEntry->setShowFirst((te.toUpper()=="YES")); }
 							cn = cn.nextSibling();
 						}
 						if ( !vQEntry->getName().isEmpty() )
@@ -213,6 +245,7 @@ void QuerySet::writeXml(QString aFileName, DbConnectionSet &dbSet) const
 			vStream.writeTextElement("appendOutput", qse->getAppendOutput()?"yes":"no");
 			vStream.writeTextElement("utf8",         qse->getOutputUtf8()?"yes":"no");
 			vStream.writeTextElement("asXml",        qse->getOutputXml()?"yes":"no");
+            vStream.writeTextElement("showFirst",    qse->getShowFirst()?"yes":"no");
 			vStream.writeEndElement();
 		}
 		vStream.writeEndDocument();

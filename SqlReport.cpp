@@ -49,6 +49,11 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	QString qsn = rc.value("queryset_name","scripts/queryset.xml").toString();
 
 	readQuerySet(qsn);
+    QuerySetEntry *e = mQuerySet.getShowFirst();
+    if (e != nullptr)
+    {
+        ui.cbQuerySet->setCurrentText(e->getName());
+    }
 }
 
 SqlReport::~SqlReport()
@@ -626,7 +631,7 @@ void SqlReport::on_btnShowTables_clicked()
 //! query set and close the database.
 void SqlReport::on_pushButtonExit_clicked()
 {
-	this->close();
+    this->close();
 }
 
 //! Es werden die Werte der Oberfläche in das aktive QuerySet übernommen.
@@ -646,6 +651,7 @@ void SqlReport::updateQuerySet()
 		activeQuerySetEntry->setAppendOutput(ui.cbAppendOutput->checkState()==Qt::Checked?true:false);
 		activeQuerySetEntry->setOutputUtf8(ui.cbOutputUtf8->checkState()==Qt::Checked?true:false);
 		activeQuerySetEntry->setOutputXml(ui.cbOutputXml->checkState()==Qt::Checked?true:false);
+        mQuerySet.setShowFirst(activeQuerySetEntry, ui.cbShowFirst->checkState()==Qt::Checked);
 	}
 }
 
@@ -686,6 +692,7 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 		ui.cbAppendOutput->setCheckState(activeQuerySetEntry->getAppendOutput()?Qt::Checked:Qt::Unchecked);
 		ui.cbOutputUtf8->setCheckState(activeQuerySetEntry->getOutputUtf8()?Qt::Checked:Qt::Unchecked);
 		ui.cbOutputXml->setCheckState(activeQuerySetEntry->getOutputXml()?Qt::Checked:Qt::Unchecked);
+        ui.cbShowFirst->setCheckState(activeQuerySetEntry->getShowFirst()?Qt::Checked:Qt::Unchecked);
 	}
 	else
 	{
@@ -701,5 +708,6 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 		ui.cbAppendOutput->setCheckState(Qt::Unchecked);
 		ui.cbOutputUtf8->setCheckState(Qt::Unchecked);
 		ui.cbOutputXml->setCheckState(Qt::Unchecked);
+        ui.cbShowFirst->setCheckState(Qt::Unchecked);
 	}
 }
