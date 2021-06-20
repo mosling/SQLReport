@@ -139,6 +139,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnSaveAs">
+        <property name="text">
+         <string>Save as</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btnClose">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">

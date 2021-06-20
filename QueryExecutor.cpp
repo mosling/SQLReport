@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QHashIterator>
 #include <QtQml/QJSValue>
+#include <QJSValueIterator>
 #include <QTime>
 #include <QtQml/QJSValue>
 
@@ -24,7 +25,6 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  templatesMap(),
 	  sqlFileName(""),
 	  templFileName(""),
-	  mExpressionMap(),
 	  scriptEngine(),
       decodeDatabase(QStringDecoder(QStringDecoder::Utf8)),
 	  fileOut(),
@@ -38,12 +38,6 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  msgHash(),
 	  traceOutput(false)
 {
-	mExpressionMap["GT"]	= 1;
-	mExpressionMap["GE"]	= 2;
-	mExpressionMap["LT"]	= 3;
-	mExpressionMap["LE"]	= 4;
-	mExpressionMap["EQ"]	= 5;
-	mExpressionMap["NE"]	= 6;
 }
 
 QueryExecutor::~QueryExecutor()
@@ -51,7 +45,6 @@ QueryExecutor::~QueryExecutor()
 	try
 	{
 		clearStructures();
-		mExpressionMap.clear();
 		mQSE = nullptr;
 		mMsgWin = nullptr;
 		mErrorWin = nullptr;
@@ -135,7 +128,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 
 		if (varList.size() > 1)
 		{
-			QString vStr = replacements[varList.at(0)];
+            QByteArray vStr = replacements[tmpName];
 			QString vCmd = varList.at(1).trimmed().toUpper();
 			if ("UPPERCASE" == vCmd)
 			{
@@ -143,7 +136,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
 			else if ("CAPITALIZE" == vCmd)
 			{
-				vStr[0] = vStr[0].toUpper();
+                vStr.replace(0,1, vStr.mid(0,1).toUpper());
 				result += vStr;
 			}
             else if ("RTF" == vCmd)
@@ -167,12 +160,12 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 					bool foundStr = false;
 					for (qint32 i = 2; !foundStr && i < varList.size(); ++i)
 					{
-						QString tmpName2 = varList.at(i);
+                        QString  tmpName2 = varList.at(i);
 						if (replacements.contains(tmpName2))
 						{
 							if ( 0 != replacements[tmpName2].size())
 							{
-								result += replacements[tmpName2];
+                                result += QString(replacements[tmpName2]);
 								foundStr = true;
 							}
 						}
@@ -193,8 +186,19 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 				// hexadecimal output
 				bool bOk = false;
 				int i = vStr.toInt(&bOk);
-				result += QString("%1").arg(i,0,16);
+                if (bOk)
+                {
+                    result += QString("%1").arg(i,0,16);
+                }
+                else
+                {
+                    result += vStr.toHex();
+                }
 			}
+            else if ("BASE64" == vCmd)
+            {
+                result += QString(vStr.toBase64());
+            }
 			else if ("BOOL" == vCmd)
 			{
 				bool bOk = false;
@@ -203,7 +207,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
 			else if ("RMLF" == vCmd)
 			{
-                vStr = vStr.replace(QRegularExpression("[\r\n]"),"");
+                vStr = vStr.replace("\r","").replace("\n","");
 				result += vStr.simplified();
 			}
 			else if ("TREEMODE" == vCmd)
@@ -213,7 +217,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 				if (mTreeNodeChanged || !lastReplacements.contains(tmpName)
 						|| lastReplacements[tmpName] != vStr)
 				{
-					result += vStr;
+                    result += QString(vStr);
 					lastReplacements[tmpName] = vStr;
 					mTreeNodeChanged = true;
 				}
@@ -256,43 +260,13 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 					result += QString("%1").arg(c);
 				}
 			}
-			else if (mExpressionMap.contains(vCmd))
-			{
-				// einen einfachen Vergleich gefunden, der zu einer Ausgabe
-				// führt, wenn er wahr ist.
-				showMsg(tr("DEPRECATED compare operation %1, please replace this with the ,eval equivalent")
-						.arg(vCmd), LogLevel::ERR);
-				bool bOk1 = false;
-				bool bOk2 = false;
-				quint32 op1 = vStr.toUInt(&bOk1);
-				quint32 op2 = varList.at(2).toUInt(&bOk2);
-				if (bOk1 && bOk2)
-				{
-					switch (mExpressionMap[vCmd])
-					{
-					case 1: bOk1 = op1 > op2; break;
-					case 2: bOk1 = op1 >= op2; break;
-					case 3: bOk1 = op1 < op2; break;
-					case 4: bOk1 = op1 <= op2; break;
-					case 5: bOk1 = op1 == op2; break;
-					case 6: bOk1 = op1 != op2; break;
-					default:
-						bOk1 = true; break;
-					}
-
-					if (bOk1 && varList.size() > 2)
-					{
-						result += varList.at(3);
-					}
-				}
-			}
             else if (varList.at(1).contains("%1"))
 			{
 				// es wurde ein zweiter Teil angegeben, dieser wird
 				// als Format verwendet, wenn ein Wert existiert
 				if (!vStr.isEmpty())
 				{
-					result += QString(varList.at(1)).arg(vStr);
+                    result += QString(varList.at(1)).arg(vStr);
 				}
 			}
             else
@@ -302,7 +276,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 		}
 		else
 		{
-			result += replacements[tmpName];
+            result += replacements[tmpName];
 		}
 	}
 }
@@ -375,7 +349,7 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 //! show message string
 void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 {
-	if (LogLevel::DBG != ll || debugOutput )
+    if (LogLevel::DBG > ll || debugOutput )
 	{
 		if (nullptr != mErrorWin && LogLevel::MSG != ll)
 		{
@@ -388,10 +362,11 @@ void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
 			QString logStr("");
 			switch (ll)
 			{
-			case LogLevel::DBG:  logStr = traceOutput ? "TRACE" : "DEBUG"; break;
-			case LogLevel::ERR:  logStr = "ERROR"; break;
-			case LogLevel::WARN: logStr = "WARN "; break;
-			case LogLevel::MSG:  logStr = "INFO "; break;
+            case LogLevel::DBG:   logStr = "DEBUG"; break;
+            case LogLevel::ERR:   logStr = "ERROR"; break;
+            case LogLevel::WARN:  logStr = "WARN "; break;
+            case LogLevel::MSG:   logStr = "INFO "; break;
+            case LogLevel::TRACE: logStr = "TRACE"; break;
 			default: break;
 			}
 
@@ -861,6 +836,14 @@ bool QueryExecutor::executeInputFiles()
                     .arg(result.toString())
                     .arg(result.property("lineNumber").toInt()) , LogLevel::ERR);
 		}
+        else if (debugOutput)
+        {
+            QJSValueIterator it(scriptEngine.globalObject());
+             while (it.hasNext()) {
+                 it.next();
+                 showMsg(QString("ADD JS property %1").arg(it.name()), LogLevel::DBG);
+              }
+        }
 	}
 
 	if (nullptr != mQSE)
@@ -1099,7 +1082,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	int lineCnt = 0;                //
 	bool bRet = true;
 	bool lastReplaceLinefeed = false;
-	QHash<QString, QString> overwrittenReplacements;
+    QHash<QString, QByteArray> overwrittenReplacements;
 	QString lastTemplateName = currentTemplateBlockName;
 
 	// split the given aTemplate into parts separated by comma
@@ -1160,11 +1143,18 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
                     QString bv = list.at(i).toString().toUtf8().data();
                     QString bv2= bv;
 					bv2.remove(0,1);
-                    if (traceOutput) showMsg(tr("bound %1 to value %2").arg(i).arg(replacements[bv2]), LogLevel::DBG);
+                    if (traceOutput)
+                    {
+                        showMsg(tr("bound %1 to value %2").arg(i).arg(replacements[bv2]), LogLevel::TRACE);
+                    }
                     query.bindValue(i, replacements[bv2]);
 				}
 				bRet = query.exec();
-				if (traceOutput) showMsg(tr("last query %1").arg(query.lastQuery()), LogLevel::DBG);
+
+                if (traceOutput)
+                {
+                    showMsg(tr("last query %1").arg(query.lastQuery()), LogLevel::TRACE);
+                }
 			}
 			else
 			{
@@ -1185,9 +1175,11 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 					{
 						for (int i=0; i<numCols; ++i)
 						{
-							showMsg(QString("column %1 name '%2'").arg(i).arg(rec.fieldName(i)), LogLevel::DBG );
+                            showMsg(QString("column %1 name '%2' : %3")
+                                    .arg(i)
+                                    .arg(rec.fieldName(i), rec.field(i).metaType().name()), LogLevel::TRACE);
 						}
-						showMsg(tr("Size of result is %1").arg(query.size()), LogLevel::DBG );
+                        showMsg(tr("Size of result is %1").arg(query.size()), LogLevel::TRACE);
 					}
 				}
 
@@ -1208,9 +1200,8 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 
 					//get the sql values
 					for (int i=0; i<numCols; ++i)
-					{                   
-
-                        QString tmpStr = decodeDatabase(query.value(i).toByteArray());
+                    {
+                        QByteArray tmpStr = query.value(i).toByteArray();
 
                         if (empty) empty = query.isNull(i);
 						if (mQSE->getOutputXml())
@@ -1228,7 +1219,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 
                         if (traceOutput)
                         {
-                            showMsg(tr("column %1 with /%2/").arg(i).arg(tmpStr), LogLevel::DBG);
+                            showMsg(tr("column %1 with /%2/").arg(i).arg(replacements[tmpFieldName]), LogLevel::TRACE);
                         }
 					}
 					if (!empty)
@@ -1277,7 +1268,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	}
 
 	//! last action is to restore the overwritten replacements
-	QHashIterator<QString,QString> it(overwrittenReplacements);
+    QHashIterator<QString,QByteArray> it(overwrittenReplacements);
 	while (it.hasNext())
 	{
 		it.next();
@@ -1309,7 +1300,7 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 		b = dbc->connectDatabase();                 // connect to database and set _tableprefix
 		if (b)
 		{
-			replacements["_tableprefix"] = dbc->getTablePrefix();
+            replacements["_tableprefix"] = QByteArray(dbc->getTablePrefix().toUtf8());
 			if (debugOutput)
 			{
 				showMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]), LogLevel::DBG);

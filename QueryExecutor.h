@@ -39,7 +39,7 @@ public:
 	bool createOutput(QuerySetEntry *aQSE, DbConnection *dbc,
 					  const QString &basePath, const QString &inputDefines);
 
-	enum class LogLevel {ERR, WARN, MSG, DBG};
+    enum class LogLevel {ERR, WARN, MSG, DBG, TRACE};
 
 protected:
 	bool replaceTemplate(const QStringList *aTemplLines, int aLineCnt);
@@ -69,15 +69,14 @@ private:
 	QTextEdit *mMsgWin;
 	QTextEdit *mErrorWin;
 	QHash <QString, QString> userInputs;
-	QHash <QString, QString> replacements;
-	QHash <QString, QString> lastReplacements;
+    QHash <QString, QByteArray> replacements;
+    QHash <QString, QByteArray> lastReplacements;
 	QMap <QString, quint32> cumulationMap;
 	QMap <QString, QString> queriesMap;
 	QMap <QString, QSqlQuery> preparedQueriesMap;
 	QMap <QString, QStringList* > templatesMap;
 	QString sqlFileName;
 	QString templFileName;
-	QMap<QString, int> mExpressionMap;
     QJSEngine scriptEngine;
     QStringDecoder decodeDatabase;
 

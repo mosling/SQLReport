@@ -4,6 +4,7 @@
 #include <QtPrintSupport/QPrinter>
 
 #include "EditWidget.h"
+#include "Utility.h"
 #include "ui_editwidget.h"
 
 EditWidget::EditWidget(QWidget *parentObj) :
@@ -93,7 +94,22 @@ bool EditWidget::on_btnSave_clicked()
 	QApplication::restoreOverrideCursor();
 
 	ui->teEditor->document()->setModified(false);
-	return true;
+    return true;
+}
+
+bool EditWidget::on_btnSaveAs_clicked()
+{
+    QString newFileName = QFileDialog::getSaveFileName(this, "Please select new file", currentFileName, "All Files(*.*)");
+
+    if (!newFileName.isEmpty())
+    {
+        QString tmp(currentFileName);
+        currentFileName = newFileName;
+        bool r = on_btnSave_clicked();
+        currentFileName = tmp;
+        return r;
+    }
+    return true;
 }
 
 void EditWidget::on_pushButtonFind_clicked()

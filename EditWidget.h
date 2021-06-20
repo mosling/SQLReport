@@ -36,6 +36,7 @@ protected:
 
 private slots:
 	bool on_btnSave_clicked();
+    bool on_btnSaveAs_clicked();
 	void on_pushButtonFind_clicked();
 	void on_pushButtonPdf_clicked();
 	void on_lineEditFind_textChanged(QString str);
