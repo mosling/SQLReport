@@ -36,7 +36,10 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  prepareQueries(false),
 	  currentTemplateBlockName(""),
 	  msgHash(),
-	  traceOutput(false)
+      traceOutput(false),
+      fontElement("<[/]*font[^>]*>"),
+      spanElement("<[/]*span[^>]*>"),
+      htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>")
 {
 }
 
@@ -144,7 +147,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
                 if (vStr.startsWith("{\\rtf"))
                 {
                     QString resultType = varList.size() > 2 ? varList.at(2) : "html";
-                    result += convertRtf(vStr, resultType);
+                    result += convertRtf(vStr, resultType, true);
                 }
                 else
                 {
@@ -595,7 +598,7 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
     }
 }
 
-QString QueryExecutor::convertRtf(QString rtfText, QString resultType)
+QString QueryExecutor::convertRtf(QString rtfText, QString resultType, bool cleanupFont)
 {
     QString unrtfCmd="unrtf";
 
@@ -608,7 +611,7 @@ QString QueryExecutor::convertRtf(QString rtfText, QString resultType)
     bool started = false;
     if (!unrtfVersion.waitForFinished(10000))
     {
-        // 10 Second timeout
+        // 10 seconds timeout
         unrtfVersion.kill();
     }
     else
@@ -648,7 +651,7 @@ QString QueryExecutor::convertRtf(QString rtfText, QString resultType)
         QString stdOutput = "";
         if (!program.waitForFinished(10000))
         {
-            // 10 Second timeout
+            // 10 seconds timeout
             program.kill();
             stdError = "RTF converter not ready within 10s.";
         }
@@ -665,12 +668,19 @@ QString QueryExecutor::convertRtf(QString rtfText, QString resultType)
         }
         else
         {
-            // etract body content from generated html
-            QRegularExpression htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>");
+            // extract body content from generated html
             QRegularExpressionMatch htmlMatch = htmlBody.match(stdOutput);
             if (htmlMatch.hasMatch())
             {
-                return htmlMatch.captured(1);
+                if (cleanupFont)
+                {
+                    QString fontless = htmlMatch.captured(1).remove(fontElement);
+                    return fontless.remove(spanElement);
+                }
+                else
+                {
+                    return htmlMatch.captured(1);
+                }
             }
         }
     }
