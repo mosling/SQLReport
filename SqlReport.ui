@@ -182,7 +182,7 @@
           <string/>
          </property>
          <property name="text">
-          <string>Global Defines:</string>
+          <string>Set Defines:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

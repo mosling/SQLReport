@@ -89,7 +89,7 @@ void SqlReport::on_But_OK_clicked()
 {
 	QueryExecutor vpExecutor;
 	QString queryPath = QFileInfo(mQuerySet.getQuerySetFileName()).absolutePath();
-	QString baseInput = ui.lineEditInput->text() + "|" + ui.lineEditLocal->text();
+    QString baseInput = ui.lineEditLocal->text() + "|" + ui.lineEditInput->text();
 	bool vRes = false;
 
 	// save open editor
