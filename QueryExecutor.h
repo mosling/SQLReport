@@ -50,7 +50,7 @@ protected:
 
 private:
 	void replaceLineUserInput(const QStringList &varList, QString &result, int lineCnt);
-	void replaceLineVariable(const QStringList &varList, QString &result, int lineCnt);
+    void replaceLineVariable(const QByteArray vStr, const QStringList &varList, QString &result, int lineCnt);
 	void replaceLineGlobal(const QStringList &varList, QString &result, int lineCnt);
 	void showDbError(QString vErrStr);
 	void showMsg(QString vMsgStr, LogLevel ll);

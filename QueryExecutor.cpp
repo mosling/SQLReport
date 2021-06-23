@@ -105,42 +105,57 @@ void QueryExecutor::replaceLineUserInput(const QStringList &varList, QString &re
 		}
 
 		tmpName = tmpName.mid(1);
-		if (userInputs.contains(tmpName))
-		{
-			result += userInputs[tmpName];
-		}
-		else
+        if (!userInputs.contains(tmpName))
 		{
 			// ask the user for the value
 			bool ok;
 			QString text = QInputDialog::getText(NULL, tmpName, tmpDescr,
 												 QLineEdit::Normal, "", &ok);
-			result += text;
 			userInputs[tmpName] = text;
+
 		}
+
+        if (varList.size() > 2)
+        {
+            // the user variable contains modifications like ${?Name,Username,CAPITALIZE}
+            QStringList tl;
+            for (int i = 0; i < varList.size(); ++i)
+            {
+                if (i != 1 ) // ignore the description value
+                {
+                    tl << varList.at(i);
+                }
+            }
+            replaceLineVariable(userInputs[tmpName].toUtf8(), tl, result, lineCnt);
+        }
+        else
+        {
+            result += userInputs[tmpName];
+        }
 	}
 }
 
-void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &result, int lineCnt)
+void QueryExecutor::replaceLineVariable(const QByteArray vStr, const QStringList &varList, QString &result, int lineCnt)
 {
 	Q_UNUSED(lineCnt)
 
 	if (varList.size() > 0)
 	{
-		QString tmpName = varList.at(0);
-
+        QString tmpName = varList.at(0);
 		if (varList.size() > 1)
-		{
-            QByteArray vStr = replacements[tmpName];
+		{   
 			QString vCmd = varList.at(1).trimmed().toUpper();
-			if ("UPPERCASE" == vCmd)
+            if ("UPPERCASE" == vCmd || "UPPER" == vCmd)
 			{
 				result += vStr.toUpper();
 			}
+            else if ("LOWERCASE" == vCmd || "LOWER" == vCmd)
+            {
+                result += vStr.toLower();
+            }
 			else if ("CAPITALIZE" == vCmd)
 			{
-                vStr.replace(0,1, vStr.mid(0,1).toUpper());
-				result += vStr;
+                result += vStr.mid(0,1).toUpper() + vStr.mid(1).toLower();
 			}
             else if ("RTF" == vCmd)
             {
@@ -210,8 +225,8 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
 			else if ("RMLF" == vCmd)
 			{
-                vStr = vStr.replace("\r","").replace("\n","");
-				result += vStr.simplified();
+                QByteArray ta(vStr);
+                result += ta.replace("\r","").replace("\n","").simplified();
 			}
 			else if ("TREEMODE" == vCmd)
 			{
@@ -281,7 +296,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 		}
 		else
 		{
-            result += replacements[tmpName];
+            result += vStr;
 		}
 	}
 }
@@ -1001,7 +1016,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		// else check if the variable exists in the replacement list (columns from SQL)
 		else if (replacements.contains(tmpName))
 		{
-			replaceLineVariable(tmpList, result, aLineCnt);
+            replaceLineVariable(replacements[tmpName], tmpList, result, aLineCnt);
 		}
 		// check if we have a global substitution
 		else if (tmpName.startsWith("__"))
