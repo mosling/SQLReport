@@ -18,7 +18,7 @@ QueryExecutor::QueryExecutor(QObject *parentObj)
 	  mErrorWin(nullptr),
 	  userInputs(),
 	  replacements(),
-	  lastReplacements(),
+      treeReplacements(),
 	  cumulationMap(),
 	  queriesMap(),
 	  preparedQueriesMap(),
@@ -215,13 +215,15 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
 			else if ("TREEMODE" == vCmd)
 			{
-				// Ausgabe erzeugen wenn 1. sich ein höherer Knoten geändert hat;
-				// 2. beim ersten Mal und 3. wenn sich Daten geändert haben
-				if (mTreeNodeChanged || !lastReplacements.contains(tmpName)
-						|| lastReplacements[tmpName] != vStr)
+                // Ausgabe erzeugen wenn
+                // 1. sich ein höherer Knoten geändert hat;
+                // 2. beim ersten Mal
+                // 3. wenn sich Daten geändert haben
+                if (mTreeNodeChanged || !treeReplacements.contains(tmpName)
+                        || treeReplacements[tmpName] != vStr)
 				{
                     result += QString(vStr);
-					lastReplacements[tmpName] = vStr;
+                    treeReplacements[tmpName] = vStr;
 					mTreeNodeChanged = true;
 				}
 				else if (varList.size() > 2)
@@ -346,6 +348,20 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 				cumulationMap.remove(varList.at(1));
 			}
 		}
+        else if ("__TREE_RESET" == tmpName)
+        {
+            if (varList.size() > 1)
+            {
+                if ( !treeReplacements.remove(varList.at(1)))
+                {
+                    showMsg(QString("__TREE_RESET: no tree entry named '%1'").arg(varList.at(1)), LogLevel::WARN);
+                }
+            }
+            else
+            {
+                treeReplacements.clear();
+            }
+        }
 	}
 }
 
@@ -1029,7 +1045,7 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 	QString vStr("");
 
 	vLineNum = aTemplLines->size();
-	mTreeNodeChanged = false;
+    mTreeNodeChanged = false;
 	result = "";
 	for (int i = 0; i < vLineNum; ++i)
 	{
@@ -1093,7 +1109,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	bool bRet = true;
 	bool lastReplaceLinefeed = false;
     QHash<QString, QByteArray> overwrittenReplacements;
-	QString lastTemplateName = currentTemplateBlockName;
+    QString lastTemplateName = currentTemplateBlockName;
 
 	// split the given aTemplate into parts separated by comma
 	QStringList ll = aTemplate.split(',');
@@ -1285,7 +1301,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 		replacements[it.key()] = it.value();
 	}
 
-	currentTemplateBlockName = lastTemplateName;
+    currentTemplateBlockName = lastTemplateName;
 
 	return bRet;
 }

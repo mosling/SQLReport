@@ -70,7 +70,7 @@ private:
 	QTextEdit *mErrorWin;
 	QHash <QString, QString> userInputs;
     QHash <QString, QByteArray> replacements;
-    QHash <QString, QByteArray> lastReplacements;
+    QHash <QString, QByteArray> treeReplacements;
 	QMap <QString, quint32> cumulationMap;
 	QMap <QString, QString> queriesMap;
 	QMap <QString, QSqlQuery> preparedQueriesMap;
