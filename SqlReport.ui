@@ -454,6 +454,16 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="cbWithForeignKeys">
+            <property name="toolTip">
+             <string>Add Foreign Keys for each table (this takes more time).</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QToolButton" name="but_AddDatabase">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">

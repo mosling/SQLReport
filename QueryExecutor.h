@@ -4,6 +4,7 @@
 #include <QObject>
 #include "QuerySet.h"
 #include "DBConnection.h"
+#include "logmessage.h"
 #include <QDateTime>
 #include <QFile>
 #include <QtSql/QtSql>
@@ -28,18 +29,48 @@ class QueryExecutor : public QObject
 	Q_CLASSINFO ("company", "com.github.mosling")
 
 public:
-	explicit QueryExecutor(QObject *parentObj = nullptr);
+    explicit QueryExecutor(QObject *parentObj = nullptr)
+        : QObject(parentObj),
+          logger(new LogMessage(this)),
+          mTreeNodeChanged(false),
+          mQSE(nullptr),
+          userInputs(),
+          replacements(),
+          treeReplacements(),
+          cumulationMap(),
+          queriesMap(),
+          preparedQueriesMap(),
+          templatesMap(),
+          sqlFileName(""),
+          templateFileName(""),
+          scriptEngine(),
+          decodeDatabase(QStringDecoder(QStringDecoder::Utf8)),
+          fileOut(),
+          streamOut(),
+          uniqueId(0),
+          firstQueryResult(false),
+          prepareQueries(false),
+          currentTemplateBlockName(""),
+          fontElement("<[/]*font[^>]*>"),
+          spanElement("<[/]*span[^>]*>"),
+          htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>")
+    {
+    }
+
 	~QueryExecutor();
 
-	void setMsgWindow(QTextEdit *te);
-	void setErrorWindow(QTextEdit *te);
-	void setDebugFlag(Qt::CheckState flag);
+    void setLogger(LogMessage *l)
+    {
+        if (l != nullptr)
+        {
+            logger = l;
+        }
+    }
+
 	void setPrepareQueriesFlag(bool flag);
 
 	bool createOutput(QuerySetEntry *aQSE, DbConnection *dbc,
 					  const QString &basePath, const QString &inputDefines);
-
-    enum class LogLevel {ERR, WARN, MSG, DBG, TRACE};
 
 protected:
 	bool replaceTemplate(const QStringList *aTemplLines, int aLineCnt);
@@ -53,7 +84,6 @@ private:
     void replaceLineVariable(const QByteArray vStr, const QStringList &varList, QString &result, int lineCnt);
 	void replaceLineGlobal(const QStringList &varList, QString &result, int lineCnt);
 	void showDbError(QString vErrStr);
-	void showMsg(QString vMsgStr, LogLevel ll);
 	bool connectDatabase();
 	void createOutputFileName(const QString &basePath);
 	void createInputFileNames(const QString &basePath);
@@ -64,10 +94,9 @@ private:
 	void addSqlQuery(const QString &name, const QString &sqlLine);
     QString convertRtf(QString rtfText, QString resultType, bool cleanupFont);
 
+    LogMessage *logger;
 	bool mTreeNodeChanged;
 	QuerySetEntry *mQSE;
-	QTextEdit *mMsgWin;
-	QTextEdit *mErrorWin;
 	QHash <QString, QString> userInputs;
     QHash <QString, QByteArray> replacements;
     QHash <QString, QByteArray> treeReplacements;
@@ -76,7 +105,7 @@ private:
 	QMap <QString, QSqlQuery> preparedQueriesMap;
 	QMap <QString, QStringList* > templatesMap;
 	QString sqlFileName;
-	QString templFileName;
+    QString templateFileName;
     QJSEngine scriptEngine;
     QStringDecoder decodeDatabase;
 
@@ -85,12 +114,8 @@ private:
 
 	int uniqueId;
 	bool firstQueryResult;
-	QString lastErrorFilename;
-	bool debugOutput;
 	bool prepareQueries;
 	QString currentTemplateBlockName;
-	QHash <QString, int> msgHash;
-	bool traceOutput;
     QRegularExpression fontElement;
     QRegularExpression spanElement;
     QRegularExpression htmlBody;

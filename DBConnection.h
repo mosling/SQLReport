@@ -8,6 +8,7 @@
 #include <QtXml/QDomDocument>
 #include <QtCore/QXmlStreamWriter>
 #include "QTreeReporter.h"
+#include "logmessage.h"
 
 //! This class holds the information for a database connection and has some methods to
 //! connect the database, react at errors and show the structure of the database in a
@@ -27,8 +28,8 @@ public:
 	QString getConnectionName() const;
 	bool connectDatabase();
 	void closeDatabase() const;
-	void showTableList(QSql::TableType aType, QString aHead, QTreeReporter *treeReporter) const;
-	void showDatabaseTables(QTreeReporter *tr) const;
+    void showTableList(QSql::TableType aType, QString aHead, bool withFk, QTreeReporter *treeReporter) const;
+    void showDatabaseTables(QTreeReporter *tr, bool withFk) const;
 
 	void readXmlNode(const QDomNode &aNode);
     void writeXmlNode(QXmlStreamWriter &aStream);
@@ -68,7 +69,13 @@ public:
 
 	QString getLastErrorString() { QString le = lastErrorStr; lastErrorStr=""; return le; }
 
+    void setLogger(LogMessage *l)
+    {
+        logger = l;
+    }
+
 private:
+    LogMessage *logger;
 	QString name;
 	QString dbType;
     QString dbEncoding;
@@ -83,7 +90,7 @@ private:
 	QString lastErrorStr;
 
     QString getFieldString(const QSqlField field) const;
-	
+    QStringList getForeignKeyList(QString &tableName) const;
 };
 
 #endif // DBCONNECTION_H

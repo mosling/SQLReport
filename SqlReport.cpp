@@ -21,7 +21,8 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	  treeModel(),
 	  sqlEditor(this),
 	  templateEditor(this),
-	  outputEditor(this)
+      outputEditor(this),
+      logger(new LogMessage(this))
 {
 	ui.setupUi(this);
 
@@ -45,6 +46,10 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	sqlEditor.restoreGeometry(rc.value("sqledit").toByteArray());
 	templateEditor.restoreGeometry(rc.value("templedit").toByteArray());
 	outputEditor.restoreGeometry(rc.value("outedit").toByteArray());
+
+    // set logger windows
+    logger->setMsgWindow(ui.textEditReport);
+    logger->setErrorWindow(ui.textEditError);
 
 	QString qsn = rc.value("queryset_name","scripts/queryset.xml").toString();
 
@@ -77,6 +82,8 @@ SqlReport::~SqlReport()
 		writeLocalDefines(mQuerySet.getQuerySetFileName());
 
 		activeQuerySetEntry = nullptr;
+        delete logger;
+        logger = nullptr;
 	}
 	catch (...) {}
 }
@@ -101,9 +108,8 @@ void SqlReport::on_But_OK_clicked()
     ui.textEditReport->clear();
 	ui.textEditError->clear();
 
-    vpExecutor.setMsgWindow(ui.textEditReport);
-	vpExecutor.setErrorWindow(ui.textEditError);
-	vpExecutor.setDebugFlag(ui.checkBoxDebug->checkState());
+    logger->setDebugFlag(ui.checkBoxDebug->checkState());
+    vpExecutor.setLogger(logger);
 	vpExecutor.setPrepareQueriesFlag(ui.checkBoxPrepare->isChecked());
 
 	if (activeQuerySetEntry->getBatchrun())
@@ -613,11 +619,12 @@ void SqlReport::on_btnShowTables_clicked()
         if (currentDbConnection->connectDatabase())
         {
             QTreeReporter treeReporter;
+            currentDbConnection->setLogger(logger);
 
-            ui.textEditReport->append(tr("Start get database structure, please wait ..."));
+            logger->infoMsg(tr("Get database structure ..."));
             treeReporter.setReportRoot(treeModel.invisibleRootItem());
-            currentDbConnection->showDatabaseTables(&treeReporter);
-            ui.textEditReport->append(tr("Ready."));
+            currentDbConnection->showDatabaseTables(&treeReporter, ui.cbWithForeignKeys->isChecked());
+            logger->infoMsg(tr("Ready."));
 
             currentDbConnection->closeDatabase();
 

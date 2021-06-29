@@ -34,7 +34,8 @@ SOURCES += main.cpp \
     DbConnectionSet.cpp \
     DbConnection.cpp \
     DbConnectionForm.cpp \
-    Utility.cpp
+    Utility.cpp \
+    logmessage.cpp
 
 HEADERS  += \
     SqlReportHighlighter.h \
@@ -47,7 +48,8 @@ HEADERS  += \
     DbConnectionSet.h \
     DbConnection.h \
     DbConnectionForm.h \
-    Utility.h
+    Utility.h \
+    logmessage.h
 
 FORMS    += \
     SqlReport.ui \
