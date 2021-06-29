@@ -59,6 +59,7 @@ private:
 	EditWidget sqlEditor;
 	EditWidget templateEditor;
 	EditWidget outputEditor;
+    LogMessage *logger;
 };
 
 #endif // SQLREPORT_H

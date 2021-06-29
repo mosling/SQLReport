@@ -5,12 +5,14 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QStringBuilder>
+#include <QSqlQuery>
 #include <QtSql/QSqlRecord>
 #include <QtSql/QSqlField>
 #include <QtSql/QSqlIndex>
 
 DbConnection::DbConnection(QObject *parentObj) :
     QObject(parentObj),
+    logger(nullptr),
     name(""),
     dbType(""),
     dbEncoding("ISO-8859-1"), // the internal name for Latin1
@@ -226,7 +228,68 @@ QString DbConnection::getFieldString(const QSqlField field) const
       ;
 }
 
-void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeReporter *treeReporter) const
+QStringList DbConnection::getForeignKeyList(QString &tableName) const
+{
+    QStringList fkList;
+    QString fkSql("");
+
+    if ("QIBASE" == dbType)
+    {
+        fkSql = QString(
+                    "SELECT rc.RDB$CONSTRAINT_NAME AS constraint_name," \
+                    "       s.RDB$FIELD_NAME AS field_name, " \
+                    "       i2.RDB$RELATION_NAME AS references_table,"\
+                    "       s2.RDB$FIELD_NAME AS references_field"\
+                    " FROM RDB$INDEX_SEGMENTS s"\
+                    " LEFT JOIN RDB$INDICES i ON i.RDB$INDEX_NAME = s.RDB$INDEX_NAME"\
+                    " LEFT JOIN RDB$RELATION_CONSTRAINTS rc ON rc.RDB$INDEX_NAME = s.RDB$INDEX_NAME"\
+                    " LEFT JOIN RDB$REF_CONSTRAINTS refc ON rc.RDB$CONSTRAINT_NAME = refc.RDB$CONSTRAINT_NAME"\
+                    " LEFT JOIN RDB$RELATION_CONSTRAINTS rc2 ON rc2.RDB$CONSTRAINT_NAME = refc.RDB$CONST_NAME_UQ"\
+                    " LEFT JOIN RDB$INDICES i2 ON i2.RDB$INDEX_NAME = rc2.RDB$INDEX_NAME"\
+                    " LEFT JOIN RDB$INDEX_SEGMENTS s2 ON i2.RDB$INDEX_NAME = s2.RDB$INDEX_NAME"\
+                    " WHERE rc.RDB$CONSTRAINT_TYPE = 'FOREIGN KEY' AND i.RDB$RELATION_NAME = '%1'"\
+                    " ORDER BY i.RDB$RELATION_NAME, s.RDB$FIELD_NAME").arg(tableName);
+    }
+
+
+    if (!fkSql.isEmpty())
+    {
+        QSqlQuery fkQuery;
+        if (fkQuery.exec(fkSql))
+        {
+            QSqlRecord rec = fkQuery.record();
+            int numCols = rec.count();
+
+            while (fkQuery.next())
+            {
+                //get the sql values
+                QString fkStr;
+                for (int i=0; i<numCols; ++i)
+                {
+                    fkStr = QString("%1  %2").arg(fkStr.toUtf8(), fkQuery.value(i).toString());
+                }
+
+                fkList << QString("%1 | %2 --> %3(%4)")
+                          .arg(fkQuery.value(0).toString().trimmed(),
+                               fkQuery.value(1).toString().trimmed(),
+                               fkQuery.value(2).toString().trimmed(),
+                               fkQuery.value(3).toString().trimmed());
+            }
+        }
+        else
+        {
+            logger->errorMsg(fkQuery.lastError().driverText());
+        }
+    }
+    else
+    {
+        logger->infoMsg(QString("no foreign key readout method for database type %1").arg(dbType));
+    }
+
+    return fkList;
+}
+
+void DbConnection::showTableList(QSql::TableType aType, QString aHead, bool withFk, QTreeReporter *treeReporter) const
 {
     qDebug() << aHead;
     treeReporter->reportMsg(aHead);
@@ -272,7 +335,20 @@ void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
                 treeReporter->decReportLevel();
             }
 
-
+            if (withFk)
+            {
+                QStringList foreignKeys = getForeignKeyList(tn);
+                if (foreignKeys.size() > 0)
+                {
+                    treeReporter->reportMsg("foreign keys");
+                    treeReporter->incReportLevel();
+                    foreach(QString s, foreignKeys)
+                    {
+                        treeReporter->reportMsg(s);
+                    }
+                    treeReporter->decReportLevel();
+                }
+            }
         }
         treeReporter->decReportLevel();
         QCoreApplication::processEvents();
@@ -281,7 +357,7 @@ void DbConnection::showTableList(QSql::TableType aType, QString aHead, QTreeRepo
     treeReporter->decReportLevel();
 }
 
-void DbConnection::showDatabaseTables(QTreeReporter *tr) const
+void DbConnection::showDatabaseTables(QTreeReporter *tr, bool withFk) const
 {
     QSqlDatabase db = QSqlDatabase::database();
     bool b;
@@ -311,7 +387,7 @@ void DbConnection::showDatabaseTables(QTreeReporter *tr) const
     }
     tr->decReportLevel();
 
-    showTableList(QSql::Tables, "List of Tables", tr);
-    showTableList(QSql::Views, "List of Views", tr);
-    showTableList(QSql::SystemTables, "List of System Tables", tr);
+    showTableList(QSql::Tables, "List of Tables", withFk, tr);
+    showTableList(QSql::Views, "List of Views", false, tr);
+    showTableList(QSql::SystemTables, "List of System Tables", false, tr);
 }

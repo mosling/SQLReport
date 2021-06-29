@@ -10,68 +10,17 @@
 #include <QTime>
 #include <QtQml/QJSValue>
 
-QueryExecutor::QueryExecutor(QObject *parentObj)
-	: QObject(parentObj),
-	  mTreeNodeChanged(false),
-	  mQSE(nullptr),
-	  mMsgWin(nullptr),
-	  mErrorWin(nullptr),
-	  userInputs(),
-	  replacements(),
-      treeReplacements(),
-	  cumulationMap(),
-	  queriesMap(),
-	  preparedQueriesMap(),
-	  templatesMap(),
-	  sqlFileName(""),
-	  templFileName(""),
-	  scriptEngine(),
-      decodeDatabase(QStringDecoder(QStringDecoder::Utf8)),
-	  fileOut(),
-	  streamOut(),
-	  uniqueId(0),
-	  firstQueryResult(false),
-	  lastErrorFilename(""),
-	  debugOutput(false),
-	  prepareQueries(false),
-	  currentTemplateBlockName(""),
-	  msgHash(),
-      traceOutput(false),
-      fontElement("<[/]*font[^>]*>"),
-      spanElement("<[/]*span[^>]*>"),
-      htmlBody("<body[^>]*>((.|[\\n\\r])*)</body>")
-{
-}
-
 QueryExecutor::~QueryExecutor()
 {
 	try
 	{
 		clearStructures();
 		mQSE = nullptr;
-		mMsgWin = nullptr;
-		mErrorWin = nullptr;
 	}
 	catch (...)
 	{
 		// catch all exception
 	}
-}
-
-void QueryExecutor::setMsgWindow(QTextEdit *te)
-{
-	mMsgWin = te;
-}
-
-void QueryExecutor::setErrorWindow(QTextEdit *te)
-{
-	mErrorWin = te;
-}
-
-void QueryExecutor::setDebugFlag(Qt::CheckState flag)
-{
-	traceOutput = (flag == Qt::Checked);
-	debugOutput = (flag == Qt::PartiallyChecked) || traceOutput;
 }
 
 void QueryExecutor::setPrepareQueriesFlag(bool flag)
@@ -105,42 +54,58 @@ void QueryExecutor::replaceLineUserInput(const QStringList &varList, QString &re
 		}
 
 		tmpName = tmpName.mid(1);
-		if (userInputs.contains(tmpName))
-		{
-			result += userInputs[tmpName];
-		}
-		else
+        if (!userInputs.contains(tmpName))
 		{
 			// ask the user for the value
 			bool ok;
 			QString text = QInputDialog::getText(NULL, tmpName, tmpDescr,
 												 QLineEdit::Normal, "", &ok);
-			result += text;
 			userInputs[tmpName] = text;
+
 		}
+
+        if (varList.size() > 2)
+        {
+            // the user variable contains modifications like ${?Name,Username,CAPITALIZE}
+            QStringList tl;
+            for (int i = 0; i < varList.size(); ++i)
+            {
+                if (i != 1 ) // ignore the description value
+                {
+                    tl << varList.at(i);
+                }
+            }
+            replaceLineVariable(userInputs[tmpName].toUtf8(), tl, result, lineCnt);
+        }
+        else
+        {
+            result += userInputs[tmpName];
+        }
 	}
 }
 
-void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &result, int lineCnt)
+void QueryExecutor::replaceLineVariable(const QByteArray vStr, const QStringList &varList, QString &result, int lineCnt)
 {
 	Q_UNUSED(lineCnt)
 
 	if (varList.size() > 0)
 	{
-		QString tmpName = varList.at(0);
-
+        QString tmpName = varList.at(0);
 		if (varList.size() > 1)
-		{
-            QByteArray vStr = replacements[tmpName];
+		{   
 			QString vCmd = varList.at(1).trimmed().toUpper();
-			if ("UPPERCASE" == vCmd)
+
+            if ("UPPERCASE" == vCmd || "UPPER" == vCmd)
 			{
 				result += vStr.toUpper();
 			}
+            else if ("LOWERCASE" == vCmd || "LOWER" == vCmd)
+            {
+                result += vStr.toLower();
+            }
 			else if ("CAPITALIZE" == vCmd)
 			{
-                vStr.replace(0,1, vStr.mid(0,1).toUpper());
-				result += vStr;
+                result += vStr.mid(0,1).toUpper() + vStr.mid(1).toLower();
 			}
             else if ("RTF" == vCmd)
             {
@@ -151,7 +116,7 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
                 }
                 else
                 {
-                    showMsg(tr("No RTF String found -- use given string"), LogLevel::DBG);
+                    logger->debugMsg(tr("No RTF String found -- use given string"));
                     result += vStr;
                 }
             }
@@ -210,8 +175,8 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
 			else if ("RMLF" == vCmd)
 			{
-                vStr = vStr.replace("\r","").replace("\n","");
-				result += vStr.simplified();
+                QByteArray ta(vStr);
+                result += ta.replace("\r","").replace("\n","").simplified();
 			}
 			else if ("TREEMODE" == vCmd)
 			{
@@ -276,12 +241,12 @@ void QueryExecutor::replaceLineVariable(const QStringList &varList, QString &res
 			}
             else
             {
-                showMsg(tr("Not supported variable conversion %1.").arg(varList.at(1)), LogLevel::ERR);
+                logger->errorMsg(tr("Not supported variable conversion '%1'.").arg(varList.at(1)));
             }
 		}
 		else
 		{
-            result += replacements[tmpName];
+            result += vStr;
 		}
 	}
 }
@@ -354,7 +319,7 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
             {
                 if ( !treeReplacements.remove(varList.at(1)))
                 {
-                    showMsg(QString("__TREE_RESET: no tree entry named '%1'").arg(varList.at(1)), LogLevel::WARN);
+                    logger->warnMsg(QString("__TREE_RESET: no tree entry named '%1'").arg(varList.at(1)));
                 }
             }
             else
@@ -362,47 +327,6 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
                 treeReplacements.clear();
             }
         }
-	}
-}
-
-//! show message string
-void QueryExecutor::showMsg(QString vMsgStr, LogLevel ll)
-{
-    if (LogLevel::DBG > ll || debugOutput )
-	{
-		if (nullptr != mErrorWin && LogLevel::MSG != ll)
-		{
-			if (lastErrorFilename != templFileName)
-			{
-				mErrorWin->append(templFileName);
-				lastErrorFilename = templFileName;
-			}
-
-			QString logStr("");
-			switch (ll)
-			{
-            case LogLevel::DBG:   logStr = "DEBUG"; break;
-            case LogLevel::ERR:   logStr = "ERROR"; break;
-            case LogLevel::WARN:  logStr = "WARN "; break;
-            case LogLevel::MSG:   logStr = "INFO "; break;
-            case LogLevel::TRACE: logStr = "TRACE"; break;
-			default: break;
-			}
-
-            QString showStr = QString("%1:%2 %3")
-                    .arg(logStr)
-                    .arg(currentTemplateBlockName.isEmpty() ? QString("") : " [" + currentTemplateBlockName + "]")
-                    .arg(vMsgStr);
-			if (!msgHash.contains(showStr))
-			{
-				msgHash.insert(showStr, 1);
-				mErrorWin->append(showStr);
-			}
-		}
-		else if (nullptr != mMsgWin)
-		{
-			mMsgWin->append(vMsgStr);
-		}
 	}
 }
 
@@ -441,7 +365,7 @@ void QueryExecutor::createOutputFileName(const QString &basePath)
 						   +"-"+bn+"-"+mNow.toString("hhmm")+"."+sf;
 		}
 
-		showMsg(tr("OUTPUT FILE NAME '%1'").arg(mOutFileName), LogLevel::MSG);
+        logger->infoMsg(tr("OUTPUT FILE NAME '%1'").arg(mOutFileName));
 		mQSE->setLastOutputFile(mOutFileName);
 	}
 }
@@ -454,12 +378,12 @@ void QueryExecutor::createInputFileNames(const QString &basePath)
 	if (nullptr != mQSE)
 	{
         sqlFileName = mQSE->getSqlFile().isEmpty() ? QString("") : basePath + "/" + mQSE->getSqlFile();
-		templFileName = basePath + "/" + mQSE->getTemplateFile();
+        templateFileName = basePath + "/" + mQSE->getTemplateFile();
 	}
 	else
 	{
 		sqlFileName = "";
-		templFileName = "";
+        templateFileName = "";
 	}
 }
 
@@ -591,15 +515,15 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
 {
 	if (prepareQueries)
 	{
-		showMsg(QString("Adding Prepared SQL Query '%1'").arg(name), LogLevel::DBG);
+        logger->debugMsg(QString("Adding Prepared SQL Query '%1'").arg(name));
 
 		QString tempPrepQuery = replaceLine(sqlLine, 0, true, false);
-		showMsg(tr("prepared sql query: %1").arg(tempPrepQuery), LogLevel::DBG);
+        logger->debugMsg(tr("prepared sql query: %1").arg(tempPrepQuery));
 		QSqlQuery q(QSqlDatabase::database());
 		bool qb = q.prepare(tempPrepQuery);
 		if (!qb)
 		{
-			showMsg(tr("preparing sql query: %1").arg(tempPrepQuery), LogLevel::ERR);
+            logger->errorMsg(tr("preparing sql query: %1").arg(tempPrepQuery));
 		}
 		else
 		{
@@ -608,7 +532,7 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
 	}
 	else
 	{
-		showMsg(QString("Adding SQL Query '%1'").arg(name), LogLevel::DBG);
+        logger->debugMsg(QString("Adding SQL Query '%1'").arg(name));
 
 		queriesMap[name] = sqlLine;
     }
@@ -637,12 +561,8 @@ QString QueryExecutor::convertRtf(QString rtfText, QString resultType, bool clea
 
     if(started)
     {
-        if (!msgHash.contains("RTF-CONVERTER"))
-        {
-            msgHash.insert("RTF-CONVERTER", 1);
-            showMsg(QString("using unrtf version %1 to convert rtf -> %2")
-                    .arg(QString::fromLocal8Bit(unrtfVersion.readAllStandardError()).trimmed(), resultType), LogLevel::MSG);
-        }
+       logger->infoMsg(QString("using unrtf version %1 to convert rtf -> %2")
+                       .arg(QString::fromLocal8Bit(unrtfVersion.readAllStandardError()).trimmed(), resultType));
 
         // write to file
         QString pathRtf= QCoreApplication::applicationDirPath() + QString("/myfile.rtf");
@@ -680,7 +600,7 @@ QString QueryExecutor::convertRtf(QString rtfText, QString resultType, bool clea
 
         if (exitCode != 0)
         {
-            showMsg(QString("%1").arg(stdError), LogLevel::ERR);
+            logger->errorMsg(QString("%1").arg(stdError));
         }
         else
         {
@@ -702,7 +622,7 @@ QString QueryExecutor::convertRtf(QString rtfText, QString resultType, bool clea
     }
     else
     {
-        showMsg("Please add unrtf to your PATH for better results.", LogLevel::WARN);
+        logger->warnMsg("Please add unrtf to your PATH for better results.");
         QRegularExpression rtfTextExp("lang1031 ([^}]*)");
         QRegularExpressionMatch rtfMatch= rtfTextExp.match(rtfText);
         if (rtfMatch.hasMatch())
@@ -754,7 +674,7 @@ bool QueryExecutor::executeInputFiles()
 		QFile fileSql(sqlFileName);
 		if (!fileSql.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
-			showMsg(tr("can't open sql file '%1'").arg(sqlFileName), LogLevel::ERR);
+            logger->errorMsg(tr("can't open sql file '%1'").arg(sqlFileName));
 			bRet = false;
 		}
 		else
@@ -781,8 +701,8 @@ bool QueryExecutor::executeInputFiles()
 					{
 						if ( "" == name)
 						{
-							showMsg(QString("no name for SQL at line %2")
-									.arg(lineNr), LogLevel::ERR);
+                            logger->errorMsg(QString("no name for SQL at line %2")
+                                    .arg(lineNr));
 						}
 						else
 						{
@@ -799,14 +719,15 @@ bool QueryExecutor::executeInputFiles()
 	}
 
 	// open and read the template file
-	QFile fileTemplate(templFileName);
+    QFile fileTemplate(templateFileName);
 	if (!fileTemplate.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
-		showMsg(tr("can't open template file '%1'").arg(templFileName), LogLevel::ERR);
+        logger->errorMsg(tr("can't open template file '%1'").arg(templateFileName));
 		bRet = false;
 	}
 	else
 	{
+        logger->infoMsg(QString("start executing template file '%1'").arg(templateFileName));
 		QTextStream streamInTemplate(&fileTemplate);
 		name = "";
 		qint32 emptyLineCnt = 0;
@@ -825,12 +746,12 @@ bool QueryExecutor::executeInputFiles()
 						{
 							if (templatesMap.contains(name))
 							{
-								showMsg(tr("Overwrite Template '%1'"), LogLevel::WARN);
+                                logger->warnMsg(tr("Overwrite Template '%1'"));
 								delete (templatesMap[name]);
 							}
 							else
 							{
-								showMsg(QString("Adding Template '%1'").arg(name), LogLevel::DBG);
+                                logger->debugMsg(QString("Adding Template '%1'").arg(name));
 							}
 							templatesMap[name] = new QStringList();
 						}
@@ -858,16 +779,16 @@ bool QueryExecutor::executeInputFiles()
         QJSValue result = scriptEngine.evaluate(templatesMap["Javascript"]->join('\n'));
         if (result.isError())
 		{
-			showMsg(tr("javascript error '%1' at line %2 ")
+            logger->errorMsg(tr("javascript error '%1' at line %2 ")
                     .arg(result.toString())
-                    .arg(result.property("lineNumber").toInt()) , LogLevel::ERR);
+                    .arg(result.property("lineNumber").toInt()));
 		}
-        else if (debugOutput)
+        else if (logger->isDebug())
         {
             QJSValueIterator it(scriptEngine.globalObject());
              while (it.hasNext()) {
                  it.next();
-                 showMsg(QString("ADD JS property %1").arg(it.name()), LogLevel::DBG);
+                 logger->debugMsg(QString("ADD JS property %1").arg(it.name()));
               }
         }
 	}
@@ -879,14 +800,14 @@ bool QueryExecutor::executeInputFiles()
 		QFileInfo fileOutInfo(fileOut);
 		if (!fileOutInfo.absoluteDir().exists())
 		{
-			showMsg(tr("create path %1")
-					.arg(fileOutInfo.absoluteDir().absolutePath()), LogLevel::MSG);
+            logger->infoMsg(tr("create path %1")
+                    .arg(fileOutInfo.absoluteDir().absolutePath()));
 			fileOutInfo.absoluteDir().mkpath(fileOutInfo.absoluteDir().absolutePath());
 		}
 
 		if (!fileOut.open(mQSE->getAppendOutput() ? QIODevice::Append : QIODevice::WriteOnly))
 		{
-			showMsg(tr("Can't open file '%1'").arg(mQSE->getLastOutputFile()), LogLevel::ERR);
+            logger->errorMsg(tr("Can't open file '%1'").arg(mQSE->getLastOutputFile()));
 			bRet = false;
 		}
 		else
@@ -900,7 +821,7 @@ bool QueryExecutor::executeInputFiles()
 	}
 	else
 	{
-		showMsg("no active query set", LogLevel::ERR);
+        logger->errorMsg("no active query set");
 		bRet = false;
 	}
 
@@ -923,10 +844,10 @@ void QueryExecutor::setInputValues(const QString &inputDefines)
 			QString value = (pvList.size() > 1) ? pvList.at(1) : "";
 			bool overwrite = userInputs.contains(param);
 			userInputs[param] = value;
-			if (debugOutput)
+            if (logger->isDebug())
 			{
-				showMsg(tr("%1 INPUT PARAM '%2' with value '%3'")
-                        .arg(overwrite ? "OVERWRITE" : "      ADD", param, value), LogLevel::MSG);
+                logger->infoMsg(tr("%1 INPUT PARAM '%2' with value '%3'")
+                        .arg(overwrite ? "OVERWRITE" : "      ADD", param, value));
 			}
 		}
 	}
@@ -974,8 +895,8 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		{
 			if ("EVAL" != tmpList.at(tmpList.size()-1).toUpper())
 			{
-				showMsg(tr("sqlReport interprets <b>'%1'</b> as <b>'eval'</b>, please remove the surrounding whitspaces")
-						.arg(tmpList.at(tmpList.size()-1)), LogLevel::WARN);
+                logger->warnMsg(tr("sqlReport interprets <b>'%1'</b> as <b>'eval'</b>, please remove the surrounding whitspaces")
+                        .arg(tmpList.at(tmpList.size()-1)));
 			}
 			tmpList.removeLast();
 			tmpName = tmpList.join(',');
@@ -987,10 +908,10 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 			}
 			else
 			{
-				showMsg(tr("error '%1' at line %2 evaluate script /%3/")
+                logger->errorMsg(tr("error '%1' at line %2 evaluate script /%3/")
                         .arg(expResult.toString())
                         .arg(expResult.property("lineNumber").toInt())
-						.arg(expression), LogLevel::ERR);
+                        .arg(expression));
 			}
 		}
 		// else check if we have a user variable
@@ -1001,7 +922,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		// else check if the variable exists in the replacement list (columns from SQL)
 		else if (replacements.contains(tmpName))
 		{
-			replaceLineVariable(tmpList, result, aLineCnt);
+            replaceLineVariable(replacements[tmpName], tmpList, result, aLineCnt);
 		}
 		// check if we have a global substitution
 		else if (tmpName.startsWith("__"))
@@ -1015,7 +936,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 		else
 		{
 			result += "['" + tmpName + "' is unknown]";
-			showMsg(QString("unknown variable name <b>'%1'</b>").arg(tmpName), LogLevel::ERR);
+            logger->errorMsg(QString("unknown variable name <b>'%1'</b>").arg(tmpName));
 		}
 	}
 
@@ -1135,6 +1056,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	if (templatesMap.contains(aTemplate))
 	{
 		currentTemplateBlockName = aTemplate;
+        logger->setContext(currentTemplateBlockName);
 		templLines = templatesMap[aTemplate];
 
 		// exists a query with the template name ?
@@ -1152,7 +1074,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			}
 		}
 
-        showMsg(tr("output template %1 using query %2").arg(aTemplate, queryTemplate), LogLevel::DBG);
+        logger->debugMsg(tr("output template %1 using query %2").arg(aTemplate, queryTemplate));
 
 		if (queriesMap.contains(queryTemplate))
 		{
@@ -1169,17 +1091,17 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
                     QString bv = list.at(i).toString().toUtf8().data();
                     QString bv2= bv;
 					bv2.remove(0,1);
-                    if (traceOutput)
+                    if (logger->isTrace())
                     {
-                        showMsg(tr("bound %1 to value %2").arg(i).arg(replacements[bv2]), LogLevel::TRACE);
+                        logger->traceMsg(tr("bound %1 to value %2").arg(i).arg(replacements[bv2]));
                     }
                     query.bindValue(i, replacements[bv2]);
 				}
 				bRet = query.exec();
 
-                if (traceOutput)
+                if (logger->isTrace())
                 {
-                    showMsg(tr("last query %1").arg(query.lastQuery()), LogLevel::TRACE);
+                    logger->traceMsg(tr("last query %1").arg(query.lastQuery()));
                 }
 			}
 			else
@@ -1194,18 +1116,18 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 				int numCols = rec.count();
 				bool empty = true;
 
-				if (debugOutput)
+                if (logger->isDebug())
 				{
-					showMsg("SQL-Query: "+sqlQuery, LogLevel::DBG);
-					if (traceOutput)
+                    logger->debugMsg("SQL-Query: "+sqlQuery);
+                    if (logger->isTrace())
 					{
 						for (int i=0; i<numCols; ++i)
 						{
-                            showMsg(QString("column %1 name '%2' : %3")
+                            logger->traceMsg(QString("column %1 name '%2' : %3")
                                     .arg(i)
-                                    .arg(rec.fieldName(i), rec.field(i).metaType().name()), LogLevel::TRACE);
+                                    .arg(rec.fieldName(i), rec.field(i).metaType().name()));
 						}
-                        showMsg(tr("Size of result is %1").arg(query.size()), LogLevel::TRACE);
+                        logger->traceMsg(tr("Size of result is %1").arg(query.size()));
 					}
 				}
 
@@ -1243,9 +1165,9 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 						}
 						replacements[tmpFieldName] = tmpStr;
 
-                        if (traceOutput)
+                        if (logger->isTrace())
                         {
-                            showMsg(tr("column %1 with /%2/").arg(i).arg(replacements[tmpFieldName]), LogLevel::TRACE);
+                            logger->traceMsg(tr("column %1 with /%2/").arg(i).arg(replacements[tmpFieldName]));
                         }
 					}
 					if (!empty)
@@ -1274,7 +1196,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 			{
 				QString errText = query.lastError().text();
 				streamOut << "## error executing " << sqlQuery << " ## " << errText << "##";
-                showMsg(tr("executing SQL '%1' (%2)").arg(sqlQuery, errText), LogLevel::ERR);
+                logger->errorMsg(tr("executing SQL '%1' (%2)").arg(sqlQuery, errText));
 			}
 		}
 		else
@@ -1289,7 +1211,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	{
 		if (!aTemplate.endsWith("_EMPTY"))
 		{
-			showMsg(tr("template %1 isn't defined").arg(aTemplate), LogLevel::ERR);
+            logger->errorMsg(tr("template %1 isn't defined").arg(aTemplate));
 		}
 	}
 
@@ -1302,6 +1224,7 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	}
 
     currentTemplateBlockName = lastTemplateName;
+    logger->setContext(currentTemplateBlockName);
 
 	return bRet;
 }
@@ -1327,14 +1250,14 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 		if (b)
 		{
             replacements["_tableprefix"] = QByteArray(dbc->getTablePrefix().toUtf8());
-			if (debugOutput)
+            if (logger->isDebug())
 			{
-				showMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]), LogLevel::DBG);
+                logger->debugMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]));
 			}
 		}
 		else
 		{
-			showMsg(dbc->getLastErrorString(), LogLevel::ERR);
+            logger->errorMsg(dbc->getLastErrorString());
 		}
 
         if (QStringConverter::encodingForName(dbc->getDbEncoding().toStdString().c_str()) != QStringConverter::Utf8)
@@ -1355,13 +1278,13 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 		dbc->closeDatabase();				        // close the database connection
 	}
 
-	showMsg(tr("query execution time: %1; using %2 different parameters")
+    logger->infoMsg(tr("query execution time: %1; using %2 different parameters")
 			.arg(Utility::formatMilliSeconds(t.elapsed()))
-			.arg(replacements.size()), LogLevel::MSG);
+            .arg(replacements.size()));
 
 	if (!b)
 	{
-		showMsg(tr("creating output creates some errors (see error window)"), LogLevel::MSG);
+        logger->infoMsg(tr("creating output creates some errors (see error window)"));
 	}
 
 	return b;
