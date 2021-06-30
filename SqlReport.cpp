@@ -19,9 +19,9 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	  databaseSet(this),
 	  activeQuerySetEntry(nullptr),
 	  treeModel(),
-	  sqlEditor(this),
-	  templateEditor(this),
-      outputEditor(this),
+      sqlEditor(this, true),
+      templateEditor(this, true),
+      outputEditor(this, false),
       logger(new LogMessage(this))
 {
 	ui.setupUi(this);
@@ -37,6 +37,8 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	outputEditor.setWindowTitle(tr("Show Report Output"));
 
 	sqlEditor.setLineWrapMode(QTextEdit::WidgetWidth);
+    sqlEditor.setConnectedWidget(&templateEditor);
+    templateEditor.setConnectedWidget(&sqlEditor);
 
 	QSettings rc;
 	// restore the window geometry for the widgets and the

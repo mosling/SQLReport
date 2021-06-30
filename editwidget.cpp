@@ -7,12 +7,14 @@
 #include "Utility.h"
 #include "ui_editwidget.h"
 
-EditWidget::EditWidget(QWidget *parentObj) :
+EditWidget::EditWidget(QWidget *parentObj, bool showToc) :
 	QWidget(parentObj),
 	ui(new Ui::EditWidget),
 	highlighter(nullptr),
 	currentFileName(""),
-	searchString("")
+    searchString(""),
+    tableOfContent(nullptr),
+    connectedWidget(nullptr)
 {
     ui->setupUi(this);
 	this->setWindowFlags(Qt::Window);
@@ -20,6 +22,15 @@ EditWidget::EditWidget(QWidget *parentObj) :
 	highlighter = new SqlReportHighlighter(ui->teEditor->document());
 	this->setStyleSheet("selection-color: yellow; selection-background-color: blue");
 
+    if (showToc)
+    {
+        tableOfContent = new QStringListModel();
+        ui->lvToc->setModel(tableOfContent);
+    }
+    else
+    {
+        ui->lvToc->hide();
+    }
 }
 
 EditWidget::~EditWidget()
@@ -37,6 +48,7 @@ bool EditWidget::newFile(QString aFileName)
 		if (file.open(QFile::ReadOnly | QFile::Text))
 		{
 			ui->teEditor->setPlainText(file.readAll());
+            updateTableOfContent();
 		}
 		else
 		{
@@ -62,8 +74,22 @@ void EditWidget::saveFile()
 void EditWidget::setLineWrapMode(QTextEdit::LineWrapMode lwp)
 {
 	ui->teEditor->setLineWrapMode(lwp);
-	ui->pushButtonWrap->setChecked(lwp!=QTextEdit::NoWrap);
+    ui->pushButtonWrap->setChecked(lwp!=QTextEdit::NoWrap);
 }
+
+void EditWidget::placeCursorAtNode(QString nodeName)
+{
+    qsizetype idx = tableOfContent->stringList().indexOf(nodeName);
+    if (idx > -1)
+    {
+        ui->lvToc->setCurrentIndex(ui->lvToc->model()->index(idx, 0));
+        ui->teEditor->moveCursor(QTextCursor::End);
+        ui->teEditor->moveCursor(QTextCursor::StartOfLine);
+        QString stmp = QString("^%1$").arg(nodeName);
+        ui->teEditor->find(QRegularExpression(stmp), QTextDocument::FindBackward);
+    }
+}
+
 
 //!
 void EditWidget::keyPressEvent(QKeyEvent *event)
@@ -73,7 +99,16 @@ void EditWidget::keyPressEvent(QKeyEvent *event)
 		on_pushButtonFind_clicked();
 	}
 
-	QWidget::keyPressEvent(event);
+    if (Qt::Key_F7 == event->key())
+    {
+        QTextCursor cursor = ui->teEditor->textCursor();
+        cursor.select(QTextCursor::WordUnderCursor);
+        ui->teEditor->setTextCursor(cursor);
+        QString word = cursor.selectedText();
+        updateCursorNode(QString("::%1").arg(word));
+    }
+
+    QWidget::keyPressEvent(event);
 }
 
 bool EditWidget::on_btnSave_clicked()
@@ -83,8 +118,7 @@ bool EditWidget::on_btnSave_clicked()
 	{
 		QMessageBox::warning(this, tr("Application"),
 							 tr("Cannot write file %1:\n%2.")
-							 .arg(currentFileName)
-							 .arg(file.errorString()));
+                             .arg(currentFileName, file.errorString()));
 		return false;
 	}
 
@@ -153,8 +187,7 @@ void EditWidget::on_lineEditFind_returnPressed()
 
 void EditWidget::on_pushButtonWrap_toggled(bool b)
 {
-	if (b) ui->teEditor->setLineWrapMode(QTextEdit::WidgetWidth);
-	else ui->teEditor->setLineWrapMode(QTextEdit::NoWrap);
+    ui->teEditor->setLineWrapMode(b ? QTextEdit::WidgetWidth: QTextEdit::NoWrap);
 }
 
 //! Wenn die Speichern-Nachfrage abgebrochen wurde, dann wird das
@@ -188,5 +221,46 @@ bool EditWidget::maybeSave()
 		else if (ret == QMessageBox::Cancel)
 			return false;
 	}
-	return true;
+    return true;
+}
+
+void EditWidget::updateTableOfContent()
+{
+    if (tableOfContent == nullptr)
+    {
+        return;
+    }
+
+    QStringList tocList;
+    foreach(QString s, ui->teEditor->toPlainText().split(QRegularExpression("[\n]")))
+    {
+        if (s.startsWith("::") && !s.startsWith("::#"))
+        {
+            tocList << s;
+        }
+    }
+    tocList.sort();
+    tableOfContent->setStringList(tocList);
+}
+
+void EditWidget::updateCursorNode(QString nodeName)
+{
+    placeCursorAtNode(nodeName);
+
+    if (connectedWidget != nullptr && ui->cbSync->isChecked())
+    {
+        connectedWidget->placeCursorAtNode(nodeName);
+    }
+}
+
+void EditWidget::on_lvToc_clicked(const QModelIndex &index)
+{
+    QString itemText = index.data(Qt::DisplayRole).toString();
+    updateCursorNode(itemText);
+}
+
+
+void EditWidget::on_teEditor_textChanged()
+{
+    updateTableOfContent();
 }
