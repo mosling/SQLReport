@@ -137,8 +137,9 @@ void DbConnection::showDbError()
 
     if(db.lastError().isValid())
     {
-        lastErrorStr = QString("%1").arg(db.lastError().text());
-        QMessageBox::critical(NULL, "DB-Error", lastErrorStr, QMessageBox::Ok);
+        QString str = QByteArray(db.lastError().text().toLocal8Bit());
+        QMessageBox::critical(NULL, "DB-Error", str, QMessageBox::Ok);
+        logger->errorMsg(str);
     }
 }
 

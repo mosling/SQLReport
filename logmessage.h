@@ -14,6 +14,7 @@ public:
     void setErrorWindow(QTextEdit *te);
     void setDebugFlag(Qt::CheckState flag);
     void setContext(QString contextString);
+    void cleanMessageHash() { msgHash.clear(); }
 
     bool isDebug() { return debugOutput; }
     bool isTrace() { return traceOutput; }

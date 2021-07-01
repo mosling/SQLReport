@@ -297,7 +297,7 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 				if (!bOk) tab = 0;
 				if (result.length() < tab)
 				{
-					// Leerzeichen anfügen
+                    // app spaces to reach the next tabstop
 					result += QString(tab-result.length(), ' ');
 				}
 			}
@@ -1241,11 +1241,13 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 	t.start();
 
 	clearStructures();								// remove the internal structure
+    logger->cleanMessageHash();                     // clean the logger message cache, restarts with execute
 	setInputValues(inputDefines);                   // set the input parameters from (input defines and local definese)
 	createOutputFileName(basePath);                 // create variable mOutFileName
 	createInputFileNames(basePath);					// create absolute input file names
 	if (nullptr != dbc)
 	{
+        dbc->setLogger(logger);
 		b = dbc->connectDatabase();                 // connect to database and set _tableprefix
 		if (b)
 		{
@@ -1254,10 +1256,6 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 			{
                 logger->debugMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]));
 			}
-		}
-		else
-		{
-            logger->errorMsg(dbc->getLastErrorString());
 		}
 
         if (QStringConverter::encodingForName(dbc->getDbEncoding().toStdString().c_str()) != QStringConverter::Utf8)

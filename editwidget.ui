@@ -211,10 +211,12 @@
            </property>
            <property name="font">
             <font>
-             <family>Source Code Pro</family>
-             <pointsize>9</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
+             <family>Inconsolata Medium</family>
+             <pointsize>10</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+             <stylestrategy>PreferAntialias</stylestrategy>
+             <kerning>false</kerning>
             </font>
            </property>
            <property name="lineWrapMode">

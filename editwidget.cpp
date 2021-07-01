@@ -99,7 +99,7 @@ void EditWidget::keyPressEvent(QKeyEvent *event)
 		on_pushButtonFind_clicked();
 	}
 
-    if (Qt::Key_F7 == event->key())
+    if (Qt::Key_F7 == event->key() && ui->lvToc->isVisible())
     {
         QTextCursor cursor = ui->teEditor->textCursor();
         cursor.select(QTextCursor::WordUnderCursor);
@@ -124,7 +124,7 @@ bool EditWidget::on_btnSave_clicked()
 
 	QTextStream out(&file);
 	QApplication::setOverrideCursor(Qt::WaitCursor);
-	out << ui->teEditor->toPlainText();
+    out << ui->teEditor->toPlainText().replace('\r', "");
 	QApplication::restoreOverrideCursor();
 
 	ui->teEditor->document()->setModified(false);
@@ -245,11 +245,14 @@ void EditWidget::updateTableOfContent()
 
 void EditWidget::updateCursorNode(QString nodeName)
 {
-    placeCursorAtNode(nodeName);
-
-    if (connectedWidget != nullptr && ui->cbSync->isChecked())
+    if (ui->lvToc->isVisible())
     {
-        connectedWidget->placeCursorAtNode(nodeName);
+        placeCursorAtNode(nodeName);
+
+        if (connectedWidget != nullptr && ui->cbSync->isChecked())
+        {
+            connectedWidget->placeCursorAtNode(nodeName);
+        }
     }
 }
 

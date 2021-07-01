@@ -4,11 +4,11 @@
         <Database>
             <type>QSQLITE</type>
             <name>chinook_sqlite_1.4</name>
-            <dbencoding>ISO-8859-1</dbencoding>
+            <dbencoding>UTF-8</dbencoding>
             <prefix></prefix>
             <host></host>
             <port>0</port>
-            <dbname>C:/Users/msk/development/src/tools/SQLReport/binaries/chinook.sqlite</dbname>
+            <dbname>C:/Users/koehler_s/development/SQLReport/binaries/chinook.sqlite</dbname>
             <dboptions></dboptions>
             <user></user>
             <save>no</save>
