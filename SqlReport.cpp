@@ -54,11 +54,6 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	QString qsn = rc.value("queryset_name","scripts/queryset.xml").toString();
 
 	readQuerySet(qsn);
-    QuerySetEntry *e = mQuerySet.getShowFirst();
-    if (e != nullptr)
-    {
-        ui.cbQuerySet->setCurrentText(e->getName());
-    }
 }
 
 SqlReport::~SqlReport()
@@ -422,14 +417,21 @@ void SqlReport::readQuerySet(QString &qsName)
 		}
 		else
 		{
-			ui.lineQuerySetName->setText(QString("%1 (%2)").arg(qsName).arg(p));
+            ui.lineQuerySetName->setText(QString("%1 (%2)").arg(qsName, p));
 		}
 
 		if (mQuerySet.rowCount() > 0)
 		{
-			ui.cbQuerySet->setCurrentIndex(0);
-			setActiveQuerySetEntry(ui.cbQuerySet->itemText(0));
-			readLocalDefines(mQuerySet.getQuerySetFileName());
+            QuerySetEntry *e = mQuerySet.getShowFirst();
+            if (e != nullptr)
+            {
+                ui.cbQuerySet->setCurrentText(e->getName());
+            }
+            else
+            {
+                ui.cbQuerySet->setCurrentIndex(0);
+            }
+            readLocalDefines(mQuerySet.getQuerySetFileName());
 		}
 		else
 		{
@@ -684,7 +686,7 @@ bool SqlReport::validQuerySet()
 //! Wird keine solcher Index gefunden, werden alle Felder gelöscht.
 void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 {
-	activeQuerySetEntry = mQuerySet.getByName(aIdxName);
+    activeQuerySetEntry = mQuerySet.getByName(aIdxName);
 	if (activeQuerySetEntry != nullptr)
 	{
 		ui.comboBoxDatabase->setCurrentText(activeQuerySetEntry->getDbName());

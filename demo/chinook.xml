@@ -4,10 +4,12 @@
         <Database>
             <type>QSQLITE</type>
             <name>chinook_sqlite_1.4</name>
+            <dbencoding>ISO-8859-1</dbencoding>
             <prefix></prefix>
             <host></host>
             <port>0</port>
             <dbname>C:/Users/msk/development/src/tools/SQLReport/binaries/chinook.sqlite</dbname>
+            <dboptions></dboptions>
             <user></user>
             <save>no</save>
         </Database>
@@ -27,6 +29,7 @@
             <appendOutput>no</appendOutput>
             <utf8>yes</utf8>
             <asXml>no</asXml>
+            <showFirst>no</showFirst>
         </Query>
         <Query>
             <name>Playlist</name>
@@ -42,6 +45,7 @@
             <appendOutput>no</appendOutput>
             <utf8>yes</utf8>
             <asXml>no</asXml>
+            <showFirst>yes</showFirst>
         </Query>
     </QuerySet>
 </SqlReport>
