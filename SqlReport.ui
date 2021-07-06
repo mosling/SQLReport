@@ -168,42 +168,6 @@
          </layout>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="labelLocal">
-         <property name="font">
-          <font>
-           <family>Tahoma</family>
-           <pointsize>9</pointsize>
-           <weight>50</weight>
-           <bold>false</bold>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="text">
-          <string>Set Defines:</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEditLocal">
-         <property name="font">
-          <font>
-           <family>Tahoma</family>
-           <pointsize>9</pointsize>
-           <weight>50</weight>
-           <bold>false</bold>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This defines are set for all queries within this query set and can be overwritten by the same query define.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
        <item row="2" column="0">
         <widget class="QLabel" name="labelQuery">
          <property name="font">
@@ -576,11 +540,11 @@
           </font>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This defines are used to set input defines or overwrite the global defines from the query set.&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This defines are used to set input defines for the query, this values can be overwritten by the local defines which are not stored in the query set file.&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="0">
+       <item row="7" column="0">
         <widget class="QLabel" name="labelSql">
          <property name="font">
           <font>
@@ -601,7 +565,7 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="1">
+       <item row="7" column="1">
         <widget class="QFrame" name="frameSql">
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
@@ -691,7 +655,7 @@
          </layout>
         </widget>
        </item>
-       <item row="7" column="0">
+       <item row="8" column="0">
         <widget class="QLabel" name="labelTemplate">
          <property name="font">
           <font>
@@ -712,7 +676,7 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
+       <item row="8" column="1">
         <widget class="QFrame" name="frameTemplate">
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
@@ -799,7 +763,7 @@
          </layout>
         </widget>
        </item>
-       <item row="9" column="0">
+       <item row="10" column="0">
         <widget class="QLabel" name="labelOutput">
          <property name="font">
           <font>
@@ -820,7 +784,7 @@
          </property>
         </widget>
        </item>
-       <item row="9" column="1">
+       <item row="10" column="1">
         <widget class="QFrame" name="frameOutput">
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
@@ -907,7 +871,7 @@
          </layout>
         </widget>
        </item>
-       <item row="10" column="0">
+       <item row="11" column="0">
         <widget class="QLabel" name="labelParameter">
          <property name="font">
           <font>
@@ -925,7 +889,7 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="1">
+       <item row="11" column="1">
         <widget class="QFrame" name="frmCheckBoxes">
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
@@ -1186,7 +1150,7 @@
          </layout>
         </widget>
        </item>
-       <item row="11" column="0">
+       <item row="12" column="0">
         <widget class="QLabel" name="labelInfo">
          <property name="font">
           <font>
@@ -1207,7 +1171,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="1">
+       <item row="12" column="1">
         <widget class="QTextEdit" name="textEditReport">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1228,7 +1192,7 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="0">
+       <item row="13" column="0">
         <widget class="QLabel" name="labelErrors">
          <property name="font">
           <font>
@@ -1246,7 +1210,7 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="1">
+       <item row="13" column="1">
         <widget class="QTextEdit" name="textEditError">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1264,7 +1228,7 @@
          </property>
         </widget>
        </item>
-       <item row="13" column="1">
+       <item row="14" column="1">
         <widget class="QFrame" name="frameButton">
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
@@ -1344,6 +1308,42 @@
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="labelLocal">
+         <property name="font">
+          <font>
+           <family>Tahoma</family>
+           <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string/>
+         </property>
+         <property name="text">
+          <string>Local Defines:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLineEdit" name="lineEditLocal">
+         <property name="font">
+          <font>
+           <family>Tahoma</family>
+           <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This are local defines which are &lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;not&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; stored in the query set file. The can be used to overwrite the &amp;quot;Query Defines&amp;quot; for some cases.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
         </widget>
        </item>
       </layout>

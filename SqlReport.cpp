@@ -19,9 +19,9 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	  databaseSet(this),
 	  activeQuerySetEntry(nullptr),
 	  treeModel(),
-      sqlEditor(this, true),
-      templateEditor(this, true),
-      outputEditor(this, false),
+      sqlEditor(this, "sqlEditor", true, true),
+      templateEditor(this, "templateEdititor", true, true),
+      outputEditor(this, "outputEditor", false, false),
       logger(new LogMessage(this))
 {
 	ui.setupUi(this);
@@ -36,25 +36,26 @@ SqlReport::SqlReport(QWidget *parentObj, Qt::WindowFlags flags)
 	templateEditor.setWindowTitle(tr("Template Editor"));
 	outputEditor.setWindowTitle(tr("Show Report Output"));
 
-	sqlEditor.setLineWrapMode(QTextEdit::WidgetWidth);
+    // connect sql and template editor
     sqlEditor.setConnectedWidget(&templateEditor);
     templateEditor.setConnectedWidget(&sqlEditor);
 
-	QSettings rc;
-	// restore the window geometry for the widgets and the
-	// window state for the main window
-	this->restoreState(rc.value("windowState").toByteArray());
-	this->restoreGeometry(rc.value("geometry").toByteArray());
-	sqlEditor.restoreGeometry(rc.value("sqledit").toByteArray());
-	templateEditor.restoreGeometry(rc.value("templedit").toByteArray());
-	outputEditor.restoreGeometry(rc.value("outedit").toByteArray());
+    // restore the window geometry for the widgets and the
+    // window state for the main window
+    QSettings rc("msk-soft", "sql-report");
+    this->restoreState(rc.value("mainwindow/windowState").toByteArray());
+    this->restoreGeometry(rc.value("mainwindow/geometry").toByteArray());
+
+    sqlEditor.readSettings(rc);
+    templateEditor.readSettings(rc);
+    outputEditor.readSettings(rc);
 
     // set logger windows
     logger->setMsgWindow(ui.textEditReport);
     logger->setErrorWindow(ui.textEditError);
 
-	QString qsn = rc.value("queryset_name","scripts/queryset.xml").toString();
-
+    // read query set for the query set name from the settings
+    QString qsn = rc.value("mainwindow/queryset_name","scripts/queryset.xml").toString();
 	readQuerySet(qsn);
 }
 
@@ -69,13 +70,17 @@ SqlReport::~SqlReport()
 		templateEditor.close();
 		outputEditor.close();
 
-		QSettings rc;
+        QSettings rc("msk-soft", "sql-report");
+        rc.beginGroup("mainwindow");
 		rc.setValue("queryset_name",mQuerySet.getQuerySetFileName());
 		rc.setValue("geometry", this->saveGeometry());
-		rc.setValue("sqledit",sqlEditor.saveGeometry());
-		rc.setValue("templedit", templateEditor.saveGeometry());
-		rc.setValue("outedit", outputEditor.saveGeometry());
-		rc.setValue("windowState", QVariant(this->saveState()));
+        rc.setValue("windowState", QVariant(this->saveState()));
+        rc.endGroup();
+
+        templateEditor.storeSettings(rc);
+        outputEditor.storeSettings(rc);
+        sqlEditor.storeSettings(rc);
+
 		writeLocalDefines(mQuerySet.getQuerySetFileName());
 
 		activeQuerySetEntry = nullptr;
@@ -93,7 +98,7 @@ void SqlReport::on_But_OK_clicked()
 {
 	QueryExecutor vpExecutor;
 	QString queryPath = QFileInfo(mQuerySet.getQuerySetFileName()).absolutePath();
-    QString baseInput = ui.lineEditLocal->text() + "|" + ui.lineEditInput->text();
+    QString baseInput = ui.lineEditInput->text() + "|" + ui.lineEditLocal->text();
 	bool vRes = false;
 
 	// save open editor
@@ -147,9 +152,9 @@ void SqlReport::on_But_OK_clicked()
 						if (qList.size() > 0)
 						{
 							queryName = qList.at(0);
-							if (qList.size() > 1)
+                            for (qsizetype i = 1; i < qList.size(); ++i)
 							{
-								queryInput = queryInput + "|" + qList.at(1);
+                                queryInput = queryInput + "|" + qList.at(i);
 							}
 						}
 						if (mQuerySet.contains(queryName))
@@ -159,16 +164,18 @@ void SqlReport::on_But_OK_clicked()
 													databaseSet.getByName(tmpQuery->getDbName()),
 													queryPath,
 													queryInput);
+                            logger->infoMsg("--------------------------------------------------");
+
 						}
 						else
 						{
-							ui.textEditError->append(tr("ReportErr: unknown QuerySet '%1'").arg(queryName));
+                            logger->errorMsg(tr("ReportErr: unknown QuerySet '%1'").arg(queryName));
 						}
 					}
 				}
 				// remove the before created batch file
 				batchFile.remove();
-                ui.textEditReport->append(tr("batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
+                logger->infoMsg(tr("batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
 			}
 		}
 	}
@@ -406,7 +413,7 @@ void SqlReport::readQuerySet(QString &qsName)
 
 	if (!qsFile.exists())
 	{
-        ui.textEditReport->append("query file doesn't exists -> write existing data");
+        logger->errorMsg("query file doesn't exists -> write existing data");
 		mQuerySet.writeXml(qsName, databaseSet);
 	}
 
@@ -443,7 +450,7 @@ void SqlReport::readQuerySet(QString &qsName)
 	}
 	else
 	{
-		ui.textEditError->append(mQuerySet.getLastError());
+        logger->errorMsg(mQuerySet.getLastError());
 	}
 }
 
@@ -531,7 +538,7 @@ void SqlReport::on_but_DeleteQuerySet_clicked()
 	}
 	else
 	{
-		ui.textEditError->append(tr("There is no active query set, which can removed."));
+        logger->errorMsg(tr("There is no active query set, which can removed."));
 	}
 }
 

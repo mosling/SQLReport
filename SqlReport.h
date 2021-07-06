@@ -13,7 +13,7 @@ class SqlReport : public QMainWindow
 {
 	Q_OBJECT
 	Q_CLASSINFO ("author", "St. Koehler")
-	Q_CLASSINFO ("company", "com.github.mosling")
+    Q_CLASSINFO ("company", "msk-soft")
 
 public:
     explicit SqlReport(QWidget *parentObj = nullptr, Qt::WindowFlags = Qt::WindowType::Widget);

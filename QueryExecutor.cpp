@@ -727,7 +727,6 @@ bool QueryExecutor::executeInputFiles()
 	}
 	else
 	{
-        logger->infoMsg(QString("start executing template file '%1'").arg(templateFileName));
 		QTextStream streamInTemplate(&fileTemplate);
 		name = "";
 		qint32 emptyLineCnt = 0;

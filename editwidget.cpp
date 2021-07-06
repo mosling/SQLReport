@@ -1,16 +1,18 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <QFileDialog>
+#include <QFontDialog>
 #include <QtPrintSupport/QPrinter>
 
 #include "EditWidget.h"
 #include "Utility.h"
 #include "ui_editwidget.h"
 
-EditWidget::EditWidget(QWidget *parentObj, bool showToc) :
+EditWidget::EditWidget(QWidget *parentObj, QString name, bool showToc, bool withSyntax) :
 	QWidget(parentObj),
 	ui(new Ui::EditWidget),
 	highlighter(nullptr),
+    name(name != nullptr ? name : ""),
 	currentFileName(""),
     searchString(""),
     tableOfContent(nullptr),
@@ -19,7 +21,10 @@ EditWidget::EditWidget(QWidget *parentObj, bool showToc) :
     ui->setupUi(this);
 	this->setWindowFlags(Qt::Window);
 
-	highlighter = new SqlReportHighlighter(ui->teEditor->document());
+    if (withSyntax)
+    {
+        highlighter = new SqlReportHighlighter(ui->teEditor->document());
+    }
 	this->setStyleSheet("selection-color: yellow; selection-background-color: blue");
 
     if (showToc)
@@ -90,6 +95,26 @@ void EditWidget::placeCursorAtNode(QString nodeName)
     }
 }
 
+void EditWidget::storeSettings(QSettings &rc)
+{
+    if ( ! this->name.isEmpty() )
+    {
+        rc.beginGroup(this->name);
+        rc.setValue("geometry",this->saveGeometry());
+        rc.setValue("font", ui->teEditor->font());
+        rc.setValue("wrapmode", ui->pushButtonWrap->isChecked());
+        rc.endGroup();
+    }
+}
+
+void EditWidget::readSettings(QSettings &rc)
+{
+    this->restoreGeometry(rc.value(this->name + "/geometry").toByteArray());
+    ui->teEditor->setFont(rc.value(this->name + "/font", QFont()).value<QFont>());
+    bool wm = rc.value(this->name + "/wrapmode").value<bool>();
+    ui->pushButtonWrap->setChecked(wm);
+    this->on_pushButtonWrap_toggled(wm);
+}
 
 //!
 void EditWidget::keyPressEvent(QKeyEvent *event)
@@ -267,3 +292,15 @@ void EditWidget::on_teEditor_textChanged()
 {
     updateTableOfContent();
 }
+
+void EditWidget::on_btnFont_clicked()
+{
+    bool ok;
+    QFont font = QFontDialog::getFont(&ok, ui->teEditor->font(), this);
+
+    if (ok)
+    {
+        ui->teEditor->setFont(font);
+    }
+}
+
