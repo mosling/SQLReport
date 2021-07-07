@@ -67,8 +67,6 @@ public:
 	bool getPasswordSave() const {return passwordSave; }
 	void setPasswordSave(const bool value);
 
-	QString getLastErrorString() { QString le = lastErrorStr; lastErrorStr=""; return le; }
-
     void setLogger(LogMessage *l)
     {
         logger = l;
@@ -87,7 +85,6 @@ private:
 	QString password;
 	quint32 port;
 	bool passwordSave;
-	QString lastErrorStr;
 
     QString getFieldString(const QSqlField field) const;
     QStringList getForeignKeyList(QString &tableName) const;

@@ -6,7 +6,9 @@
 #include <QCloseEvent>
 #include <QDialog>
 #include <QFile>
+#include <QSettings>
 #include <QString>
+#include <QStringListModel>
 #include <QTextEdit>
 #include <QWidget>
 
@@ -21,12 +23,16 @@ class EditWidget : public QWidget
 	Q_CLASSINFO ("company", "com.github.mosling")
 
 public:
-	explicit EditWidget(QWidget *parentObj = 0);
+    explicit EditWidget(QWidget *parentObj, QString name, bool showToc, bool withSyntax);
     ~EditWidget();
 
 	bool newFile(QString aFileName);
 	void saveFile();
 	void setLineWrapMode(QTextEdit::LineWrapMode lwp);
+    void placeCursorAtNode(QString nodeName);
+    void setConnectedWidget(EditWidget *w) { connectedWidget = w; }
+    void storeSettings(QSettings &rc);
+    void readSettings(QSettings &rc);
 
 protected:
 	void keyPressEvent(QKeyEvent *event) override;
@@ -43,13 +49,24 @@ private slots:
 	void on_lineEditFind_returnPressed();
 	void on_pushButtonWrap_toggled(bool b);
 
+    void on_lvToc_clicked(const QModelIndex &index);
+
+    void on_teEditor_textChanged();
+
+    void on_btnFont_clicked();
+
 private:
 	bool maybeSave();
+    void updateTableOfContent();
+    void updateCursorNode(QString nodeName);
 
     Ui::EditWidget *ui;
 	SqlReportHighlighter *highlighter;
+    QString name;
 	QString currentFileName;
 	QString searchString;
+    QStringListModel *tableOfContent;
+    EditWidget *connectedWidget;
 
 };
 
