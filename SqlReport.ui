@@ -44,6 +44,21 @@
       <layout class="QFormLayout" name="formLayout">
        <item row="0" column="0">
         <widget class="QLabel" name="labelQuerySet">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -66,7 +81,7 @@
        <item row="0" column="1">
         <widget class="QFrame" name="frameQuerySet">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -170,6 +185,15 @@
        </item>
        <item row="2" column="0">
         <widget class="QLabel" name="labelQuery">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -189,23 +213,26 @@
        <item row="2" column="1">
         <widget class="QFrame" name="frameQuery">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <property name="leftMargin">
            <number>0</number>
           </property>
           <property name="topMargin">
-           <number>0</number>
+           <number>5</number>
           </property>
           <property name="rightMargin">
            <number>0</number>
           </property>
           <property name="bottomMargin">
-           <number>0</number>
+           <number>5</number>
           </property>
           <item>
            <widget class="QComboBox" name="cbQuerySet">
@@ -231,6 +258,24 @@
             </property>
             <property name="editable">
              <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="cbShowFirst">
+            <property name="font">
+             <font>
+              <family>Tahoma</family>
+              <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the selected Query after loading the Query Set.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string/>
             </property>
            </widget>
           </item>
@@ -293,6 +338,15 @@
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="labelDescr">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -329,6 +383,15 @@
        </item>
        <item row="4" column="0">
         <widget class="QLabel" name="labelDatabase">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -351,7 +414,7 @@
        <item row="4" column="1">
         <widget class="QFrame" name="frameDatabase">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -513,6 +576,15 @@
        </item>
        <item row="5" column="0">
         <widget class="QLabel" name="labelInput">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -546,6 +618,15 @@
        </item>
        <item row="7" column="0">
         <widget class="QLabel" name="labelSql">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -568,7 +649,7 @@
        <item row="7" column="1">
         <widget class="QFrame" name="frameSql">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -657,6 +738,15 @@
        </item>
        <item row="8" column="0">
         <widget class="QLabel" name="labelTemplate">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -679,10 +769,10 @@
        <item row="8" column="1">
         <widget class="QFrame" name="frameTemplate">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
+          <enum>QFrame::Plain</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <property name="leftMargin">
@@ -765,6 +855,15 @@
        </item>
        <item row="10" column="0">
         <widget class="QLabel" name="labelOutput">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -787,7 +886,7 @@
        <item row="10" column="1">
         <widget class="QFrame" name="frameOutput">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -873,6 +972,15 @@
        </item>
        <item row="11" column="0">
         <widget class="QLabel" name="labelParameter">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -892,7 +1000,7 @@
        <item row="11" column="1">
         <widget class="QFrame" name="frmCheckBoxes">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -927,7 +1035,7 @@
              </font>
             </property>
             <property name="text">
-             <string>Locale </string>
+             <string>Date Format</string>
             </property>
            </widget>
           </item>
@@ -963,24 +1071,6 @@
              </size>
             </property>
            </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="cbShowFirst">
-            <property name="font">
-             <font>
-              <family>Tahoma</family>
-              <pointsize>9</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the selected Query after loading the Query Set.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="text">
-             <string>Selected</string>
-            </property>
-           </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxBatchRun">
@@ -1152,6 +1242,15 @@
        </item>
        <item row="12" column="0">
         <widget class="QLabel" name="labelInfo">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -1167,7 +1266,7 @@
           <string>Report:</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -1194,6 +1293,12 @@
        </item>
        <item row="13" column="0">
         <widget class="QLabel" name="labelErrors">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>
@@ -1231,7 +1336,7 @@
        <item row="14" column="1">
         <widget class="QFrame" name="frameButton">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -1312,6 +1417,15 @@
        </item>
        <item row="6" column="0">
         <widget class="QLabel" name="labelLocal">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Tahoma</family>

@@ -34,6 +34,7 @@ EditWidget::EditWidget(QWidget *parentObj, QString name, bool showToc, bool with
     }
     else
     {
+        ui->cbSync->hide();
         ui->lvToc->hide();
     }
 }
