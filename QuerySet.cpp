@@ -166,7 +166,6 @@ bool QuerySet::readXml(QString aFilename, DbConnectionSet &dbSet)
 							if (ce == "TEMPLATE")     { vQEntry->setTemplateFile(te); }
 							if (ce == "OUTPUT")       { vQEntry->setOutputFile(te); }
 							if (ce == "NAME")         { vQEntry->setName(te); }
-							if (ce == "LOCALE")       { vQEntry->setLocale(te); }
 							if (ce == "BATCHRUN")     { vQEntry->setBatchrun((te.toUpper()=="YES"));	}
 							if (ce == "USETIMESTAMP") {	vQEntry->setWithTimestamp((te.toUpper()=="YES")); }
 							if (ce == "APPENDOUTPUT") { vQEntry->setAppendOutput((te.toUpper()=="YES")); }
@@ -239,7 +238,6 @@ void QuerySet::writeXml(QString aFileName, DbConnectionSet &dbSet) const
 			vStream.writeTextElement("sql",			 qse->getSqlFile() );
 			vStream.writeTextElement("template",	 qse->getTemplateFile() );
 			vStream.writeTextElement("output",		 qse->getOutputFile());
-			vStream.writeTextElement("locale",		 qse->getLocale());
 			vStream.writeTextElement("batchrun",     qse->getBatchrun()?"yes":"no");
 			vStream.writeTextElement("useTimestamp", qse->getWithTimestamp()?"yes":"no");
 			vStream.writeTextElement("appendOutput", qse->getAppendOutput()?"yes":"no");

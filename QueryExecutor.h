@@ -43,6 +43,7 @@ public:
           templatesMap(),
           sqlFileName(""),
           templateFileName(""),
+          databaseType(""),
           scriptEngine(),
           decodeDatabase(QStringDecoder(QStringDecoder::Utf8)),
           fileOut(),
@@ -75,7 +76,7 @@ public:
 protected:
 	bool replaceTemplate(const QStringList *aTemplLines, int aLineCnt);
 	QString replaceLine(const QString &aLine, int aLineCnt, bool sqlBinding, bool simpleFormat);
-	bool outputTemplate(QString aTemplate);
+    bool outputTemplate(QString aTemplate);
 	QString getDate(const QString &aFormat) const;
 	void clearStructures();
 
@@ -106,6 +107,7 @@ private:
 	QMap <QString, QStringList* > templatesMap;
 	QString sqlFileName;
     QString templateFileName;
+    QString databaseType;
     QJSEngine scriptEngine;
     QStringDecoder decodeDatabase;
 
@@ -119,7 +121,6 @@ private:
     QRegularExpression fontElement;
     QRegularExpression spanElement;
     QRegularExpression htmlBody;
-
 };
 
 #endif // QUERYEXECUTOR_H

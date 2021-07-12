@@ -15,8 +15,7 @@ QuerySetEntry::QuerySetEntry() :
 	appendOutput(false),
 	outputUtf8(false),
 	outputXml(false),
-    showFirst(false),
-	locale("de_DE")
+    showFirst(false)
 {
 }
 
@@ -41,7 +40,6 @@ QuerySetEntry &QuerySetEntry::operator=(const QuerySetEntry &rhs)
 		withTimestamp = rhs.withTimestamp;
 		outputUtf8    = rhs.outputUtf8;
 		outputXml     = rhs.outputXml;
-		locale        = rhs.locale;
 		appendOutput  = rhs.appendOutput;
         showFirst     = false;
 	}
@@ -184,27 +182,3 @@ void QuerySetEntry::setShowFirst(bool value)
 {
     showFirst = value;
 }
-
-QString QuerySetEntry::getLocale() const
-{
-	return locale;
-}
-
-void QuerySetEntry::setLocale(const QString &value)
-{
-	locale = value;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-

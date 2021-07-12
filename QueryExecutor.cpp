@@ -31,6 +31,7 @@ void QueryExecutor::setPrepareQueriesFlag(bool flag)
 void QueryExecutor::clearStructures()
 {
 	qDeleteAll(templatesMap);
+    databaseType = "";
 	userInputs.clear();
 	replacements.clear();
 	queriesMap.clear();
@@ -265,7 +266,7 @@ void QueryExecutor::replaceLineGlobal(const QStringList &varList, QString &resul
 		}
 		else if ("__DATE" == tmpName)
 		{
-			QString tmpDateFormat("d MMMM yyyy");
+            QString tmpDateFormat("yyyy-MM-dd");
 			if (varList.size() > 1)
 			{
 				tmpDateFormat = varList.at(1);
@@ -515,7 +516,7 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
 {
 	if (prepareQueries)
 	{
-        logger->debugMsg(QString("Adding Prepared SQL Query '%1'").arg(name));
+        logger->debugMsg(QString("Adding Prepared SQL-Query '%1'").arg(name));
 
 		QString tempPrepQuery = replaceLine(sqlLine, 0, true, false);
         logger->debugMsg(tr("prepared sql query: %1").arg(tempPrepQuery));
@@ -532,8 +533,7 @@ void QueryExecutor::addSqlQuery(const QString &name, const QString &sqlLine)
 	}
 	else
 	{
-        logger->debugMsg(QString("Adding SQL Query '%1'").arg(name));
-
+        logger->debugMsg(QString("Adding SQL-Query '%1'").arg(name));
 		queriesMap[name] = sqlLine;
     }
 }
@@ -692,16 +692,24 @@ bool QueryExecutor::executeInputFiles()
 					{
 						if (!name.isEmpty())
 						{
-							addSqlQuery(name, sqlLine);
+                            // add the last SQL Query
+                            addSqlQuery(name, sqlLine);
 						}
-						sqlLine = "";
-						name = line.mid(2).trimmed();
+
+                        // start new SQL Query
+                        sqlLine = "";
+                        name = line.mid(2).trimmed();
+                        if (queriesMap.contains(name))
+                        {
+                            logger->warnMsg(tr("Overwrite SQL-Query '%1' at line %2").arg(name).arg(lineNr));
+                            queriesMap.remove(name);
+                        }
 					}
 					else
 					{
 						if ( "" == name)
 						{
-                            logger->errorMsg(QString("no name for SQL at line %2")
+                            logger->errorMsg(QString("Detached SQL at line %2")
                                     .arg(lineNr));
 						}
 						else
@@ -711,6 +719,8 @@ bool QueryExecutor::executeInputFiles()
 					}
 				}
 			}
+
+            // add the last SQL-Query
 			if (!name.isEmpty())
 			{
 				addSqlQuery(name, sqlLine);
@@ -729,10 +739,12 @@ bool QueryExecutor::executeInputFiles()
 	{
 		QTextStream streamInTemplate(&fileTemplate);
 		name = "";
+        lineNr = 0;
 		qint32 emptyLineCnt = 0;
 		while ( !streamInTemplate.atEnd())
 		{
 			line = streamInTemplate.readLine();
+            lineNr++;
 			if (line.length() != 0)  // extra handling for empty lines using emptyLineCnt
 			{
 				if (!line.startsWith("::#")) //ignore comment lines
@@ -745,7 +757,7 @@ bool QueryExecutor::executeInputFiles()
 						{
 							if (templatesMap.contains(name))
 							{
-                                logger->warnMsg(tr("Overwrite Template '%1'"));
+                                logger->warnMsg(tr("Overwrite Template '%1' at line %2").arg(name).arg(lineNr));
 								delete (templatesMap[name]);
 							}
 							else
@@ -948,10 +960,7 @@ QString QueryExecutor::replaceLine(const QString &aLine, int aLineCnt, bool sqlB
 QString QueryExecutor::getDate(const QString &aFormat) const
 {
 	QDateTime mNow = QDateTime::currentDateTime();
-	QLocale l(mQSE != nullptr ? mQSE->getLocale() : "en-en");
-	QString res = l.toString( mNow, aFormat);
-
-	return res;
+    return QLocale::system().toString( mNow, aFormat);
 }
 
 //! This method expands all lines of the given template list.
@@ -984,7 +993,7 @@ bool QueryExecutor::replaceTemplate(const QStringList *aTemplLines, int aLineCnt
 			streamOut << replaceLine(result, aLineCnt, false, false);
             lpos = pos + match.capturedLength();
 			// now add the subtemplate
-			outputTemplate(tmpName);
+            outputTemplate(tmpName);
 		}
 
 		QString tmpStr = vStr.mid(lpos);
@@ -1036,7 +1045,44 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 	aTemplate = ll.at(0).trimmed();
 	QString outputModifier = ll.size()>1 ? ll.at(1).trimmed().toUpper() : "";
 
-	// first check the calling template string for more informations
+    // first check if we need this template
+    // use the javascript engine to check if we need this template to output
+    if ("IF" == outputModifier && ll.size() > 2)
+    {
+        QString expression = replaceLine(ll.at(2), lineCnt, false, true);
+        QJSValue expResult = scriptEngine.evaluate(expression).toString();
+        if (!expResult.isError())
+        {
+            QString resultStr = expResult.toString();
+            if (resultStr == "false" || resultStr == "true")
+            {
+                bool b = resultStr == "true";
+                if ( !b )
+                {
+                    logger->infoMsg(QString("Suppress output for template '%1' because '%2' is false.")
+                                    .arg(aTemplate, ll.at(2)));
+                    return true;
+                }
+            }
+            else
+            {
+                logger->errorMsg(QString("The IF clause must return a boolean (false/true) value but is '%1'")
+                                 .arg(expResult.toString()));
+                return false;
+            }
+        }
+        else
+        {
+            logger->errorMsg(tr("error '%1' at line %2 evaluate script /%3/")
+                    .arg(expResult.toString())
+                    .arg(expResult.property("lineNumber").toInt())
+                    .arg(expression));
+
+            return false;
+        }
+    }
+
+    // first check the calling template string for more informations
 	if ("LIST" == outputModifier)
 	{
 		if (ll.size() > 2)
@@ -1067,16 +1113,18 @@ bool QueryExecutor::outputTemplate(QString aTemplate)
 		if (aTemplate.contains('.'))
 		{
 			queryTemplate = aTemplate.split('.').at(0);
-			if (aTemplate.endsWith("_EMPTY"))
-			{
-				queryTemplate += "_EMPTY";
-			}
 		}
 
-        logger->debugMsg(tr("output template %1 using query %2").arg(aTemplate, queryTemplate));
+        // check if there is a DB specific SQL
+        QString queryTemplateDb = QString("%1.%2").arg(queryTemplate, databaseType);
+        if (queriesMap.contains(queryTemplateDb))
+        {
+            queryTemplate = queryTemplateDb;
+        }
 
 		if (queriesMap.contains(queryTemplate))
 		{
+            logger->debugMsg(tr("output template %1 using query %2").arg(aTemplate, queryTemplate));
 			QString sqlQuery;
 
 			if (prepareQueries && preparedQueriesMap.contains(queryTemplate))
@@ -1251,6 +1299,7 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 		if (b)
 		{
             replacements["_tableprefix"] = QByteArray(dbc->getTablePrefix().toUtf8());
+            databaseType = dbc->getDbType();
             if (logger->isDebug())
 			{
                 logger->debugMsg(tr("Set parameter ${_tableprefix} to '%1'").arg(replacements["_tableprefix"]));
@@ -1259,13 +1308,12 @@ bool QueryExecutor::createOutput(QuerySetEntry *aQSE,
 
         if (QStringConverter::encodingForName(dbc->getDbEncoding().toStdString().c_str()) != QStringConverter::Utf8)
         {
-
             decodeDatabase = QStringDecoder(dbc->getDbEncoding().toStdString().c_str());
         }
 	}
 
 	b = b && executeInputFiles();                   // read the sql and the template file into the internal structure
-	b = b && outputTemplate("MAIN");				// start process with the MAIN template
+    b = b && outputTemplate("MAIN");				// start process with the MAIN template
 	streamOut.flush();
 	fileOut.close();								// flush and close the output file
 

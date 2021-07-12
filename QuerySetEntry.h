@@ -57,8 +57,8 @@ public:
     bool getShowFirst() const;
     void setShowFirst(bool value);
 
-	QString getLocale() const;
-	void setLocale(const QString &value);
+    QString getDateFormat() const;
+    void setDateFormat(const QString &value);
 
 private:
 	QString name;
@@ -75,7 +75,6 @@ private:
 	bool outputUtf8;
 	bool outputXml;
     bool showFirst;
-	QString locale;
 };
 
 #endif // QUERYSETENTRY_H

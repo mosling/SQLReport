@@ -135,17 +135,27 @@ void SqlReport::on_But_OK_clicked()
 			}
 			else
 			{
-				QByteArray batchCommands = batchFile.readAll();
-				QTextStream streamInSql(batchCommands);
-				QString line;
-				quint32 lineNr = 0;
+                QString batchCommandsString = QString(batchFile.readAll());
+                QStringList batchCommand = batchCommandsString.split('\n');
+                qint32 cntCommands = 0;
+                foreach(QString str, batchCommand)
+                {
+                    if (str.startsWith("!!"))
+                    {
+                        cntCommands++;
+                    }
+                }
 
-				while ( !streamInSql.atEnd())
+				quint32 lineNr = 0;
+                quint32 queryNr = 0;
+
+                foreach (QString line, batchCommand)
 				{
-					line = streamInSql.readLine().trimmed();
+                    line = line.trimmed();
 					lineNr++;
 					if (line.startsWith("!!"))
 					{
+                        queryNr++;
                         QStringList qList = line.split("!!", Qt::SkipEmptyParts);
 						QString queryName("");
 						QString queryInput = baseInput;
@@ -159,20 +169,22 @@ void SqlReport::on_But_OK_clicked()
 						}
 						if (mQuerySet.contains(queryName))
 						{
+                            logger->infoMsg(QString("--[ %1/%2 ]--------------------------------------------------")
+                                            .arg(queryNr).arg(cntCommands));
 							QuerySetEntry *tmpQuery = mQuerySet.getByName(queryName);
 							vpExecutor.createOutput(tmpQuery,
 													databaseSet.getByName(tmpQuery->getDbName()),
 													queryPath,
 													queryInput);
-                            logger->infoMsg("--------------------------------------------------");
 
 						}
 						else
 						{
-                            logger->errorMsg(tr("ReportErr: unknown QuerySet '%1'").arg(queryName));
+                            logger->errorMsg(tr("Unknown QuerySet '%1' at line %2").arg(queryName).arg(lineNr));
 						}
 					}
 				}
+
 				// remove the before created batch file
 				batchFile.remove();
                 logger->infoMsg(tr("batch execution time: %1").arg(Utility::formatMilliSeconds(batchTime.elapsed())));
@@ -663,7 +675,6 @@ void SqlReport::updateQuerySet()
 		activeQuerySetEntry->setSqlFile(ui.outSql->text());
 		activeQuerySetEntry->setTemplateFile(ui.outTemplate->text());
 		activeQuerySetEntry->setOutputFile(ui.output->text());
-		activeQuerySetEntry->setLocale(ui.leLocale->text());
 		activeQuerySetEntry->setBatchrun(ui.checkBoxBatchRun->checkState()==Qt::Checked?true:false);
 		activeQuerySetEntry->setWithTimestamp(ui.cbTimeStamp->checkState()==Qt::Checked?true:false);
 		activeQuerySetEntry->setAppendOutput(ui.cbAppendOutput->checkState()==Qt::Checked?true:false);
@@ -704,7 +715,6 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 		ui.outSql->setText(activeQuerySetEntry->getSqlFile());
 		ui.outTemplate->setText(activeQuerySetEntry->getTemplateFile());
 		ui.output->setText(activeQuerySetEntry->getOutputFile());
-		ui.leLocale->setText(activeQuerySetEntry->getLocale());
 		ui.checkBoxBatchRun->setCheckState(activeQuerySetEntry->getBatchrun()?Qt::Checked:Qt::Unchecked);
 		ui.cbTimeStamp->setCheckState(activeQuerySetEntry->getWithTimestamp()?Qt::Checked:Qt::Unchecked);
 		ui.cbAppendOutput->setCheckState(activeQuerySetEntry->getAppendOutput()?Qt::Checked:Qt::Unchecked);
@@ -720,7 +730,6 @@ void SqlReport::setActiveQuerySetEntry(const QString aIdxName)
 		ui.outSql->setText("");
 		ui.outTemplate->setText("");
 		ui.output->setText("");
-		ui.leLocale->setText("");
 		ui.checkBoxBatchRun->setCheckState(Qt::Unchecked);
 		ui.cbTimeStamp->setCheckState(Qt::Unchecked);
 		ui.cbAppendOutput->setCheckState(Qt::Unchecked);

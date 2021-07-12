@@ -42,7 +42,7 @@
        </sizepolicy>
       </property>
       <layout class="QFormLayout" name="formLayout">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="QLabel" name="labelQuerySet">
          <property name="enabled">
           <bool>true</bool>
@@ -78,7 +78,7 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
+       <item row="1" column="1">
         <widget class="QFrame" name="frameQuerySet">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -176,14 +176,14 @@
              </font>
             </property>
             <property name="text">
-             <string>...</string>
+             <string>Load</string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="labelQuery">
          <property name="enabled">
           <bool>true</bool>
@@ -210,7 +210,7 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="3" column="1">
         <widget class="QFrame" name="frameQuery">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -336,7 +336,7 @@
          </layout>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="4" column="0">
         <widget class="QLabel" name="labelDescr">
          <property name="enabled">
           <bool>true</bool>
@@ -366,7 +366,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="4" column="1">
         <widget class="QLineEdit" name="lineEditDescr">
          <property name="font">
           <font>
@@ -381,7 +381,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="labelDatabase">
          <property name="enabled">
           <bool>true</bool>
@@ -411,7 +411,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="5" column="1">
         <widget class="QFrame" name="frameDatabase">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -567,14 +567,14 @@
              </font>
             </property>
             <property name="text">
-             <string>...</string>
+             <string>Edit</string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="5" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="labelInput">
          <property name="enabled">
           <bool>true</bool>
@@ -601,7 +601,7 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
+       <item row="6" column="1">
         <widget class="QLineEdit" name="lineEditInput">
          <property name="font">
           <font>
@@ -616,7 +616,7 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
+       <item row="8" column="0">
         <widget class="QLabel" name="labelSql">
          <property name="enabled">
           <bool>true</bool>
@@ -646,7 +646,7 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
+       <item row="8" column="1">
         <widget class="QFrame" name="frameSql">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -729,14 +729,14 @@
              </font>
             </property>
             <property name="text">
-             <string>...</string>
+             <string>Select</string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="8" column="0">
+       <item row="9" column="0">
         <widget class="QLabel" name="labelTemplate">
          <property name="enabled">
           <bool>true</bool>
@@ -766,7 +766,7 @@
          </property>
         </widget>
        </item>
-       <item row="8" column="1">
+       <item row="9" column="1">
         <widget class="QFrame" name="frameTemplate">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -846,14 +846,14 @@
              </font>
             </property>
             <property name="text">
-             <string>...</string>
+             <string>Select</string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="10" column="0">
+       <item row="11" column="0">
         <widget class="QLabel" name="labelOutput">
          <property name="enabled">
           <bool>true</bool>
@@ -883,7 +883,7 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="1">
+       <item row="11" column="1">
         <widget class="QFrame" name="frameOutput">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -963,14 +963,14 @@
              </font>
             </property>
             <property name="text">
-             <string>...</string>
+             <string>Select</string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="11" column="0">
+       <item row="12" column="0">
         <widget class="QLabel" name="labelParameter">
          <property name="enabled">
           <bool>true</bool>
@@ -997,7 +997,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="1">
+       <item row="12" column="1">
         <widget class="QFrame" name="frmCheckBoxes">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -1018,47 +1018,6 @@
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item>
-           <widget class="QLabel" name="lblLocale">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <family>Tahoma</family>
-              <pointsize>9</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Date Format</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="leLocale">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>9</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This is used to format the ${__DATE} parameter.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <spacer name="horizontalSpacer_2">
             <property name="orientation">
@@ -1087,6 +1046,9 @@
               <weight>50</weight>
               <bold>false</bold>
              </font>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;If checked the gererated output file is used as input for the process. Each line has the form&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;!!&amp;lt;Query Name&amp;gt;!!Param1:=Value1!!Param2:=Value2&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;with each parameter optional.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Batch</string>
@@ -1118,6 +1080,9 @@
               <strikeout>false</strikeout>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;If checked the generated output is added to an existing file, otherwise the file is rewritten.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Append</string>
             </property>
@@ -1142,6 +1107,9 @@
               <strikeout>false</strikeout>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Add timestamp to generated output file.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Timestamp</string>
             </property>
@@ -1163,6 +1131,9 @@
               <bold>false</bold>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;The generated output file has UTF-8 encoding.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>UTF-8</string>
             </property>
@@ -1183,6 +1154,9 @@
               <weight>50</weight>
               <bold>false</bold>
              </font>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;The output is in XML format which means that the following characters are replaced by theire HTML representation: &amp;lt;, &amp;gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>XML</string>
@@ -1232,15 +1206,31 @@
               <bold>false</bold>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Experimental Flag for prepared SQL statements.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Prepare</string>
             </property>
            </widget>
           </item>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </widget>
        </item>
-       <item row="12" column="0">
+       <item row="13" column="0">
         <widget class="QLabel" name="labelInfo">
          <property name="enabled">
           <bool>true</bool>
@@ -1270,7 +1260,7 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="1">
+       <item row="13" column="1">
         <widget class="QTextEdit" name="textEditReport">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1291,7 +1281,7 @@
          </property>
         </widget>
        </item>
-       <item row="13" column="0">
+       <item row="14" column="0">
         <widget class="QLabel" name="labelErrors">
          <property name="minimumSize">
           <size>
@@ -1315,7 +1305,7 @@
          </property>
         </widget>
        </item>
-       <item row="13" column="1">
+       <item row="14" column="1">
         <widget class="QTextEdit" name="textEditError">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1333,7 +1323,7 @@
          </property>
         </widget>
        </item>
-       <item row="14" column="1">
+       <item row="15" column="1">
         <widget class="QFrame" name="frameButton">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -1415,7 +1405,7 @@
          </layout>
         </widget>
        </item>
-       <item row="6" column="0">
+       <item row="0" column="0">
         <widget class="QLabel" name="labelLocal">
          <property name="enabled">
           <bool>true</bool>
@@ -1445,7 +1435,7 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="1">
+       <item row="0" column="1">
         <widget class="QLineEdit" name="lineEditLocal">
          <property name="font">
           <font>
@@ -1456,7 +1446,7 @@
           </font>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This are local defines which are &lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;not&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; stored in the query set file. The can be used to overwrite the &amp;quot;Query Defines&amp;quot; for some cases.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Format&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: param1:=value1|param2:=value2...&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Usage&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: ${?param1}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This are local defines which are &lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;not&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; stored in the query set file. The can be used to overwrite the &amp;quot;Query Defines&amp;quot; for some cases. The application has &lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;one&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; set of parameters for all defined queries.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
